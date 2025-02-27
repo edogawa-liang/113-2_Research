@@ -22,7 +22,7 @@ class GraphDatasetLoader:
         self.transform = T.Compose([
             T.NormalizeFeatures(),
             T.ToDevice(self.device),
-            T.RandomNodeSplit(num_val=0.1, num_test=0.1),
+            T.RandomNodeSplit(num_val=0.1, num_test=0.1, random_state=42),
         ])
         
         # Available datasets
@@ -63,9 +63,9 @@ class GraphDatasetLoader:
         print(f"Has self-loops: {data.has_self_loops()}")
         print(f"Is undirected: {data.is_undirected()}")
         print(f"Node Feature: {data.x}")
-        return dataset, data
+        return data
 
 if __name__ == "__main__":
     loader = GraphDatasetLoader()
     dataset_name = input(f"Enter dataset name {list(loader.datasets.keys())}: ")
-    dataset, data = loader.load_dataset(dataset_name)
+    data = loader.load_dataset(dataset_name)

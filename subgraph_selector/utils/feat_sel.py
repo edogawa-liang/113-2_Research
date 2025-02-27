@@ -18,7 +18,7 @@ class PCAFeatureSelector:
         self.top_n_pcs = top_n_pcs
         self.top_n_features_per_pc = top_n_features_per_pc
         self.pca = None
-        self.scaler = StandardScaler()  # 加入 StandardScaler
+        self.scaler = StandardScaler() 
         self.top_features_per_pc = None  # Store selected features for each PCA
         self.common_features = None  # Store the intersection of top features across PCs
 
