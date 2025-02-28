@@ -7,7 +7,7 @@ class ExperimentLogger:
     A logger for storing GNN training results in a Excel file.
     """
 
-    def __init__(self, save_dir="saved/results", file_name="gnn_results", move_old=True):
+    def __init__(self, save_dir, file_name, note, copy_old):
         """
         Initializes the logger.
 
@@ -17,7 +17,7 @@ class ExperimentLogger:
         """
         self.save_dir = save_dir
         self.history_dir = os.path.join(self.save_dir, "history")
-        self.move_old = move_old
+        self.copy_old = copy_old
         os.makedirs(self.save_dir, exist_ok=True)
         os.makedirs(self.history_dir, exist_ok=True)
 
@@ -25,9 +25,9 @@ class ExperimentLogger:
         self.file_name = f"{file_name}_{self.date_str}.xlsx"
         self.file_path = os.path.join(self.save_dir, self.file_name)
 
-    def _move_old_results(self):
+    def _copy_old_results(self):
         """Moves old Excel results to the history folder before saving new ones."""
-        if self.move_old and os.path.exists(self.file_path):
+        if self.copy_old and os.path.exists(self.file_path):
             new_path = os.path.join(self.history_dir, self.file_name)
             os.rename(self.file_path, new_path)
             print(f"Moved old results to {new_path}")
@@ -59,7 +59,7 @@ class ExperimentLogger:
         all_sheets = self._load_existing_results()
 
         # Move old results to history folder
-        self._move_old_results()
+        self._copy_old_results()
 
         # Get existing records for the dataset or create a new DataFrame
         df = all_sheets.get(dataset_name, pd.DataFrame())
@@ -101,7 +101,7 @@ class ExperimentLogger:
 
 # Example Usage
 if __name__ == "__main__":
-    logger = ExperimentLogger(file_name="GCN_experiments", move_old=True)  # 檔名 = GCN_experiments_YYYYMMDD.xlsx
+    logger = ExperimentLogger(file_name="GCN_experiments", copy_old=True)  # 檔名 = GCN_experiments_YYYYMMDD.xlsx
 
     experiment_data_1 = {
         "Model": "GCN2",

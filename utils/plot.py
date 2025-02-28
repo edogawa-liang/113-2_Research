@@ -6,14 +6,15 @@ class MetricPlotter:
     Supports loss, accuracy, AUC, precision, recall, and F1-score.
     """
 
-    def __init__(self, plot_name="result", save_dir="saved/plot", dpi=300):
+    def __init__(self, save_dir, dpi=300):
         """
         Initializes the plotter.
         """
         self.save_dir = save_dir
         self.dpi = dpi
         os.makedirs(self.save_dir, exist_ok=True)
-        self.save_path = os.path.join(self.save_dir, f"{plot_name}.png")
+        self.save_path = save_dir
+
 
     def plot_metrics(self, metrics, n_epoch):
         """
