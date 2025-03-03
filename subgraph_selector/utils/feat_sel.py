@@ -1,14 +1,14 @@
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from .feat2cat import Con2Cat
 
-
-class PCAFeatureSelector:
+class FeatureSelector:
     """
     Identifies the most important features across the top N principal components (PCs).
     """
 
-    def __init__(self, top_n_pcs=3, top_n_features_per_pc=1):
+    def __init__(self, top_n_pcs=3, top_n_features_per_pc=2):
         """
         Initializes the PCA feature selector.
         
@@ -18,16 +18,38 @@ class PCAFeatureSelector:
         self.top_n_pcs = top_n_pcs
         self.top_n_features_per_pc = top_n_features_per_pc
         self.pca = None
-        self.scaler = StandardScaler() 
+        self.scaler = StandardScaler()
+        self.feat2vec =Con2Cat() 
         self.top_features_per_pc = None  # Store selected features for each PCA
         self.common_features = None  # Store the intersection of top features across PCs
 
+
+    def detect_non_categorical_features(self, feature_matrix):
+        """
+        Detects which features are non-categorical based on unique value count.
+        A feature is considered categorical if it has a low number of unique values.
+        """
+        num_unique_values = np.apply_along_axis(lambda col: len(np.unique(col)), axis=0, arr=feature_matrix)
+        categorical_threshold = 10  # if unique values < 10, consider as categorical
+        categorical_mask = num_unique_values < categorical_threshold
+        print("Number of categorical features:", np.sum(categorical_mask))
+        return categorical_mask
+    
 
     def fit(self, feature_matrix):
         """
         Fits PCA on the given feature matrix and finds the most important features.
         """
 
+        # Transform non-categorical features using Feat2Vec
+        transformed_features = feature_matrix.copy()
+        categorical_mask = self.detect_non_categorical_features(feature_matrix)
+
+        non_categorical_indices = np.where(~categorical_mask)[0] 
+        if len(non_categorical_indices) > 0:  # If non-categorical features exist
+            transformed_features[:, non_categorical_indices] = self.feat2vec.transform(feature_matrix[:, non_categorical_indices])
+
+        # Standardize the feature matrix
         feature_matrix_scaled = self.scaler.fit_transform(feature_matrix)
         self.pca = PCA(n_components=self.top_n_pcs)
         self.pca.fit(feature_matrix_scaled)
@@ -77,7 +99,7 @@ if __name__ == "__main__":
     ])  
 
     # Initialize and fit PCA feature selector
-    pca_selector = PCAFeatureSelector(top_n_pcs=3, top_n_features_per_pc=2)  # 取前 3 個 PCA，每個取 2 個重要特徵
+    pca_selector = FeatureSelector(top_n_pcs=3, top_n_features_per_pc=2)  # 取前 3 個 PCA，每個取 2 個重要特徵
     pca_selector.fit(feature_matrix)
 
     # Get the union of the most important features

@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.mixture import GaussianMixture
 
-class Feat2Vec:
+class Con2Cat:
     """
     A class for transforming continuous numerical features into categorical values.
     Uses Gaussian Mixture Model (GMM) to find the best cut-off points.
@@ -74,7 +74,7 @@ if __name__ == "__main__":
         "Feature Vector 3": np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),  # Expect k ≈ 2
     }
 
-    feat2vec = Feat2Vec()
+    feat2vec = Con2Cat()
 
     for name, feature_vector in feature_vectors.items():
         categorical_values = feat2vec.transform(feature_vector)

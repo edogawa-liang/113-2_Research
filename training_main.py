@@ -1,7 +1,7 @@
 import argparse
 from data.dataset_loader import GraphDatasetLoader
 from data.data_modifier import GraphModifier
-from subgraph_selector.utils.feat_sel import PCAFeatureSelector
+from subgraph_selector.utils.feat_sel import FeatureSelector
 from models.basic_GCN import GCN2, GCN3
 from trainer.gnn_trainer import GNNTrainer
 from utils.save_result import ExperimentLogger
@@ -15,14 +15,16 @@ def parse_args():
     parser.add_argument("--epochs", type=int, default=1000, help="Number of training epochs")
     parser.add_argument("--lr", type=float, default=0.01, help="Learning rate")
     parser.add_argument("--weight_decay", type=float, default=1e-4, help="Weight decay for optimizer")
+    parser.add_argument("--threshold", type=float, default=0.5, help="threshold for binary classification")
     
-    parser.add_argument("--model_dir", type=str, default="saved/model", help="Directory to save trained models")
-    parser.add_argument("--plot_dir", type=str, default="saved/plot", help="Directory to save plots")
-    parser.add_argument("--result_dir", type=str, default="saved/result", help="Directory to save results")
-    parser.add_argument("--result_filename", type=str, default="gnn_experiment", help="File name for results document")
+    # result settings
+    parser.add_argument("--run_mode", type=str, default="try", help="Experiment run mode: 'try' (testing) or formal runs")
+    parser.add_argument("--result_filename", type=str, default="result", help="File name for results document")
     parser.add_argument("--note", type=str, default="", help="Note for the experiment")
     parser.add_argument("--copy_old", type=lambda x: x.lower() == "true", default=True, help="Whether to backup old experiment data (true/false).")
     
+    # Feature selection parameters
+    parser.add_argument("--use_original_label", type=lambda x: x.lower() == "true", default=True, help="Whether to use original labels (true/false)")
     parser.add_argument("--top_pcs", type=int, default=3, help="Number of principal components for PCA")
     parser.add_argument("--top_features", type=int, default=2, help="Number of top features per PC")
     return parser.parse_args()
@@ -34,29 +36,41 @@ if __name__ == "__main__":
 
     # Load dataset
     loader = GraphDatasetLoader()
-    data = loader.load_dataset(args.dataset)
+    data, num_features, num_classes = loader.load_dataset(args.dataset)
 
-    # Feature selection using PCA
-    pca_selector = PCAFeatureSelector(top_n_pcs=args.top_pcs, top_n_features_per_pc=args.top_features)
-    pca_selector.fit(data.x.cpu().numpy())
-    imp_features = pca_selector.get_top_features()
+    if args.use_original_label is False:
+        # Feature selection using PCA
+        print("Performing feature selection using PCA...")
+        pca_selector = FeatureSelector(top_n_pcs=args.top_pcs, top_n_features_per_pc=args.top_features)
+        pca_selector.fit(data.x.cpu().numpy())
+        imp_features = pca_selector.get_top_features()
+        print(f"Selected important features: {imp_features}")
 
-    # Modify graph using selected features
-    modifier = GraphModifier(data)
-    modified_graphs = modifier.modify_graph(imp_features)
+        # Modify graph using selected features
+        modifier = GraphModifier(data)
+        modified_graphs = modifier.modify_graph(imp_features)
+        print("Graph modified based on selected features.")
+
+    else:
+        modified_graphs = data
+        print("Using original dataset without feature selection.")
 
     # Select model
     model_class = GCN2 if args.model == "GCN2" else GCN3
+    print(f"Using model: {model_class.__name__}")
 
     # Get the trial number
-    logger = ExperimentLogger(save_dir=args.result_dir, file_name=args.result_filename, move_old=args.copy_old)
-    trial_number = logger.get_next_trial_number()
+    logger = ExperimentLogger(file_name=args.result_filename, note=args.note, copy_old=args.copy_old, run_mode=args.run_mode)
+    trial_number = logger.get_next_trial_number(args.dataset)
+    print(f"Trial number: {trial_number}")
+    print("==============================================================\n")
 
     # Train GNN model
-    trainer = GNNTrainer(dataset_name=args.dataset, data=modified_graphs, model_class=model_class, 
-                         trial_number=trial_number, epochs=args.epochs, lr=args.lr, 
-                         weight_decay=args.weight_decay, save_model_dir=args.model_dir, 
-                         save_plot_dir=args.plot_dir, copy_old=args.copy_old)
+    trainer = GNNTrainer(dataset_name=args.dataset, data=modified_graphs, 
+                         num_features=num_features, num_classes=num_classes,
+                         model_class=model_class, trial_number=trial_number, 
+                         epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay, 
+                         run_mode=args.run_mode, threshold=args.threshold)
     result = trainer.run()
 
     # Save experiment results

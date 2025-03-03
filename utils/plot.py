@@ -12,7 +12,6 @@ class MetricPlotter:
         """
         self.save_dir = save_dir
         self.dpi = dpi
-        os.makedirs(self.save_dir, exist_ok=True)
         self.save_path = save_dir
 
 
@@ -48,7 +47,7 @@ class MetricPlotter:
 
         plt.tight_layout()
         plt.savefig(self.save_path, dpi=self.dpi)
-        plt.show()
+        print(f"Metrics plot saved at {self.save_path}")
 
 
 

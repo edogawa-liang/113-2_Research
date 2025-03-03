@@ -1,3 +1,4 @@
+import torch
 import torch.nn.functional as F
 from sklearn.metrics import roc_auc_score, precision_score, recall_score, f1_score, confusion_matrix
 
@@ -7,11 +8,20 @@ class Evaluator:
     """
 
     @staticmethod
-    def evaluate(model, data):
+    @torch.no_grad()
+    def evaluate(model, data, threshold):
         """
         Evaluates the model on validation and test sets and returns performance metrics.
+
+        :param model: Trained GNN model.
+        :param data: Graph data object.
+        :param threshold: Threshold for binary classification.
         """
-        out, pred = model.predict(data) 
+        model.eval()
+        out = model(data.x, data.edge_index)
+        prob = F.softmax(out, dim=-1)  # get class probabilities
+        pred = prob.argmax(dim=-1)  # get predicted class
+
 
         # Compute accuracy
         acc_val = (pred[data.val_mask] == data.y[data.val_mask]).sum().item() / data.val_mask.sum().item()
@@ -19,29 +29,43 @@ class Evaluator:
 
         # Extract true & predicted values
         y_true_val = data.y[data.val_mask].cpu().numpy()
-        y_pred_val = pred[data.val_mask].cpu().numpy()
+        y_pred_val = prob[data.val_mask].cpu().numpy()
         y_true_test = data.y[data.test_mask].cpu().numpy()
-        y_pred_test = pred[data.test_mask].cpu().numpy()
+        y_pred_test = prob[data.test_mask].cpu().numpy()
+
+        # only use the positive class's probability for binary classification!!!
+        num_classes = out.shape[1]
+        if num_classes == 2:
+            y_pred_val = y_pred_val[:, 1]  
+            y_pred_test = y_pred_test[:, 1]
+            use_threshold = threshold
+        else:
+            use_threshold = None 
 
         # Compute AUC (only if multiple classes exist)
-        val_auc = roc_auc_score(y_true_val, y_pred_val, multi_class="ovr") if len(set(y_true_val)) > 1 else 0
-        test_auc = roc_auc_score(y_true_test, y_pred_test, multi_class="ovr") if len(set(y_true_test)) > 1 else 0
+        val_auc = roc_auc_score(y_true_val, y_pred_val, multi_class="ovr", average="macro") if num_classes > 2 else roc_auc_score(y_true_val, y_pred_val)
+        test_auc = roc_auc_score(y_true_test, y_pred_test, multi_class="ovr", average="macro") if num_classes > 2 else roc_auc_score(y_true_test, y_pred_test)
+
+        # Get predicted class
+        # if binary classification, use 0.5 as threshold
+        y_pred_class_val = y_pred_val.argmax(axis=1) if num_classes > 2 else (y_pred_val > use_threshold).astype(int)
+        y_pred_class_test = y_pred_test.argmax(axis=1) if num_classes > 2 else (y_pred_test > use_threshold).astype(int)
 
         # Compute precision, recall, F1-score
-        val_precision = precision_score(y_true_val, y_pred_val, average="macro", zero_division=0)
-        test_precision = precision_score(y_true_test, y_pred_test, average="macro", zero_division=0)
+        val_precision = precision_score(y_true_val, y_pred_class_val, average="macro", zero_division=0)
+        test_precision = precision_score(y_true_test, y_pred_class_test, average="macro", zero_division=0)
 
-        val_recall = recall_score(y_true_val, y_pred_val, average="macro", zero_division=0)
-        test_recall = recall_score(y_true_test, y_pred_test, average="macro", zero_division=0)
+        val_recall = recall_score(y_true_val, y_pred_class_val, average="macro", zero_division=0)
+        test_recall = recall_score(y_true_test, y_pred_class_test, average="macro", zero_division=0)
 
-        val_f1 = f1_score(y_true_val, y_pred_val, average="macro", zero_division=0)
-        test_f1 = f1_score(y_true_test, y_pred_test, average="macro", zero_division=0)
+        val_f1 = f1_score(y_true_val, y_pred_class_val, average="macro", zero_division=0)
+        test_f1 = f1_score(y_true_test, y_pred_class_test, average="macro", zero_division=0)
 
         # Compute confusion matrix
-        cm = confusion_matrix(y_true_test, y_pred_test).tolist()
+        cm = confusion_matrix(y_true_test, y_pred_class_test).tolist()
 
         return {
-            "Loss": float(F.cross_entropy(out[data.train_mask], data.y[data.train_mask])),
+            "Threshold": threshold,
             "Val_AUC": val_auc,
             "Test_AUC": test_auc,
             "Val_Acc": acc_val,
@@ -52,5 +76,6 @@ class Evaluator:
             "Test_Re": test_recall,
             "Val_F1": val_f1,
             "Test_F1": test_f1,
-            "CM": cm
+            "CM": cm,
+            "Threshold": use_threshold
         }
