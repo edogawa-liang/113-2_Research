@@ -82,7 +82,7 @@ class ExperimentLogger:
             return df["Trial"].max() + 1
         return 1  
 
-    def log_experiment(self, dataset_name, experiment_data):
+    def log_experiment(self, dataset_name, experiment_data, label_source):
         """
         Logs an experiment result into an Excel file.
         If the dataset does not exist in the current file, a new sheet is created.
@@ -98,7 +98,7 @@ class ExperimentLogger:
 
         # Get the next trial number
         trial_number = self.get_next_trial_number(dataset_name)
-        experiment_data = {"Trial": trial_number, **experiment_data, "Note": self.note} 
+        experiment_data = {"Trial": trial_number, "Label": label_source, **experiment_data, "Note": self.note} 
 
         # Ensure all columns exist in the DataFrame
         for col in experiment_data.keys():

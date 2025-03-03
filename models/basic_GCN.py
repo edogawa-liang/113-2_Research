@@ -3,7 +3,7 @@ import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
 
 
-class GCN3(torch.nn.Module):
+class GCN3Classifier(torch.nn.Module):
     def __init__(self, in_channels, hidden_channels1=64, hidden_channels2=32, out_channels=4):
         """
         Initializes a 3-layer GCN model.
@@ -23,7 +23,7 @@ class GCN3(torch.nn.Module):
 
 
 
-class GCN2(torch.nn.Module):
+class GCN2Classifier(torch.nn.Module):
     def __init__(self, in_channels, hidden_channels=64, out_channels=2):
         """
         Initializes a 2-layer GCN model.

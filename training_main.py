@@ -1,9 +1,10 @@
 import argparse
+import numpy as np
 from data.dataset_loader import GraphDatasetLoader
 from data.data_modifier import GraphModifier
 from subgraph_selector.utils.feat_sel import FeatureSelector
-from models.basic_GCN import GCN2, GCN3, GCN2Regressor, GCN3Regressor
-from trainer.gnn_trainer import GNNTrainer
+from models.basic_GCN import GCN2Classifier, GCN3Classifier, GCN2Regressor, GCN3Regressor
+from trainer.gnn_trainer import GNNClassifierTrainer, GNNRegressorTrainer
 from utils.save_result import ExperimentLogger
 
 
@@ -52,36 +53,55 @@ if __name__ == "__main__":
         modified_graphs = modifier.modify_graph(imp_features)  # List of graphs
         print(f"Graph modified into {len(modified_graphs)} graphs.")
 
+        # check for continuous and categorical features
+        continuous_features = [f for f in imp_features if len(np.unique(data.x[:, f].cpu().numpy())) > 10]
+        categorical_features = list(set(imp_features) - set(continuous_features))
+        print(f"Continuous Features: {continuous_features}, Categorical Features: {categorical_features}")
+
+        # Assign task type
+        for graph in modified_graphs:
+            unique_labels = np.unique(graph.y.cpu().numpy())  
+            if len(unique_labels) > 10:  
+                graph.task_type = "regression"
+            else:  #
+                graph.task_type = "classification"
+
         # One feature is removed from the original dataset to label
         num_features = num_features - 1
 
     else:
-        modified_graphs = [data]  # Wrap single graph in a list for uniform processing
+        modified_graphs = [data]  
         print("Using original dataset without feature selection.")
+        modified_graphs[0].task_type = "classification"
 
-    # Select model
-    model_class = GCN2 if args.model == "GCN2" else GCN3
-    print(f"Using model: {model_class.__name__}")
 
     # Initialize logger
     logger = ExperimentLogger(file_name=args.result_filename, note=args.note, copy_old=args.copy_old, run_mode=args.run_mode)
 
     # Loop over all modified graphs
     for i, graph in enumerate(modified_graphs):
-        print(f"Training on Graph {i+1}/{len(modified_graphs)}")
-        
-        # Get the trial number for this graph
-        trial_number = logger.get_next_trial_number(args.dataset)
-        print(f"Trial number: {trial_number}")
-        print("==============================================================\n")
+        print(f"\nTraining on Graph {i+1}/{len(modified_graphs)} - Task: {graph.task_type}")
+        label_source = "Original Label" if args.use_original_label else f"Feature {imp_features[i]}"
 
-        # Train GNN model
-        trainer = GNNTrainer(dataset_name=args.dataset, data=graph, 
-                             num_features=num_features, num_classes=num_classes,
-                             model_class=model_class, trial_number=trial_number, 
-                             epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay, 
-                             run_mode=args.run_mode, threshold=args.threshold)
-        result = trainer.run()
+        if graph.task_type == "regression":
+            trial_number = logger.get_next_trial_number(args.dataset + "_regression")
+            print(f"Training Regression Model - Trial {trial_number}")
+            trainer = GNNRegressorTrainer(dataset_name=args.dataset, data=graph, 
+                                        num_features=num_features, num_classes=1,  # Regression num_classes = 1
+                                        model_class=GCN2Regressor if args.model == "GCN2" else GCN3Regressor,
+                                        trial_number=trial_number, epochs=args.epochs, lr=args.lr, 
+                                        weight_decay=args.weight_decay, run_mode=args.run_mode)
+            result = trainer.run()
+            logger.log_experiment(args.dataset + "_regression", result, label_source)
 
-        # Save experiment results
-        logger.log_experiment(args.dataset, result)
+        elif graph.task_type == "classification":
+            trial_number = logger.get_next_trial_number(args.dataset + "_classification")
+            print(f"Training Classification Model - Trial {trial_number}")
+            trainer = GNNClassifierTrainer(dataset_name=args.dataset, data=graph, 
+                                        num_features=num_features, num_classes=num_classes,  
+                                        model_class=GCN2Classifier if args.model == "GCN2" else GCN3Classifier,
+                                        trial_number=trial_number, epochs=args.epochs, lr=args.lr, 
+                                        weight_decay=args.weight_decay, run_mode=args.run_mode, threshold=args.threshold)
+            result = trainer.run()
+            logger.log_experiment(args.dataset + "_classification", result, label_source)
+
