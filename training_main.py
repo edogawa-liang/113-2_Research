@@ -2,17 +2,18 @@ import argparse
 from data.dataset_loader import GraphDatasetLoader
 from data.data_modifier import GraphModifier
 from subgraph_selector.utils.feat_sel import FeatureSelector
-from models.basic_GCN import GCN2, GCN3
+from models.basic_GCN import GCN2, GCN3, GCN2Regressor, GCN3Regressor
 from trainer.gnn_trainer import GNNTrainer
 from utils.save_result import ExperimentLogger
 
 
+# python training_main.py --dataset GitHub --model GCN2 --run_mode try2 --note basic --use_original_label false 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train a GNN model with specified parameters.")
     parser.add_argument("--dataset", type=str, required=True, help="Dataset name")
     
     parser.add_argument("--model", type=str, default="GCN2", choices=["GCN2", "GCN3"], help="Model type")
-    parser.add_argument("--epochs", type=int, default=1000, help="Number of training epochs")
+    parser.add_argument("--epochs", type=int, default=2, help="Number of training epochs")
     parser.add_argument("--lr", type=float, default=0.01, help="Learning rate")
     parser.add_argument("--weight_decay", type=float, default=1e-4, help="Weight decay for optimizer")
     parser.add_argument("--threshold", type=float, default=0.5, help="threshold for binary classification")
@@ -48,30 +49,39 @@ if __name__ == "__main__":
 
         # Modify graph using selected features
         modifier = GraphModifier(data)
-        modified_graphs = modifier.modify_graph(imp_features)
-        print("Graph modified based on selected features.")
+        modified_graphs = modifier.modify_graph(imp_features)  # List of graphs
+        print(f"Graph modified into {len(modified_graphs)} graphs.")
+
+        # One feature is removed from the original dataset to label
+        num_features = num_features - 1
 
     else:
-        modified_graphs = data
+        modified_graphs = [data]  # Wrap single graph in a list for uniform processing
         print("Using original dataset without feature selection.")
 
     # Select model
     model_class = GCN2 if args.model == "GCN2" else GCN3
     print(f"Using model: {model_class.__name__}")
 
-    # Get the trial number
+    # Initialize logger
     logger = ExperimentLogger(file_name=args.result_filename, note=args.note, copy_old=args.copy_old, run_mode=args.run_mode)
-    trial_number = logger.get_next_trial_number(args.dataset)
-    print(f"Trial number: {trial_number}")
-    print("==============================================================\n")
 
-    # Train GNN model
-    trainer = GNNTrainer(dataset_name=args.dataset, data=modified_graphs, 
-                         num_features=num_features, num_classes=num_classes,
-                         model_class=model_class, trial_number=trial_number, 
-                         epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay, 
-                         run_mode=args.run_mode, threshold=args.threshold)
-    result = trainer.run()
+    # Loop over all modified graphs
+    for i, graph in enumerate(modified_graphs):
+        print(f"Training on Graph {i+1}/{len(modified_graphs)}")
+        
+        # Get the trial number for this graph
+        trial_number = logger.get_next_trial_number(args.dataset)
+        print(f"Trial number: {trial_number}")
+        print("==============================================================\n")
 
-    # Save experiment results
-    logger.log_experiment(args.dataset, result)
+        # Train GNN model
+        trainer = GNNTrainer(dataset_name=args.dataset, data=graph, 
+                             num_features=num_features, num_classes=num_classes,
+                             model_class=model_class, trial_number=trial_number, 
+                             epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay, 
+                             run_mode=args.run_mode, threshold=args.threshold)
+        result = trainer.run()
+
+        # Save experiment results
+        logger.log_experiment(args.dataset, result)

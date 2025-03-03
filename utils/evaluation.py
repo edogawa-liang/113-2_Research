@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 from sklearn.metrics import roc_auc_score, precision_score, recall_score, f1_score, confusion_matrix
 
-class Evaluator:
+class ClassificationEvaluator:
     """
     Evaluates a trained GNN model and computes various performance metrics.
     """

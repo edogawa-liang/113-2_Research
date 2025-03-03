@@ -37,29 +37,3 @@ class GraphModifier:
 
         return modified_graphs
 
-
-
-# Example Usage
-if __name__ == "__main__":
-    # Create a sample graph with 5 nodes and 4 features
-    x = torch.tensor([[1.0, 2.0, 3.0, 4.0],
-                      [5.0, 6.0, 7.0, 8.0],
-                      [9.0, 10.0, 11.0, 12.0],
-                      [13.0, 14.0, 15.0, 16.0],
-                      [17.0, 18.0, 19.0, 20.0]])
-    
-    edge_index = torch.tensor([[0, 1, 2, 3],
-                               [1, 2, 3, 4]])  # Simple edge connections
-
-    data = Data(x=x, edge_index=edge_index)
-
-    # Specify feature indices to use as y
-    feature_indices = [0, 2]  # Remove feature 0 and 2
-
-    modifier = GraphModifier(data)
-    modified_graphs = modifier.modify_graph(feature_indices)
-
-    for i, graph in enumerate(modified_graphs):
-        print(f"\nGraph {i+1}: y = Feature {feature_indices[i]}")
-        print("New x:", graph.x)
-        print("y:", graph.y)
