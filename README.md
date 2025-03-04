@@ -36,5 +36,6 @@
 	```
 
 ## Saved
-Original\: Node classification for original graph
-Stage1\: Node regression for explainer 
+original\: Node classification for original graph
+stage1\: Node regression for explainer, used for subgraph selection 
+baselineResult\: Node classification for baseline approach (random, Explainer)

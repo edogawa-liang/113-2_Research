@@ -11,10 +11,6 @@ from models.basic_GCN import GCN2Classifier, GCN3Classifier
 from trainer.gnn_trainer import GNNClassifierTrainer
 from utils.save_result import ExperimentLogger
 
-# python train_remaining_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult --note basic_node_cls --selector_type random --fraction 0.1
-# python train_remaining_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult --note basic_node_cls --selector_type random --fraction 0.1
-# python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult --note basic_node_cls --selector_type random --fraction 0.1
-
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train GNN after removing a selected subgraph.")
@@ -46,22 +42,24 @@ if __name__ == "__main__":
 
     # Select subgraph
     if args.selector_type == "random":
-        print("Use random selector")
-        selector = RandomSubgraphSelector(data, fraction=args.fraction, seed=args.seed)
+        print("Using Random Selector")
+        selector = RandomSubgraphSelector(data, fraction=args.fraction, seed=args.seed, device=device)
     elif args.selector_type == "explainer":
-        print("Use explainer selector")
-        # selector = ExplainerSubgraphSelector(data)
+        print("Using Explainer Selector")
+        # selector = ExplainerSubgraphSelector(data, device=device)
 
     selected_edges = selector.select_subgraph()
 
     # Remove subgraph from the original graph
-    remaining_graph_constructor = RemainingGraphConstructor(data, selected_edges)
+    remaining_graph_constructor = RemainingGraphConstructor(data, selected_edges, device=device)
     remaining_graph = remaining_graph_constructor.get_remaining_graph()
 
     # Train GNN on the remaining graph
     print("\nTraining GNN on the remaining graph after removing subgraph...")
 
-    trial_number = 1  # Example trial number
+    logger = ExperimentLogger(file_name=args.filename, note=args.note, copy_old=True, run_mode=args.run_mode)
+    trial_number = logger.get_next_trial_number(args.dataset + "_remaining_graph")
+    print(f"Training Classification Model - Trial {trial_number}")
     trainer = GNNClassifierTrainer(dataset_name=args.dataset, data=remaining_graph, 
                                    num_features=num_features, num_classes=num_classes, 
                                    model_class=GCN2Classifier if args.model == "GCN2" else GCN3Classifier,
@@ -72,7 +70,6 @@ if __name__ == "__main__":
     result = trainer.run()
 
     # Save experiment results
-    logger = ExperimentLogger(file_name=args.filename, note=args.note, copy_old=True, run_mode=args.run_mode)
     logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, fraction=args.fraction)
 
     print("Experiment finished and results saved.")

@@ -1,0 +1,25 @@
+# Original node classification
+------------------------------------------------------------
+python training_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode original --note basic_node_cls --use_original_label true
+python training_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode original --note basic_node_cls --use_original_label true
+python training_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode original --note basic_node_cls --use_original_label true
+python training_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode original --note basic_node_cls --use_original_label true
+python training_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0.01 --run_mode original --note basic_node_cls --use_original_label true
+
+
+# Train base GNN model (node regression) for explainer (multi features for y) 
+------------------------------------------------------------
+python training_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1 --note basic_node_reg --use_original_label false
+python training_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1 --note basic_node_reg --use_original_label false
+python training_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1 --note basic_node_reg --use_original_label false
+python training_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1 --note basic_node_reg --use_original_label false
+python training_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1 --note basic_node_reg --use_original_label false
+
+
+# Train GNN model (node classification) after random subgraph selection
+------------------------------------------------------------
+python train_remaining_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult --note basic_node_cls --selector_type random --fraction 0.1
+python train_remaining_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult --note basic_node_cls --selector_type random --fraction 0.1
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult --note basic_node_cls --selector_type random --fraction 0.1
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult --note basic_node_cls --selector_type random --fraction 0.1
+python train_remaining_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult --note basic_node_cls --selector_type random --fraction 0.1

@@ -9,15 +9,6 @@ from trainer.gnn_trainer import GNNClassifierTrainer, GNNRegressorTrainer
 from utils.save_result import ExperimentLogger
 
 
-# Original node classification
-# python training_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode original --note basic_node_cls --use_original_label true
-# python training_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode original --note basic_node_cls --use_original_label true
-# python training_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode original --note basic_node_cls --use_original_label true
-
-# Trained base GNN model for explainer (multi features for y) 
-# python training_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1 --note basic_node_reg --use_original_label false
-# python training_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1 --note basic_node_reg --use_original_label false
-# python training_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1 --note basic_node_reg --use_original_label false
 
 
 def parse_args():
