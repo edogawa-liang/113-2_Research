@@ -26,9 +26,14 @@
 5. Github
 
 ## How to run
-```bash 
-python training_main.py
-```
+1. Train basic GNN model (including Original and select feature for multiple GNN)
+	```bash 
+	python training_main.py
+	```
+2. Remove the core subgraph and train GNN model
+	```bash 
+	python train_remaining_main.py
+	```
 
 ## Saved
 Original\: Node classification for original graph
