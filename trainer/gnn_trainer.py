@@ -12,8 +12,8 @@ class GNNClassifierTrainer:
     def __init__(self, dataset_name, data, num_features, num_classes, model_class, trial_number, device=None, 
                  lr=0.01, weight_decay=1e-4, epochs=1000, run_mode="try", threshold=0.5):
         # model setting
-        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-        self.data = data
+        self.device = device 
+        self.data = data.to(self.device)
         self.num_features = num_features
         self.num_classes = num_classes
         self.model = model_class(in_channels=self.num_features, out_channels=self.num_classes).to(self.device)

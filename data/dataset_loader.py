@@ -11,18 +11,10 @@ class GraphDatasetLoader:
         """
         Initializes the dataset loader, sets device, and defines transformations.
         """
-        os.environ['TORCH'] = torch.__version__
-        print(f"Using torch version: {torch.__version__}")
-        
-        # Set device
-        self.device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
-        print(f"Using device: {self.device}")
-        print("==============================================================\n")
-        
+
         torch.manual_seed(42)
         self.transform = T.Compose([
             T.NormalizeFeatures(),
-            T.ToDevice(self.device),  
             T.RandomNodeSplit(num_val=0.1, num_test=0.1)
         ])
                 

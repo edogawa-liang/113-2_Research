@@ -1,6 +1,6 @@
 import argparse
-import numpy as np
 import torch
+import os
 from data.dataset_loader import GraphDatasetLoader
 from data.data_modifier import GraphModifier
 from subgraph_selector.utils.feat_sel import FeatureSelector
@@ -9,7 +9,17 @@ from trainer.gnn_trainer import GNNClassifierTrainer, GNNRegressorTrainer
 from utils.save_result import ExperimentLogger
 
 
-# python training_main.py --dataset GitHub --model GCN2 --run_mode try2 --note basic --use_original_label false 
+# Original node classification
+# python training_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode original --note basic_node_cls --use_original_label true
+# python training_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode original --note basic_node_cls --use_original_label true
+# python training_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode original --note basic_node_cls --use_original_label true
+
+# Trained base GNN model for explainer (multi features for y) 
+# python training_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1 --note basic_node_reg --use_original_label false
+# python training_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1 --note basic_node_reg --use_original_label false
+# python training_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1 --note basic_node_reg --use_original_label false
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Train a GNN model with specified parameters.")
     parser.add_argument("--dataset", type=str, required=True, help="Dataset name")
@@ -37,9 +47,15 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
 
+    os.environ['TORCH'] = torch.__version__
+    print(f"Using torch version: {torch.__version__}")
+    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
+
     # Load dataset
     loader = GraphDatasetLoader()
     data, num_features, num_classes = loader.load_dataset(args.dataset)
+    data = data.to(device)
 
     if args.use_original_label is False:
         # Feature selection using PCA
@@ -81,8 +97,9 @@ if __name__ == "__main__":
             trainer = GNNRegressorTrainer(dataset_name=args.dataset, data=graph, 
                                         num_features=num_features, 
                                         model_class=GCN2Regressor if args.model == "GCN2" else GCN3Regressor,
-                                        trial_number=trial_number, epochs=args.epochs, lr=args.lr, 
-                                        weight_decay=args.weight_decay, run_mode=args.run_mode)
+                                        trial_number=trial_number, device=device,
+                                        epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
+                                        run_mode=args.run_mode)
             result = trainer.run()
             logger.log_experiment(args.dataset + "_regression", result, label_source)
 
@@ -93,8 +110,9 @@ if __name__ == "__main__":
             trainer = GNNClassifierTrainer(dataset_name=args.dataset, data=graph, 
                                         num_features=num_features, num_classes=num_classes,  
                                         model_class=GCN2Classifier if args.model == "GCN2" else GCN3Classifier,
-                                        trial_number=trial_number, epochs=args.epochs, lr=args.lr, 
-                                        weight_decay=args.weight_decay, run_mode=args.run_mode, threshold=args.threshold)
+                                        trial_number=trial_number, device=device,
+                                        epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay, 
+                                        run_mode=args.run_mode, threshold=args.threshold)
             result = trainer.run()
             logger.log_experiment(args.dataset + "_classification", result, label_source)
 

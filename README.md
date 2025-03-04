@@ -21,10 +21,15 @@
 ## Dataset
 1. Cora
 2. Citeseer
-3. Facebook
-4. Github
+3. Pubmed
+4. Facebook
+5. Github
 
 ## How to run
 ```bash 
-python main.py
+python training_main.py
 ```
+
+## Saved
+Original\: Node classification for original graph
+Stage1\: Node regression for explainer 
