@@ -23,7 +23,7 @@ class ClassificationEvaluator:
         out = model(data.x, data.edge_index)
         prob = F.softmax(out, dim=-1)  # get class probabilities
         pred = prob.argmax(dim=-1)  # get predicted class
-
+        
 
         # Compute accuracy
         acc_val = (pred[data.val_mask] == data.y[data.val_mask]).sum().item() / data.val_mask.sum().item()

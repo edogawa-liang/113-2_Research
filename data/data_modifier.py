@@ -1,5 +1,4 @@
 import torch
-from torch_geometric.data import Data
 import copy
 
 class GraphModifier:
@@ -29,11 +28,13 @@ class GraphModifier:
             new_data = copy.deepcopy(self.original_data)
 
             # Set y as the feature column and remove it from x
-            new_data.y = new_data.x[:, idx].clone()
+            new_data.y = new_data.x[:, idx].clone().to(torch.float)
             new_data.x = torch.cat((new_data.x[:, :idx], new_data.x[:, idx+1:]), dim=1)
 
             print(f"Modified Graph: Feature {idx} set as y and removed from x. New x shape: {new_data.x.shape}")
             modified_graphs.append(new_data)
+        
+        print(modified_graphs[0])
 
         return modified_graphs
 

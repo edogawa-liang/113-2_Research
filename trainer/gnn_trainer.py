@@ -67,6 +67,7 @@ class GNNClassifierTrainer:
         self.model.train()
         self.optimizer.zero_grad()
         out = self.model(self.data.x, self.data.edge_index)
+        # self.data.y = self.data.y.to(torch.long) # 這一步讓y都變成0了
         loss = F.cross_entropy(out[self.data.train_mask], self.data.y[self.data.train_mask])
         loss.backward()
         self.optimizer.step()
@@ -109,8 +110,8 @@ class GNNClassifierTrainer:
             self.metrics["val_f1"].append(metrics["Val_F1"])
             self.metrics["test_f1"].append(metrics["Test_F1"])
 
-            if epoch % (self.epochs/20) == 0 or epoch == self.epochs:
-                print(f"Epoch {epoch:04d}, Loss: {loss:.4f}, Val Acc: {metrics['Val_Acc']:.4f}, Test Acc: {metrics['Test_Acc']:.4f}")
+            if epoch % max(1, self.epochs // 20) == 0 or epoch == self.epochs:
+                print(f"Epoch {epoch:04d}, Loss: {loss:.4f}, Val Acc: {metrics['Val_Acc']:.4f}, Test Acc: {metrics['Test_Acc']:.4f}, Val F1: {metrics['Val_F1']:.4f}, Test F1: {metrics['Test_F1']:.4f}")
 
             # Save the best model and metrics based on validation accuracy
             if metrics["Val_Acc"] > self.best_val_acc:
@@ -157,7 +158,7 @@ class GNNRegressorTrainer:
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.data = data
         self.num_features = num_features
-        self.model = model_class(in_channels=self.num_features, out_channels=1).to(self.device)  # 回歸輸出維度為 1
+        self.model = model_class(in_channels=self.num_features).to(self.device) 
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, weight_decay=weight_decay)
         self.lr = lr
         self.weight_decay = weight_decay
@@ -239,8 +240,8 @@ class GNNRegressorTrainer:
             self.metrics["val_r2"].append(metrics["Val_R2"])
             self.metrics["test_r2"].append(metrics["Test_R2"])
 
-            if epoch % (self.epochs // 20) == 0 or epoch == self.epochs:
-                print(f"Epoch {epoch:04d}, Loss: {loss:.4f}, Val MSE: {metrics['Val_MSE']:.4f}, Test MSE: {metrics['Test_MSE']:.4f}")
+            if epoch % max(1, self.epochs // 20) == 0 or epoch == self.epochs:
+                print(f"Epoch {epoch:04d}, Loss: {loss:.4f}, Val MSE: {metrics['Val_MSE']:.4f}, Test MSE: {metrics['Test_MSE']:.4f}, Val R²: {metrics['Val_R2']:.4f}, Test R²: {metrics['Test_R2']:.4f}")
 
             # Save the best model based on validation MSE
             if metrics["Val_MSE"] < self.best_val_mse:

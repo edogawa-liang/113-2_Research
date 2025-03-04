@@ -34,7 +34,7 @@ class FeatureSelector:
             print("Feature matrix scaled and standardized.")
 
         # Apply PCA
-        self.pca = PCA(n_components=self.top_n_pcs, svd_solver="randomized")
+        self.pca = PCA(n_components=self.top_n_pcs, svd_solver="randomized", random_state=42)
         self.pca.fit(feature_matrix)
 
         # Get loadings (absolute values to ignore direction)
