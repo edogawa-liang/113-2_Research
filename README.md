@@ -36,7 +36,7 @@
 	```
 3. Generate explanation subgraph
 	```bash 
-	stage2_expsubg.py
+	python stage2_expsubg.py
 	```	
 
 ## Saved

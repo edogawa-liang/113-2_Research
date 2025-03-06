@@ -10,7 +10,7 @@ class SubgraphExplainer:
 
     def __init__(self, model_class, dataset, data, model_path, trial_name, 
                  explainer_type="GNNExplainer", hop=2, epoch=100, 
-                 run_mode="stage2_expsubg", config=None, remove_feature=None, device=None):
+                 run_mode="stage2_expsubg", config=None, remove_feature=None, device=None, choose_nodes="random"):
         """
         Initializes the explainer.
 
@@ -35,6 +35,7 @@ class SubgraphExplainer:
         self.run_mode = run_mode
         self.config = config if config else {}
         self.remove_feature = remove_feature
+        self.choose_nodes = choose_nodes
 
         # 設定裝置
         self.device = device if device else ("cuda:1" if torch.cuda.is_available() else "cpu")
@@ -105,11 +106,11 @@ class SubgraphExplainer:
         """
 
         # Define save directory based on run mode, dataset, and explainer type
-        save_exp_dir = os.path.join("saved", self.run_mode, explainer_type,self.dataset)
+        save_exp_dir = os.path.join("saved", self.run_mode, explainer_type,self.dataset, self.choose_nodes, f"{self.trial_name}_{self.model_class.__name__}")
         os.makedirs(save_exp_dir, exist_ok=True)
 
         # Define file path for saving explanations
-        file_path = os.path.join(save_exp_dir, f"{self.trial_name}_{self.model_class.__name__}_node{node_idx}.pkl")
+        file_path = os.path.join(save_exp_dir, f"node_{node_idx}.pkl")
 
         # Prepare explanation data
         explanation_data = {

@@ -1,9 +1,9 @@
 import argparse
 import os
 import torch
-import random
 from data.dataset_loader import GraphDatasetLoader
 from data.data_modifier import GraphModifier
+from subgraph_selector.utils.choose_node import ChooseNodeSelector
 from models.explainer import SubgraphExplainer
 from models.basic_GCN import GCN2Regressor, GCN3Regressor  
 from subgraph_selector.utils.feat_extract import FeatureExtractorXLSX  
@@ -15,7 +15,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run GNN Explainer for node regression.")
     parser.add_argument("--dataset", type=str, required=True, help="Dataset name")
     parser.add_argument("--model", type=str, default="GCN2", choices=["GCN2", "GCN3"], help="Model type")
-    parser.add_argument("--nodes", type=str, default='random', help="Comma-separated list of node indices to explain")
+    parser.add_argument("--choose_nodes", type=str, default='random', choices=["random", "high_degree", "top_pagerank", "manual"], help="Node selection strategy")
+    parser.add_argument("--manual_nodes", type=str, default=None, help="Comma-separated list of node indices to explain")
     parser.add_argument("--node_ratio", type=float, default=0.01, help="Ratio of training nodes to explain")
     parser.add_argument("--explainer_type", type=str, default="GNNExplainer", choices=["GNNExplainer", "PGExplainer"], help="Type of explainer to use")
     parser.add_argument("--epoch", type=int, default=100, help="Number of training epochs for explainer")
@@ -49,15 +50,10 @@ if __name__ == "__main__":
     modifier = GraphModifier(data)
     modified_graphs = modifier.modify_graph(feature_indices) 
     
-    # ======= 選擇一次 nodes，確保不同 feature_trials 下都使用相同的 nodes =======
-    if args.nodes == "random":
-        train_nodes = data.train_mask.nonzero().view(-1).tolist()  # 只會從 training nodes 中選
-        num_selected = max(1, int(len(train_nodes) * args.node_ratio))
-        node_indices = random.sample(train_nodes, num_selected)
-        print(f"Randomly selected {num_selected} training nodes for explanation: {node_indices}")
-    else:  # 指定 node
-        node_indices = [int(n) for n in args.nodes.split(",")]
-            
+    # Select nodes to explain
+    node_selector = ChooseNodeSelector(data, node_ratio=args.node_ratio, strategy=args.choose_nodes, manual_nodes=args.manual_nodes)
+    node_indices = node_selector.select_nodes()
+    print(f"Selected {len(node_indices)} nodes using strategy: {args.choose_nodes}")
 
     # feature_trials,  feature_indices, modified_graphs 數量一樣多
     for i in range(len(feature_trials)):
@@ -75,7 +71,8 @@ if __name__ == "__main__":
             run_mode=args.run_mode,
             trial_name=feature_trials[i],
             remove_feature=feature_indices[i],
-            device=device
+            device=device,
+            choose_nodes=args.choose_nodes
         )
 
         # Explain each node

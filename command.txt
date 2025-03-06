@@ -1,4 +1,4 @@
-# Original node classification
+# 1. Original node classification
 ------------------------------------------------------------
 python training_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode original --note basic_node_cls --use_original_label true
 python training_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode original --note basic_node_cls --use_original_label true
@@ -7,7 +7,16 @@ python training_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 -
 python training_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0.01 --run_mode original --note basic_node_cls --use_original_label true
 
 
-# Train base GNN model (node regression) for explainer (multi features for y) 
+# 2. Train GNN model (node classification) after random subgraph selection
+------------------------------------------------------------
+python train_remaining_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult --note basic_node_cls --selector_type random --fraction 0.1
+python train_remaining_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult --note basic_node_cls --selector_type random --fraction 0.1
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult --note basic_node_cls --selector_type random --fraction 0.1
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult --note basic_node_cls --selector_type random --fraction 0.1
+python train_remaining_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult --note basic_node_cls --selector_type random --fraction 0.1
+
+
+# 3. Train base GNN model (node regression) for explainer (multi features for y) 
 ------------------------------------------------------------
 python training_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1 --note basic_node_reg --use_original_label false
 python training_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1 --note basic_node_reg --use_original_label false
@@ -16,10 +25,11 @@ python training_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 -
 python training_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1 --note basic_node_reg --use_original_label false
 
 
-# Train GNN model (node classification) after random subgraph selection
+# 4. Generate explainable subgraph (base on node regression model from #3)
 ------------------------------------------------------------
-python train_remaining_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult --note basic_node_cls --selector_type random --fraction 0.1
-python train_remaining_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult --note basic_node_cls --selector_type random --fraction 0.1
-python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult --note basic_node_cls --selector_type random --fraction 0.1
-python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult --note basic_node_cls --selector_type random --fraction 0.1
-python train_remaining_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult --note basic_node_cls --selector_type random --fraction 0.1
+python stage2_expsubg.py --dataset GitHub  --choose_nodes random --node_ratio 0.01
+python stage2_expsubg.py --dataset FacebookPagePage  --choose_nodes random --node_ratio 0.01
+python stage2_expsubg.py --dataset Cora  --choose_nodes random --node_ratio 0.01
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes random --node_ratio 0.01
+python stage2_expsubg.py --dataset PubMed  --choose_nodes random --node_ratio 0.01
+
