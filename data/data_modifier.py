@@ -33,8 +33,6 @@ class GraphModifier:
 
             print(f"Modified Graph: Feature {idx} set as y and removed from x. New x shape: {new_data.x.shape}")
             modified_graphs.append(new_data)
-        
-        print(modified_graphs[0])
 
         return modified_graphs
 

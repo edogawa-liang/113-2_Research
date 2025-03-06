@@ -26,7 +26,7 @@
 5. Github
 
 ## How to run
-1. Train basic GNN model (including Original and select feature for multiple GNN)
+1. Train basic GNN model (including Original and select feature for multiple GNN Explaination)
 	```bash 
 	python training_main.py
 	```
@@ -34,6 +34,10 @@
 	```bash 
 	python train_remaining_main.py
 	```
+3. Generate explanation subgraph
+	```bash 
+	stage2_expsubg.py
+	```	
 
 ## Saved
 original\: Node classification for original graph

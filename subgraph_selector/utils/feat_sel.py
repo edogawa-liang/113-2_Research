@@ -63,27 +63,3 @@ class FeatureSelector:
         if self.common_features is None:
             raise ValueError("PCA has not been fitted. Please call `fit()` first.")
         return self.common_features
-
-
-# Example
-if __name__ == "__main__":
-    feature_matrix = np.array([
-        [0, 2, 0, 0, 1, 3],  
-        [0, 2, 0, 1, 1, 2],
-        [0, 2, 0, 2, 1, 3],
-        [0, 2, 0, 3, 1, 2],
-        [0, 2, 0, 3, 1, 3],
-        [1, 0, 1, 2, 2, 1],
-        [1, 0, 1, 3, 2, 3],
-        [1, 0, 1, 0, 2, 1],
-        [1, 0, 1, 0, 2, 3],
-        [1, 1, 1, 1, 3, 1]
-    ])  
-
-    # Initialize and fit PCA feature selector
-    pca_selector = FeatureSelector(top_n_pcs=3, top_n_features_per_pc=2, standardize=True)  # 取前 3 個 PCA，每個取 2 個重要特徵
-    pca_selector.fit(feature_matrix)
-
-    # Get the union of the most important features
-    common_features = pca_selector.get_top_features()
-    print("Union of Top Features Across PCs:", common_features)
