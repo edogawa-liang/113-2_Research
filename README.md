@@ -37,7 +37,7 @@ See `command.txt`
 	```bash 
 	python training_main.py
 	```
-2. Remove the core subgraph and train GNN model
+2. Remove the core subgraph (random, explainer) and train GNN model
 	```bash 
 	python train_remaining_main.py
 	```
@@ -51,3 +51,4 @@ See `command.txt`
 - stage1\: Node regression for explainer, used for subgraph selection 
 - baselineResult\: Node classification for baseline approach (random, Explainer)
 - stage2_expsubg\: explanation subgraph for selected node (base on stage1 models)
+- remove_from_GNNExplainer\: Node classification for remove subgraph from GNNExplainer
