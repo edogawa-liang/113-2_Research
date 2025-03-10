@@ -1,10 +1,10 @@
 import torch
 import random
 
-class RandomSubgraphSelector:
+class RandomEdgeSelector:
     """
     Selects a random subgraph by sampling a fraction of edges 
-    from the training subset of the original graph.
+    from the training subset of the original graph. (核心子圖包含整個節點)
     """
 
     def __init__(self, data, fraction=0.1, seed=None, device="cpu"):
@@ -18,13 +18,13 @@ class RandomSubgraphSelector:
         """
         self.data = data.to(device)
         self.fraction = fraction
-        self.device = device  # 新增這一行，確保裝置統一
+        self.device = device  
 
         if seed is not None:
             random.seed(seed)
             torch.manual_seed(seed)
 
-    def select_subgraph(self):
+    def select_edges(self):
         """
         Selects a random subgraph by sampling a fraction of edges 
         only from the training subset.

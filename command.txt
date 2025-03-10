@@ -33,3 +33,10 @@ python stage2_expsubg.py --dataset Cora  --choose_nodes random --node_ratio 0.01
 python stage2_expsubg.py --dataset CiteSeer  --choose_nodes random --node_ratio 0.01
 python stage2_expsubg.py --dataset PubMed  --choose_nodes random --node_ratio 0.01
 
+
+# 5. Train GNN model (node classification) after explainable subgraph selection (base on #4)
+python train_remaining_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note remove_edge_from_GNNExplainer --selector_type explainer --fraction 0.1
+python train_remaining_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note remove_edge_from_GNNExplainer --selector_typeexplainer --fraction 0.1
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note remove_edge_from_GNNExplainer --selector_type explainer --fraction 0.1
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note remove_edge_from_GNNExplainer --selector_type explainer --fraction 0.1
+python train_remaining_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note remove_edge_from_GNNExplainer --selector_type explainer --fraction 0.1

@@ -3,14 +3,15 @@ import os
 import argparse
 from data.dataset_loader import GraphDatasetLoader
 
-from subgraph_selector.random_selector import RandomSubgraphSelector
-# from subgraph_selector.explainer_selector import ExplainerSubgraphSelector
+from subgraph_selector.random_selector import RandomEdgeSelector
+from subgraph_selector.explainer_selector import ExplainerEdgeSelector
 from subgraph_selector.remaining_graph import RemainingGraphConstructor
 
 from models.basic_GCN import GCN2Classifier, GCN3Classifier
 from trainer.gnn_trainer import GNNClassifierTrainer
 from utils.save_result import ExperimentLogger
 
+# 核心子圖包含整個節點
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train GNN after removing a selected subgraph.")
@@ -19,9 +20,16 @@ def parse_args():
     parser.add_argument("--epochs", type=int, default=100, help="Number of training epochs")
     parser.add_argument("--lr", type=float, default=0.01, help="Learning rate")
     parser.add_argument("--weight_decay", type=float, default=1e-4, help="Weight decay for optimizer")
-    parser.add_argument("--fraction", type=float, default=0.1, help="Fraction of edges to remove for the subgraph")
-    parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
+    
     parser.add_argument("--selector_type", type=str, default="random", choices=["random", "explainer"], help="Subgraph selector type")
+    parser.add_argument("--fraction", type=float, default=0.1, help="Fraction of edges to remove for the subgraph") # both random and explainer
+    # random
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
+    # explainer
+    parser.add_argument("--base_dir", type=str, default="saved/stage2_expsubg", help="Base directory for explainer results")
+    parser.add_argument("--explainer_name", type=str, default="GNNExplainer", help="Name of the explainer model")
+    parser.add_argument("--node_choose", type=str, default="random", help="Name of the experiment folder")
+    
     parser.add_argument("--run_mode", type=str, default="try", help="Run mode")
     parser.add_argument("--filename", type=str, default="result", help="File name for saving results")
     parser.add_argument("--note", type=str, default="", help="Note for the experiment")
@@ -43,12 +51,16 @@ if __name__ == "__main__":
     # Select subgraph
     if args.selector_type == "random":
         print("Using Random Selector")
-        selector = RandomSubgraphSelector(data, fraction=args.fraction, seed=args.seed, device=device)
+        selector = RandomEdgeSelector(data, fraction=args.fraction, seed=args.seed, device=device)
     elif args.selector_type == "explainer":
         print("Using Explainer Selector")
-        # selector = ExplainerSubgraphSelector(data, device=device)
+        selector = ExplainerEdgeSelector(args.base_dir, args.explainer_name, args.dataset, args.node_choose, args.fraction, device=device)
+        selector.load_data()
+        selector.plot_edge_distribution()
+        num_node = selector.get_node_count()
+        num_edge = selector.get_edge_count()
 
-    selected_edges = selector.select_subgraph()
+    selected_edges = selector.select_edges()
 
     # Remove subgraph from the original graph
     remaining_graph_constructor = RemainingGraphConstructor(data, selected_edges, device=device)
@@ -70,6 +82,9 @@ if __name__ == "__main__":
     result = trainer.run()
 
     # Save experiment results
-    logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, fraction=args.fraction)
+    if args.selector_type == "random":
+        logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Random", selector_type=args.selector_type, fraction=args.fraction)
+    elif args.selector_type == "explainer":
+        logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, explaner=args.explainer_name, node_choose=args.node_choose, fraction=args.fraction, node_explain_ratio=num_node/data.x.shape[0], edge_explain_ratio=num_edge/data.edge_index.shape[1]), 
 
     print("Experiment finished and results saved.")

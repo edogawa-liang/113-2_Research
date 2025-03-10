@@ -24,7 +24,7 @@ class ChooseNodeSelector:
         Selects nodes based on the chosen strategy.
         """
         train_nodes = self.data.train_mask.nonzero().view(-1).tolist()
-        num_selected = max(1, int(len(train_nodes) * self.node_ratio))
+        num_selected = max(1, int(self.data.x.shape[0] * self.node_ratio))
 
         if self.strategy == "random":
             return random.sample(train_nodes, num_selected)
