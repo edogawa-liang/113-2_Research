@@ -50,5 +50,5 @@ See `command.txt`
 - original\: Node classification for original graph
 - stage1\: Node regression for explainer, used for subgraph selection 
 - baselineResult\: Node classification for baseline approach (random, Explainer)
-- stage2_expsubg\: explanation subgraph for selected node (base on stage1 models)
+- stage2g\: explanation subgraph for selected node (base on stage1 models)
 - remove_from_GNNExplainer\: Node classification for remove subgraph from GNNExplainer

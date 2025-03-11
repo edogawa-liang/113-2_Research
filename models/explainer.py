@@ -1,7 +1,7 @@
 import os
 import torch
 import pickle
-from torch_geometric.explain import Explainer, GNNExplainer, PGExplainer
+from torch_geometric.explain import Explainer, GNNExplainer, PGExplainer, DummyExplainer
 
 class SubgraphExplainer:
     """
@@ -68,6 +68,8 @@ class SubgraphExplainer:
             algorithm = GNNExplainer(epochs=self.epoch, num_hops=self.hop)
         elif explainer_type == "PGExplainer":
             algorithm = PGExplainer(epochs=self.epoch, num_hops=self.hop)
+        elif explainer_type == "DummyExplainer":
+            algorithm = DummyExplainer()
         else:
             raise ValueError(f"Unsupported explainer type: {explainer_type}")
 

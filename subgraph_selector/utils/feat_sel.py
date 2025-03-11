@@ -1,34 +1,49 @@
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestRegressor
 
 class FeatureSelector:
     """
-    Identifies the most important features across the top N principal components (PCs).
+    Identifies the most important features using PCA or Tree-based methods.
     """
 
-    def __init__(self, top_n_pcs=3, top_n_features_per_pc=2, standardize=True):
+    def __init__(self, method="pca", top_n_pcs=3, top_n_features_per_pc=2, top_n_features_tree=6, standardize=True):
         """
-        Initializes the PCA feature selector.
-        
-        :param top_n_pcs: Number of top principal components to consider.
-        :param top_n_features_per_pc: Number of most significant features to extract per PCA component.
+        Initializes the feature selector.
+
+        :param method: "pca" for PCA-based feature selection, "tree" for tree-based feature selection.
+        :param top_n_pcs: Number of top principal components to consider (if using PCA).
+        :param top_n_features_per_pc: Number of most significant features per PCA component.
+        :param top_n_features_tree: Number of top important features to select for tree-based method.
         :param standardize: Whether to standardize the feature matrix before applying PCA.
         """
+        self.method = method
         self.top_n_pcs = top_n_pcs
         self.top_n_features_per_pc = top_n_features_per_pc
+        self.top_n_features_tree = top_n_features_tree
         self.standardize = standardize
         self.pca = None
+        self.tree_model = None
         self.scaler = StandardScaler() if standardize else None
-        self.top_features_per_pc = None  # Store selected features for each PCA
-        self.common_features = None  # Store the intersection of top features across PCs
+        self.top_features = None  # Store selected features
 
-    def fit(self, feature_matrix):
+    def fit(self, feature_matrix, labels=None):
         """
-        Fits PCA on the given feature matrix and finds the most important features.
+        Fits the feature selection model based on the chosen method.
         """
 
-        # Optional standardization
+        if self.method == "pca":
+            self._fit_pca(feature_matrix)
+        elif self.method == "tree":
+            if labels is None:
+                raise ValueError("Tree-based method requires labels (y).")
+            self._fit_tree(feature_matrix, labels)
+        else:
+            raise ValueError("Unsupported method. Choose 'pca' or 'tree'.")
+
+    def _fit_pca(self, feature_matrix):
+        """Applies PCA for feature selection."""
         if self.standardize:
             feature_matrix = self.scaler.fit_transform(feature_matrix)
             print("Feature matrix scaled and standardized.")
@@ -41,25 +56,35 @@ class FeatureSelector:
         loadings = np.abs(self.pca.components_)
 
         # Identify the top N features for each PCA component
-        self.top_features_per_pc = {}
         feature_sets = []
-
         for i in range(self.top_n_pcs):
             top_indices = np.argsort(loadings[i])[-self.top_n_features_per_pc:][::-1]  # Get top N features
-            self.top_features_per_pc[f"PCA {i+1}"] = top_indices.tolist()
-            feature_sets.append(set(top_indices.tolist()))  # Store as set for intersection
-
-        # Print top features per PCA component
-        for pc, features in self.top_features_per_pc.items():
-            print(f"{pc}: Top {self.top_n_features_per_pc} Features → {features}")
+            feature_sets.append(set(top_indices.tolist()))
 
         # Compute union of top features across PCs
-        self.common_features = list(set.union(*feature_sets)) if feature_sets else []
+        self.top_features = list(set.union(*feature_sets)) if feature_sets else []
+        print(f"PCA Selected Features: {self.top_features}")
+
+    # 以防禦方的角度，可以看到訓練集的y
+    def _fit_tree(self, feature_matrix, labels):
+        """Applies a tree-based model (Random Forest) for feature selection."""
+
+        self.tree_model = RandomForestRegressor(n_estimators=100, random_state=42)
+
+        # Train the model
+        self.tree_model.fit(feature_matrix, labels)
+
+        # Get feature importance scores
+        feature_importance = self.tree_model.feature_importances_
+
+        # Select top N important features
+        self.top_features = np.argsort(feature_importance)[-self.top_n_features_tree:][::-1].tolist()
+        print(f"Tree-Based Selected Features: {self.top_features}")
 
     def get_top_features(self):
         """
-        Returns the union of the most important features across the selected PCs.
+        Returns the most important features based on the selected method.
         """
-        if self.common_features is None:
-            raise ValueError("PCA has not been fitted. Please call `fit()` first.")
-        return self.common_features
+        if self.top_features is None:
+            raise ValueError("Feature selection has not been fitted. Please call `fit()` first.")
+        return self.top_features

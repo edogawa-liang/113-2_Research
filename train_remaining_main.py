@@ -5,6 +5,7 @@ from data.dataset_loader import GraphDatasetLoader
 
 from subgraph_selector.random_selector import RandomEdgeSelector
 from subgraph_selector.explainer_selector import ExplainerEdgeSelector
+from subgraph_selector.random_walk_selector import RandomWalkEdgeSelector
 from subgraph_selector.remaining_graph import RemainingGraphConstructor
 
 from models.basic_GCN import GCN2Classifier, GCN3Classifier
@@ -21,14 +22,18 @@ def parse_args():
     parser.add_argument("--lr", type=float, default=0.01, help="Learning rate")
     parser.add_argument("--weight_decay", type=float, default=1e-4, help="Weight decay for optimizer")
     
-    parser.add_argument("--selector_type", type=str, default="random", choices=["random", "explainer"], help="Subgraph selector type")
-    parser.add_argument("--fraction", type=float, default=0.1, help="Fraction of edges to remove for the subgraph") # both random and explainer
+    parser.add_argument("--selector_type", type=str, default="random", choices=["random", "explainer", "random_walk"], help="Subgraph selector type")
+    parser.add_argument("--fraction", type=float, default=0.1, help="Fraction of edges to remove for the subgraph") # random, explainer, random_walk
     # random
     parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
     # explainer
-    parser.add_argument("--base_dir", type=str, default="saved/stage2_expsubg", help="Base directory for explainer results")
-    parser.add_argument("--explainer_name", type=str, default="GNNExplainer", help="Name of the explainer model")
-    parser.add_argument("--node_choose", type=str, default="random", help="Name of the experiment folder")
+    parser.add_argument("--base_dir", type=str, default="saved/stage2_node_ratio_0.01", help="Base directory for explainer results")
+    parser.add_argument("--explainer_name", type=str, default="GNNExplainer", choices=["GNNExplainer", "PGExplainer", "DummyExplainer"], help="Name of the explainer model")
+    parser.add_argument("--node_choose", type=str, default="random", choices=["random", "high_degree", "top_pagerank", "manual"],  help="Name of the experiment folder") # both for explainer and random walk
+    # random walk
+    parser.add_argument("--walk_length", type=int, default=10, help="Number of steps per random walk")
+    parser.add_argument("--num_walks", type=int, default=5, help="Number of walks per selected node")
+    parser.add_argument("--node_ratio", type=float, default=0.05, help="Percentage of nodes to start random walks")
     
     parser.add_argument("--run_mode", type=str, default="try", help="Run mode")
     parser.add_argument("--filename", type=str, default="result", help="File name for saving results")
@@ -60,6 +65,10 @@ if __name__ == "__main__":
         num_node = selector.get_node_count()
         num_edge = selector.get_edge_count()
 
+    elif args.selector_type == "random_walk":
+        print("Using Random Walk Selector")
+        selector = RandomWalkEdgeSelector(data, node_ratio=args.node_ratio, fraction=args.fraction, walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, device=device)
+
     selected_edges = selector.select_edges()
 
     # Remove subgraph from the original graph
@@ -83,8 +92,10 @@ if __name__ == "__main__":
 
     # Save experiment results
     if args.selector_type == "random":
-        logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Random", selector_type=args.selector_type, fraction=args.fraction)
+        logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, fraction=args.fraction)
     elif args.selector_type == "explainer":
         logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, explaner=args.explainer_name, node_choose=args.node_choose, fraction=args.fraction, node_explain_ratio=num_node/data.x.shape[0], edge_explain_ratio=num_edge/data.edge_index.shape[1]), 
+    elif args.selector_type == "random_walk":
+        logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, fraction=args.fraction, node_ratio=args.node_ratio)
 
     print("Experiment finished and results saved.")

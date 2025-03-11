@@ -53,7 +53,7 @@ class ChooseNodeSelector:
         sorted_nodes = sorted(train_nodes, key=lambda n: centrality.get(n, 0), reverse=True)
         return sorted_nodes[:num_selected]
 
-    # 還沒看
+
     def select_top_pagerank_nodes(self, train_nodes, num_selected):
         """
         Select nodes with the highest PageRank scores.

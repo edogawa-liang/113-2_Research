@@ -28,9 +28,12 @@ def parse_args():
     parser.add_argument("--copy_old", type=lambda x: x.lower() == "true", default=True, help="Whether to backup old experiment data (true/false).")
     
     # Feature selection parameters
-    parser.add_argument("--use_original_label", type=lambda x: x.lower() == "true", default=True, help="Whether to use original labels (true/false)")
+    parser.add_argument("--use_original_label", type=lambda x: x.lower() == "true", default=True, help="Use original labels (true/false)")
+    parser.add_argument("--feature_selection_method", type=str, default="pca", choices=["pca", "tree"], help="Feature selection method")
     parser.add_argument("--top_pcs", type=int, default=3, help="Number of principal components for PCA")
     parser.add_argument("--top_features", type=int, default=2, help="Number of top features per PC")
+    parser.add_argument("--top_tree_features", type=int, default=6, help="Number of top features for tree-based selection")
+
     return parser.parse_args()
 
 
@@ -50,10 +53,19 @@ if __name__ == "__main__":
 
     if args.use_original_label is False:
         # Feature selection using PCA
-        print("Performing feature selection using PCA...")
-        pca_selector = FeatureSelector(top_n_pcs=args.top_pcs, top_n_features_per_pc=args.top_features)
-        pca_selector.fit(data.x.cpu().numpy())
-        imp_features = pca_selector.get_top_features()
+        print(f"Performing feature selection using {args.feature_selection_method.upper()}...")
+
+        if args.feature_selection_method == "pca":
+            selector = FeatureSelector(method="pca", top_n_pcs=args.top_pcs, top_n_features_per_pc=args.top_features)
+            selector.fit(data.x.cpu().numpy())
+
+        elif args.feature_selection_method == "tree":
+            if data.y is None:
+                raise ValueError("Tree-based feature selection requires labels (y).")
+            selector = FeatureSelector(method="tree", top_n_features_tree=args.top_tree_features)
+            selector.fit(data.x.cpu().numpy(), labels=data.y.cpu().numpy())
+
+        imp_features = selector.get_top_features()
         print(f"Selected important features: {imp_features}")
 
         # Modify graph using selected features
@@ -92,7 +104,7 @@ if __name__ == "__main__":
                                         epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
                                         run_mode=args.run_mode)
             result = trainer.run()
-            logger.log_experiment(args.dataset + "_regression", result, label_source)
+            logger.log_experiment(args.dataset + "_regression", result, label_source, feat_sel_method=args.feature_selection_method)
 
         
         elif graph.task_type == "classification": # use original label
@@ -105,5 +117,5 @@ if __name__ == "__main__":
                                         epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay, 
                                         run_mode=args.run_mode, threshold=args.threshold)
             result = trainer.run()
-            logger.log_experiment(args.dataset + "_classification", result, label_source)
+            logger.log_experiment(args.dataset + "_classification", result, label_source, feat_sel_method=args.feature_selection_method)
 
