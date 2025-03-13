@@ -47,7 +47,7 @@ class ChooseNodeSelector:
         Select nodes with the highest degree centrality.
         """
         G = to_networkx(self.data, to_undirected=True)
-        G = G.subgraph(train_nodes)  # 只轉換 train_nodes 的子圖，加快計算速度
+        G = G.subgraph(train_nodes)  
 
         centrality = nx.degree_centrality(G)
         sorted_nodes = sorted(train_nodes, key=lambda n: centrality.get(n, 0), reverse=True)
@@ -59,7 +59,7 @@ class ChooseNodeSelector:
         Select nodes with the highest PageRank scores.
         """
         G = to_networkx(self.data, to_undirected=True)
-        G = G.subgraph(train_nodes)  # 只轉換 train_nodes 的子圖，加快計算速度
+        G = G.subgraph(train_nodes) 
 
         pagerank = nx.pagerank(G)
         sorted_nodes = sorted(train_nodes, key=lambda n: pagerank.get(n, 0), reverse=True)

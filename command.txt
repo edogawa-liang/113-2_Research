@@ -62,7 +62,7 @@ python stage2_expsubg.py --dataset PubMed  --choose_nodes top_pagerank --node_ra
 
 
 # 7. Generate Dummy explainable subgraph from random nodes (base on node regression model from #3)
-# 跑完
+# 跑完 (刪掉了 太佔空間)
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset GitHub  --choose_nodes random --node_ratio 0.01 --run_mode stage2_node_ratio_0.01 --explainer_type DummyExplainer
 python stage2_expsubg.py --dataset FacebookPagePage  --choose_nodes random --node_ratio 0.01 --run_mode stage2_node_ratio_0.01 --explainer_type DummyExplainer
@@ -72,7 +72,7 @@ python stage2_expsubg.py --dataset PubMed  --choose_nodes random --node_ratio 0.
 
 
 # 8. Generate Dummy explainable subgraph from Top PageRank nodes (base on node regression model from #3)
-# 跑完
+# 跑完 (刪掉了 太佔空間)
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset GitHub  --choose_nodes top_pagerank --node_ratio 0.01 --run_mode stage2_node_ratio_0.01 --explainer_type DummyExplainer
 python stage2_expsubg.py --dataset FacebookPagePage  --choose_nodes top_pagerank --node_ratio 0.01 --run_mode stage2_node_ratio_0.01 --explainer_type DummyExplainer
@@ -123,7 +123,7 @@ python training_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 -
 python training_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1_tree --note node_reg_tree --use_original_label false --feature_selection_method tree --top_tree_features 6
 
 
-# 13.Generate GNNExplainer explainable subgraph from Top PageRank nodes (base on node regression model from #12)
+# 13. Generate GNNExplainer explainable subgraph from Top PageRank nodes Tree(base on node regression model from #12)
 # 跑完 (PubMed 沒跑完)
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset GitHub  --choose_nodes top_pagerank --node_ratio 0.01 --run_mode stage2_tree_node_ratio_0.01 --explainer_type GNNExplainer
@@ -143,7 +143,7 @@ python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr
 python train_remaining_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note remove_edge_from_Tree_GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_tree_node_ratio_0.05 --explainer_name GNNExplainer --node_choose top_pagerank
 
 
-# 15. Generate GNNExplainer explainable subgraph from random nodes (base on node regression model from #12)
+# 15. Generate GNNExplainer explainable subgraph from random nodes Tree(base on node regression model from #12)
 # 跑完 (PubMed 沒跑完)
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset GitHub  --choose_nodes random --node_ratio 0.01 --run_mode stage2_tree_node_ratio_0.01 --explainer_type GNNExplainer
@@ -164,10 +164,10 @@ python train_remaining_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0
 
 
 # 17. Remove Edge by Random Walk (choose nodes by PageRank)
-# 還沒跑 
+# 跑完
 ------------------------------------------------------------
 python train_remaining_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note remove_edge_by_PageRank_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose top_pagerank --node_ratio 0.05
-python train_remaining_main.py --dataset Facebook --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note remove_edge_by_PageRank_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose top_pagerank --node_ratio 0.05
+python train_remaining_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note remove_edge_by_PageRank_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose top_pagerank --node_ratio 0.05
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note remove_edge_by_PageRank_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose top_pagerank --node_ratio 0.05
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note remove_edge_by_PageRank_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose top_pagerank --node_ratio 0.05
 python train_remaining_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note remove_edge_by_PageRank_RandomWalk --selector_type random_walk --fraction 0.1 --node_choose top_pagerank --node_ratio 0.05
