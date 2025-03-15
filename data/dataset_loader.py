@@ -7,16 +7,19 @@ class GraphDatasetLoader:
     """
     A class for loading graph datasets using PyTorch Geometric.
     """
-    def __init__(self):
+    def __init__(self, normalize=True):
         """
         Initializes the dataset loader, sets device, and defines transformations.
         """
 
         torch.manual_seed(42)
-        self.transform = T.Compose([
-            T.NormalizeFeatures(),
-            T.RandomNodeSplit(num_val=0.1, num_test=0.1)
-        ])
+
+        transforms = []
+        if normalize:
+            transforms.append(T.NormalizeFeatures())  # 只有 normalize=True 才添加
+        transforms.append(T.RandomNodeSplit(num_val=0.1, num_test=0.1))
+
+        self.transform = T.Compose(transforms)
                 
         # Available datasets
         self.datasets = {

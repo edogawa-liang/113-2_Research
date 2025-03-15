@@ -1,5 +1,4 @@
 import os
-import pickle
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
@@ -26,26 +25,31 @@ class ExplainerEdgeSelector:
         self.top_k_percent = top_k_percent
         self.device = device
 
+
     def load_data(self):
         """
-        Loads edge masks from multiple experiment folders and computes the mean for each edge.
+        Loads edge masks from multiple experiment folders (in .npz format) 
+        and computes the mean for each edge.
         """
 
         self.node_count = 0
+        self.edge_masks = [] 
+
         for sub_dir in self.sub_dirs:
             sub_path = os.path.join(self.base_path, sub_dir)
-            
-            if self.node_count == 0:
-                self.node_count = len([f for f in os.listdir(sub_path) if f.startswith("node_") and f.endswith(".pkl")])
 
+            # 設定 node 數量（僅需計算一次）
+            if self.node_count == 0:
+                self.node_count = len([f for f in os.listdir(sub_path) if f.startswith("node_") and f.endswith(".npz")])
+
+            # 遍歷目錄下的所有 .npz 檔案
             for file in os.listdir(sub_path):
-                if file.startswith("node_") and file.endswith(".pkl"):
+                if file.startswith("node_") and file.endswith(".npz"):
                     file_path = os.path.join(sub_path, file)
 
-                    with open(file_path, "rb") as f:
-                        data = pickle.load(f)
-
-                    edge_mask = np.array(data["edge_mask"]) if data["edge_mask"] is not None else None
+                    # 載入 .npz 文件
+                    data = np.load(file_path, allow_pickle=True)
+                    edge_mask = data.get("edge_mask", None)
 
                     if edge_mask is not None:
                         self.edge_masks.append(edge_mask)  # 收集 edge_mask

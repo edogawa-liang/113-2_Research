@@ -39,7 +39,7 @@ class RandomWalkEdgeSelector:
         self.device = device
         self.manual_nodes = manual_nodes
 
-    def get_start_nodes(self):
+    def _get_start_nodes(self):
         """
         Uses `ChooseNodeSelector` to select the starting nodes based on the given strategy.
         """
@@ -59,7 +59,7 @@ class RandomWalkEdgeSelector:
         4. Return indices of these edges in the original `edge_index`.
         """
         edge_index = self.data.edge_index.to(self.device)
-        start_nodes = self.get_start_nodes()
+        start_nodes = self._get_start_nodes()
 
         # 檢查圖是否為無向圖
         is_undirected = self.data.is_undirected()

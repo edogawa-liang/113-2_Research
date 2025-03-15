@@ -1,6 +1,6 @@
 import os
 import torch
-import pickle
+import numpy as np
 from torch_geometric.explain import Explainer, GNNExplainer, PGExplainer, DummyExplainer
 
 class SubgraphExplainer:
@@ -102,17 +102,18 @@ class SubgraphExplainer:
         return explanation.node_mask, explanation.edge_mask
 
 
+
     def _save_explanation(self, node_idx, explanation, explainer_type, y_value):
         """
         Saves node ID, node mask, and edge mask into a structured folder hierarchy.
         """
 
         # Define save directory based on run mode, dataset, and explainer type
-        save_exp_dir = os.path.join("saved", self.run_mode, explainer_type,self.dataset, self.choose_nodes, f"{self.trial_name}_{self.model_class.__name__}")
+        save_exp_dir = os.path.join("saved", self.run_mode, explainer_type, self.dataset, self.choose_nodes, f"{self.trial_name}_{self.model_class.__name__}")
         os.makedirs(save_exp_dir, exist_ok=True)
 
         # Define file path for saving explanations
-        file_path = os.path.join(save_exp_dir, f"node_{node_idx}.pkl")
+        file_path = os.path.join(save_exp_dir, f"node_{node_idx}.npz")
 
         # Prepare explanation data
         explanation_data = {
@@ -120,12 +121,15 @@ class SubgraphExplainer:
             "explainer_type": explainer_type,
             "node_idx": node_idx,
             "y_value": y_value,
-            "removed_feature_index": self.remove_feature,
-            "node_mask": explanation.node_mask.cpu().numpy() if explanation.node_mask is not None else None,
-            "edge_mask": explanation.edge_mask.cpu().numpy() if explanation.edge_mask is not None else None,
-            }
-        # Save to file
-        with open(file_path, "wb") as f:
-            pickle.dump(explanation_data, f)
+            "removed_feature_index": self.remove_feature
+        }
+
+        # Convert masks to NumPy and reduce precision
+        node_mask = explanation.node_mask.cpu().numpy().astype(np.float16) if explanation.node_mask is not None else None
+        edge_mask = explanation.edge_mask.cpu().numpy().astype(np.float16) if explanation.edge_mask is not None else None
+
+        # Save to compressed .npz file
+        np.savez_compressed(file_path, **explanation_data, node_mask=node_mask, edge_mask=edge_mask)
 
         print(f"Saved explanation for node {node_idx} at {file_path}")
+
