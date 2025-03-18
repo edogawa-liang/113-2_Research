@@ -10,7 +10,7 @@ class FeatureSelector:
     Identifies the most important features using PCA or Tree-based methods.
     """
 
-    def __init__(self, method="pca", top_n_pcs=3, top_n_features_per_pc=2, top_n_features_tree=6, standardize=True):
+    def __init__(self, method="pca", top_n=6, standardize=True, top_n_features_per_pc=2):   
         """
         Initializes the feature selector.
 
@@ -21,14 +21,13 @@ class FeatureSelector:
         :param standardize: Whether to standardize the feature matrix before applying PCA.
         """
         self.method = method
-        self.top_n_pcs = top_n_pcs
-        self.top_n_features_per_pc = top_n_features_per_pc
-        self.top_n_features_tree = top_n_features_tree
+        self.top_n = top_n
         self.standardize = standardize
         self.pca = None
         self.tree_model = None
         self.scaler = StandardScaler() if standardize else None
         self.top_features = None  # Store selected features
+        self.top_n_features_per_pc = top_n_features_per_pc
 
     def fit(self, feature_matrix, labels=None):
         """
@@ -56,7 +55,8 @@ class FeatureSelector:
             print("Feature matrix scaled and standardized.")
 
         # Apply PCA
-        self.pca = PCA(n_components=self.top_n_pcs, svd_solver="randomized", random_state=42)
+        top_n_pcs = max(1, self.top_n // self.top_n_features_per_pc)
+        self.pca = PCA(n_components=top_n_pcs, svd_solver="randomized", random_state=42)
         self.pca.fit(feature_matrix)
 
         # Get loadings (absolute values to ignore direction)
@@ -64,7 +64,7 @@ class FeatureSelector:
 
         # Identify the top N features for each PCA component
         feature_sets = []
-        for i in range(self.top_n_pcs):
+        for i in range(top_n_pcs):
             top_indices = np.argsort(loadings[i])[-self.top_n_features_per_pc:][::-1]  # Get top N features
             feature_sets.append(set(top_indices.tolist()))
 
@@ -86,15 +86,15 @@ class FeatureSelector:
         feature_importance = self.tree_model.feature_importances_
 
         # Select top N important features
-        self.top_features = np.argsort(feature_importance)[-self.top_n_features_tree:][::-1].tolist()
+        self.top_features = np.argsort(feature_importance)[-self.top_n:][::-1].tolist()
         print(f"Tree-Based Selected Features: {self.top_features}")
 
 
     # 以防禦方的角度，可以看到訓練集的y
     def _fit_mutual_info(self, feature_matrix, labels):
         """Applies Mutual Information for feature selection."""
-        mi_scores = mutual_info_classif(feature_matrix, labels, discrete_features=True)
-        self.top_features = np.argsort(-mi_scores)[:self.top_n_features_mi].tolist()
+        mi_scores = mutual_info_classif(feature_matrix, labels, discrete_features='auto')
+        self.top_features = np.argsort(-mi_scores)[:self.top_n].tolist()
         print(f"Mutual Information Selected Features: {self.top_features}")
 
 
@@ -102,6 +102,6 @@ class FeatureSelector:
         """
         Returns the most important features based on the selected method.
         """
-        if self.top_features is None:
-            raise ValueError("Feature selection has not been fitted. Please call `fit()` first.")
+        if self.top_features is None or len(self.top_features) == 0:  # 檢查 `None` 和空列表
+            raise ValueError("Feature selection has not been fitted or no important features were found.")
         return self.top_features
