@@ -31,7 +31,16 @@ class GraphModifier:
             new_data.y = new_data.x[:, idx].clone().to(torch.float)
             new_data.x = torch.cat((new_data.x[:, :idx], new_data.x[:, idx+1:]), dim=1)
 
-            print(f"Modified Graph: Feature {idx} set as y and removed from x. New x shape: {new_data.x.shape}")
+            # Determine task type
+            unique_values = torch.unique(new_data.y)
+            if torch.is_floating_point(new_data.y) and torch.all(unique_values == unique_values.int()):
+                new_data.task_type = "classification"  # Allow integer-like floats for classification
+            elif torch.is_floating_point(new_data.y):
+                new_data.task_type = "regression"
+            else:
+                new_data.task_type = "classification"
+
+            print(f"Modified Graph: Feature {idx} set as y and removed from x. New x shape: {new_data.x.shape}. Task type: {new_data.task_type}")
             modified_graphs.append(new_data)
 
         return modified_graphs

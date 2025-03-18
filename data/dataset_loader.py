@@ -1,6 +1,6 @@
 import os
 import torch
-from torch_geometric.datasets import FacebookPagePage, GitHub, Planetoid
+from torch_geometric.datasets import FacebookPagePage, GitHub, Planetoid, KarateClub, Amazon, Airports
 import torch_geometric.transforms as T
 
 class GraphDatasetLoader:
@@ -27,7 +27,10 @@ class GraphDatasetLoader:
             "GitHub": lambda: GitHub(root='/tmp/GitHub', transform=self.transform),
             "Cora": lambda: Planetoid(root='/tmp/Cora', name='Cora', transform=self.transform),
             "CiteSeer": lambda: Planetoid(root='/tmp/CiteSeer', name='CiteSeer', transform=self.transform),
-            "PubMed": lambda: Planetoid(root='/tmp/PubMed', name='PubMed', transform=self.transform)
+            "PubMed": lambda: Planetoid(root='/tmp/PubMed', name='PubMed', transform=self.transform),
+            "KarateClub": lambda: KarateClub(transform=self.transform),
+            "Amazon": lambda: Amazon(root='/tmp/Amazon', name='Computers', transform=self.transform),
+            "Airports": lambda: Airports(root='/tmp/Airports', name='Europe', transform=self.transform),
         }
     
     def load_dataset(self, name: str):

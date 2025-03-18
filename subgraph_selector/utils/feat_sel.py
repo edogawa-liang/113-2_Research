@@ -2,6 +2,8 @@ import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.feature_selection import mutual_info_classif
+
 
 class FeatureSelector:
     """
@@ -39,8 +41,13 @@ class FeatureSelector:
             if labels is None:
                 raise ValueError("Tree-based method requires labels (y).")
             self._fit_tree(feature_matrix, labels)
+        elif self.method == "mutual_info":
+            if labels is None:
+                raise ValueError("Mutual Information method requires labels (y).")
+            self._fit_mutual_info(feature_matrix, labels)
         else:
-            raise ValueError("Unsupported method. Choose 'pca' or 'tree'.")
+            raise ValueError("Unsupported method. Choose 'pca', 'tree', or 'mutual_info'.")
+
 
     def _fit_pca(self, feature_matrix):
         """Applies PCA for feature selection."""
@@ -65,6 +72,7 @@ class FeatureSelector:
         self.top_features = list(set.union(*feature_sets)) if feature_sets else []
         print(f"PCA Selected Features: {self.top_features}")
 
+
     # 以防禦方的角度，可以看到訓練集的y
     def _fit_tree(self, feature_matrix, labels):
         """Applies a tree-based model (Random Forest) for feature selection."""
@@ -80,6 +88,15 @@ class FeatureSelector:
         # Select top N important features
         self.top_features = np.argsort(feature_importance)[-self.top_n_features_tree:][::-1].tolist()
         print(f"Tree-Based Selected Features: {self.top_features}")
+
+
+    # 以防禦方的角度，可以看到訓練集的y
+    def _fit_mutual_info(self, feature_matrix, labels):
+        """Applies Mutual Information for feature selection."""
+        mi_scores = mutual_info_classif(feature_matrix, labels, discrete_features=True)
+        self.top_features = np.argsort(-mi_scores)[:self.top_n_features_mi].tolist()
+        print(f"Mutual Information Selected Features: {self.top_features}")
+
 
     def get_top_features(self):
         """

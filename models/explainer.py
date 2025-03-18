@@ -10,7 +10,8 @@ class SubgraphExplainer:
 
     def __init__(self, model_class, dataset, data, model_path, trial_name, 
                  explainer_type="GNNExplainer", hop=2, epoch=100, 
-                 run_mode="stage2_expsubg", config=None, remove_feature=None, device=None, choose_nodes="random"):
+                 run_mode="stage2_expsubg", config=None, remove_feature=None, device=None, 
+                 choose_nodes="random"):
         """
         Initializes the explainer.
 
@@ -24,6 +25,7 @@ class SubgraphExplainer:
         :param trial_name: Name of the trial for saving explanations.
         :param config: Additional configuration for the model.
         :param device: The device to use ('cpu' or 'cuda').
+        :param task_type: Type of task ("regression" or "classification").
         """
         self.epoch = epoch
         self.hop = hop
@@ -37,15 +39,21 @@ class SubgraphExplainer:
         self.remove_feature = remove_feature
         self.choose_nodes = choose_nodes
 
-        # 設定裝置
         self.device = device if device else ("cuda:1" if torch.cuda.is_available() else "cpu")
-
-        # 載入模型
         self.model = self._load_model()
+        self.task_type = self._determine_task_type()
+        self.explainer = self._explainer_setting(explainer_type)  # 設定 explainer
 
-        # 設定 explainer
-        self.explainer = self._explainer_setting(explainer_type)
-
+    
+    def _determine_task_type(self):
+        """Determines whether the model is for regression or classification based on its name."""
+        model_name = self.model_class.__name__.lower()
+        if "regressor" in model_name:
+            return "regression"
+        elif "classifier" in model_name:
+            return "classification"
+        else:
+            raise ValueError("Model class name must contain 'Regressor' or 'Classifier' to determine task type.")
 
     def _load_model(self):
         """Loads the GNN regression model and weights."""
@@ -80,7 +88,7 @@ class SubgraphExplainer:
             node_mask_type='attributes',
             edge_mask_type='object',
             model_config=dict(
-                mode='regression',
+                mode=self.task_type,
                 task_level='node',
                 return_type='raw',
             ),
@@ -93,7 +101,6 @@ class SubgraphExplainer:
         data = data.to(self.device)  # 確保數據也移動到對應裝置
 
         explanation = self.explainer(data.x, data.edge_index, index=node_idx)
-
         y_value = data.y[node_idx].item()  # 取得節點的回歸目標數值
 
         if save:
@@ -119,6 +126,7 @@ class SubgraphExplainer:
         explanation_data = {
             "model_name": self.model_class.__name__,
             "explainer_type": explainer_type,
+            "task_type": self.task_type, 
             "node_idx": node_idx,
             "y_value": y_value,
             "removed_feature_index": self.remove_feature

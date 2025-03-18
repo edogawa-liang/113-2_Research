@@ -29,7 +29,7 @@ def parse_args():
     
     # Feature selection parameters
     parser.add_argument("--use_original_label", type=lambda x: x.lower() == "true", default=True, help="Use original labels (true/false)")
-    parser.add_argument("--feature_selection_method", type=str, default="pca", choices=["pca", "tree"], help="Feature selection method")
+    parser.add_argument("--feature_selection_method", type=str, default="pca", choices=["pca", "tree", "mutual_info"], help="Feature selection method")
     parser.add_argument("--top_pcs", type=int, default=3, help="Number of principal components for PCA")
     parser.add_argument("--top_features", type=int, default=2, help="Number of top features per PC")
     parser.add_argument("--top_tree_features", type=int, default=6, help="Number of top features for tree-based selection")
@@ -65,6 +65,13 @@ if __name__ == "__main__":
             selector = FeatureSelector(method="tree", top_n_features_tree=args.top_tree_features)
             selector.fit(data.x.cpu().numpy(), labels=data.y.cpu().numpy())
 
+        elif args.feature_selection_method == "mutual_info":
+            if data.y is None:
+                raise ValueError("Mutual information feature selection requires labels (y).")
+            selector = FeatureSelector(method="mutual_info")
+            selector.fit(data.x.cpu().numpy(), labels=data.y.cpu().numpy())
+
+            
         imp_features = selector.get_top_features()
         print(f"Selected important features: {imp_features}")
 
@@ -72,9 +79,6 @@ if __name__ == "__main__":
         modifier = GraphModifier(data)
         modified_graphs = modifier.modify_graph(imp_features)  # List of graphs
         print(f"Graph modified into {len(modified_graphs)} graphs.")
-
-        for graph in modified_graphs:
-            graph.task_type = "regression"
 
         # One feature is removed from the original dataset to label
         num_features = num_features - 1
@@ -107,7 +111,7 @@ if __name__ == "__main__":
             logger.log_experiment(args.dataset + "_regression", result, label_source, feat_sel_method=args.feature_selection_method)
 
         
-        elif graph.task_type == "classification": # use original label
+        elif graph.task_type == "classification": 
             trial_number = logger.get_next_trial_number(args.dataset + "_classification")
             print(f"Training Classification Model - Trial {trial_number}")
             trainer = GNNClassifierTrainer(dataset_name=args.dataset, data=graph, 

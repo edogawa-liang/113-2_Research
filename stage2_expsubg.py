@@ -36,7 +36,7 @@ if __name__ == "__main__":
     data, num_features, num_classes = loader.load_dataset(args.dataset)
     data = data.to(device)
 
-    # Set model class
+    # Set model class #改也可以cls
     model_class = GCN2Regressor if args.model == "GCN2" else GCN3Regressor
 
     # Read feature selection results 
@@ -71,7 +71,7 @@ if __name__ == "__main__":
             trial_name=feature_trials[i],
             remove_feature=feature_indices[i],
             device=device,
-            choose_nodes=args.choose_nodes
+            choose_nodes=args.choose_nodes,
         )
 
         # Explain each node
