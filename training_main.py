@@ -30,9 +30,7 @@ def parse_args():
     # Feature selection parameters
     parser.add_argument("--use_original_label", type=lambda x: x.lower() == "true", default=True, help="Use original labels (true/false)")
     parser.add_argument("--feature_selection_method", type=str, default="pca", choices=["pca", "tree", "mutual_info"], help="Feature selection method")
-    parser.add_argument("--top_pcs", type=int, default=3, help="Number of principal components for PCA")
-    parser.add_argument("--top_features", type=int, default=2, help="Number of top features per PC")
-    parser.add_argument("--top_tree_features", type=int, default=6, help="Number of top features for tree-based selection")
+    parser.add_argument("--top_n", type=int, default=6, help="Number of top features to select")
 
     return parser.parse_args()
 
@@ -56,22 +54,22 @@ if __name__ == "__main__":
         print(f"Performing feature selection using {args.feature_selection_method.upper()}...")
 
         if args.feature_selection_method == "pca":
-            selector = FeatureSelector(method="pca", top_n_pcs=args.top_pcs, top_n_features_per_pc=args.top_features)
+            selector = FeatureSelector(method="pca", top_n=args.top_n, standardize=True, top_n_features_per_pc=2)
             selector.fit(data.x.cpu().numpy())
 
         elif args.feature_selection_method == "tree":
             if data.y is None:
                 raise ValueError("Tree-based feature selection requires labels (y).")
-            selector = FeatureSelector(method="tree", top_n_features_tree=args.top_tree_features)
+            selector = FeatureSelector(method="tree", top_n=args.top_n)
             selector.fit(data.x.cpu().numpy(), labels=data.y.cpu().numpy())
 
         elif args.feature_selection_method == "mutual_info":
             if data.y is None:
                 raise ValueError("Mutual information feature selection requires labels (y).")
-            selector = FeatureSelector(method="mutual_info")
+            selector = FeatureSelector(method="mutual_info", top_n=args.top_n)
             selector.fit(data.x.cpu().numpy(), labels=data.y.cpu().numpy())
 
-            
+
         imp_features = selector.get_top_features()
         print(f"Selected important features: {imp_features}")
 
