@@ -33,8 +33,9 @@ def parse_args():
     # random walk
     parser.add_argument("--walk_length", type=int, default=10, help="Number of steps per random walk")
     parser.add_argument("--num_walks", type=int, default=5, help="Number of walks per selected node")
-    parser.add_argument("--node_ratio", type=float, default=0.05, help="Percentage of nodes to start random walks")
-    
+    parser.add_argument("--node_ratio", type=str, default="auto", help="'auto' for automatic calculation or a numeric value to manually set node selection ratio")
+    parser.add_argument("--edge_ratio", type=float, default=0.5, help="Ensures sufficient edges in the subgraph, required only if node_ratio is 'auto'")
+
     parser.add_argument("--run_mode", type=str, default="try", help="Run mode")
     parser.add_argument("--filename", type=str, default="result", help="File name for saving results")
     parser.add_argument("--note", type=str, default="", help="Note for the experiment")
@@ -57,6 +58,7 @@ if __name__ == "__main__":
     if args.selector_type == "random":
         print("Using Random Selector")
         selector = RandomEdgeSelector(data, fraction=args.fraction, seed=args.seed, device=device)
+    
     elif args.selector_type == "explainer":
         print("Using Explainer Selector")
         selector = ExplainerEdgeSelector(args.base_dir, args.explainer_name, args.dataset, args.node_choose, args.fraction, device=device)
@@ -67,7 +69,10 @@ if __name__ == "__main__":
 
     elif args.selector_type == "random_walk":
         print("Using Random Walk Selector")
-        selector = RandomWalkEdgeSelector(data, node_ratio=args.node_ratio, fraction=args.fraction, walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, device=device)
+        selector = RandomWalkEdgeSelector(data, node_ratio=args.node_ratio, edge_ratio =args.edge_ratio , fraction=args.fraction, 
+                                          walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, device=device)
+        node_start_ratio = selector.get_final_node_ratio()
+        edge_neighbor_ratio = selector.get_neighbor_edge_ratio()
 
     selected_edges = selector.select_edges()
 
@@ -91,11 +96,14 @@ if __name__ == "__main__":
     result = trainer.run()
 
     # Save experiment results
+    # 移除的邊數量都是 fraction
     if args.selector_type == "random":
         logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, fraction=args.fraction)
+    
     elif args.selector_type == "explainer":
         logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, explaner=args.explainer_name, node_choose=args.node_choose, fraction=args.fraction, node_explain_ratio=num_node/data.x.shape[0], edge_explain_ratio=num_edge/data.edge_index.shape[1]), 
+    
     elif args.selector_type == "random_walk":
-        logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, fraction=args.fraction, node_ratio=args.node_ratio)
+        logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, fraction=args.fraction, node_start_ratio=node_start_ratio, edge_neighbor_ratio= edge_neighbor_ratio)
 
     print("Experiment finished and results saved.")

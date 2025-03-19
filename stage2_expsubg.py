@@ -17,7 +17,10 @@ def parse_args():
     parser.add_argument("--model", type=str, default="GCN2", choices=["GCN2", "GCN3"], help="Model type")
     parser.add_argument("--choose_nodes", type=str, default='random', choices=["random", "high_degree", "top_pagerank", "manual"], help="Node selection strategy")
     parser.add_argument("--manual_nodes", type=str, default=None, help="Comma-separated list of node indices to explain")
-    parser.add_argument("--node_ratio", type=float, default=0.01, help="Ratio of training nodes to explain")
+    
+    parser.add_argument("--node_ratio", type=str, default="auto", help="'auto' for automatic calculation or a numeric value to manually set node selection ratio")
+    parser.add_argument("--edge_ratio", type=float, default=0.5, help="Ensures sufficient edges in the subgraph, required only if node_ratio is 'auto'")
+
     parser.add_argument("--explainer_type", type=str, default="GNNExplainer", choices=["GNNExplainer", "PGExplainer", "DummyExplainer"], help="Type of explainer to use")
     parser.add_argument("--epoch", type=int, default=100, help="Number of training epochs for explainer")
     parser.add_argument("--run_mode", type=str, default="stage2_expsubg", help="Run mode")
@@ -51,7 +54,7 @@ if __name__ == "__main__":
     modified_graphs = modifier.modify_graph(feature_indices) 
     
     # Select nodes to explain
-    node_selector = ChooseNodeSelector(data, node_ratio=args.node_ratio, strategy=args.choose_nodes, manual_nodes=args.manual_nodes)
+    node_selector = ChooseNodeSelector(data, node_ratio=args.node_ratio, edge_ratio=args.edge_ratio, strategy=args.choose_nodes, manual_nodes=args.manual_nodes)
     node_indices = node_selector.select_nodes()
     print(f"Selected {len(node_indices)} nodes using strategy: {args.choose_nodes}")
 

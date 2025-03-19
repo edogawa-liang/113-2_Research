@@ -7,42 +7,63 @@ class ChooseNodeSelector:
     A class to select nodes from a graph dataset based on different strategies.
     """
 
-    def __init__(self, data, node_ratio=0.01, strategy="random", manual_nodes=None):
+    def __init__(self, data, node_ratio="auto", edge_ratio=0.5, strategy="random", manual_nodes=None):
         """
         :param data: PyG data object
-        :param node_ratio: Ratio of nodes to select
+        :param node_ratio: "auto" for automatic calculation or a numeric value to manually set node selection ratio
+        :param edge_ratio: Ensures sufficient edges in the subgraph, required only if node_ratio is 'auto'
         :param strategy: Node selection strategy (e.g., "random", "high_degree", "top_pagerank", "manual")
         :param manual_nodes: Comma-separated list of node indices if using 'manual' strategy
         """
         self.data = data
         self.node_ratio = node_ratio
+        self.edge_ratio = edge_ratio
         self.strategy = strategy
         self.manual_nodes = manual_nodes  # 手動選擇的節點（字串）
+    
+    def _calculate_node_ratio(self):
+        """
+        計算需要選擇的節點數量，以確保解釋子圖能包含指定比例的邊。
+        """
 
+        avg_degree = self.data.edge_index.shape[1] / self.data.x.shape[0]
+        print(f"Average node degree: {avg_degree}")
+        
+        if self.node_ratio == "auto":
+            target_edges = self.edge_ratio * self.data.edge_index.shape[1]  # 目標邊數
+            num_selected_nodes = target_edges / avg_degree  # 需要的節點數
+            node_ratio = num_selected_nodes / self.data.x.shape[0]
+        else:
+            node_ratio = float(self.node_ratio)
+
+        return node_ratio
+
+    
     def select_nodes(self):
         """
         Selects nodes based on the chosen strategy.
         """
         train_nodes = self.data.train_mask.nonzero().view(-1).tolist()
-        num_selected = max(1, int(self.data.x.shape[0] * self.node_ratio))
+        node_ratio = self._calculate_node_ratio()
+        num_selected = max(1, int(self.data.x.shape[0] * node_ratio))
 
         if self.strategy == "random":
             return random.sample(train_nodes, num_selected)
 
         elif self.strategy == "high_degree":
-            return self.select_high_degree_nodes(train_nodes, num_selected)
+            return self._select_high_degree_nodes(train_nodes, num_selected)
 
         elif self.strategy == "top_pagerank":
-            return self.select_top_pagerank_nodes(train_nodes, num_selected)
+            return self._select_top_pagerank_nodes(train_nodes, num_selected)
 
         elif self.strategy == "manual":
-            return self.select_manual_nodes()
+            return self._select_manual_nodes()
 
         else:
             raise ValueError(f"Unsupported choose_nodes strategy: {self.strategy}")
 
     # 還沒看
-    def select_high_degree_nodes(self, train_nodes, num_selected):
+    def _select_high_degree_nodes(self, train_nodes, num_selected):
         """
         Select nodes with the highest degree centrality.
         """
@@ -54,7 +75,7 @@ class ChooseNodeSelector:
         return sorted_nodes[:num_selected]
 
 
-    def select_top_pagerank_nodes(self, train_nodes, num_selected):
+    def _select_top_pagerank_nodes(self, train_nodes, num_selected):
         """
         Select nodes with the highest PageRank scores.
         """
@@ -65,7 +86,7 @@ class ChooseNodeSelector:
         sorted_nodes = sorted(train_nodes, key=lambda n: pagerank.get(n, 0), reverse=True)
         return sorted_nodes[:num_selected]
 
-    def select_manual_nodes(self):
+    def _select_manual_nodes(self):
         """
         Select nodes manually.
         """

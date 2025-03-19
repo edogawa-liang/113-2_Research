@@ -9,20 +9,12 @@ class RandomWalkEdgeSelector:
     Selects the top fraction of most frequently visited edges (by random walk) for removal.
     """
 
-    def __init__(
-        self, 
-        data, 
-        node_ratio=0.01, 
-        fraction=0.1,       # 移除前 fraction 比例的邊 (預設 10%)
-        walk_length=10, 
-        num_walks=5, 
-        node_choose="top_pagerank", 
-        device="cpu", 
-        manual_nodes=None
-    ):
+    def __init__(self, data, node_ratio="auto", edge_ratio=0.5, fraction=0.1,  
+                 walk_length=10, num_walks=5, node_choose="top_pagerank", device="cpu", manual_nodes=None):
         """
         :param data: PyG graph data
-        :param node_ratio: Percentage of nodes to start random walks
+        :param node_ratio: "auto" for automatic calculation or a numeric value to manually set node selection ratio
+        :param edge_ratio: Ensures sufficient edges in the subgraph, required only if node_ratio is 'auto'
         :param fraction: Fraction of most frequently visited edges to remove (0.1 → top 10%)
         :param walk_length: Number of steps per random walk
         :param num_walks: Number of random walks per starting node
@@ -32,6 +24,7 @@ class RandomWalkEdgeSelector:
         """
         self.data = data
         self.node_ratio = node_ratio
+        self.edge_ratio = edge_ratio
         self.fraction = fraction
         self.walk_length = walk_length
         self.num_walks = num_walks
@@ -39,17 +32,38 @@ class RandomWalkEdgeSelector:
         self.device = device
         self.manual_nodes = manual_nodes
 
+        self._get_start_nodes()
+        self._calculate_neighbor_edges()
+
+
     def _get_start_nodes(self):
         """
         Uses `ChooseNodeSelector` to select the starting nodes based on the given strategy.
         """
-        node_selector = ChooseNodeSelector(
-            self.data, 
-            node_ratio=self.node_ratio, 
-            strategy=self.node_choose, 
-            manual_nodes=self.manual_nodes
-        )
-        return torch.tensor(node_selector.select_nodes(), dtype=torch.long, device=self.device)
+        node_selector = ChooseNodeSelector(self.data, node_ratio=self.node_ratio, edge_ratio=self.edge_ratio,
+                                           strategy=self.node_choose, manual_nodes=self.manual_nodes)
+        
+        selected_nodes = node_selector.select_nodes()
+        self.start_nodes = torch.tensor(selected_nodes, dtype=torch.long, device=self.device)
+        self.final_node_ratio = len(selected_nodes) / self.data.x.shape[0]
+
+    def _calculate_neighbor_edges(self):
+        """
+        計算選中的節點的鄰居邊數量。
+        """
+        edge_index = self.data.edge_index
+        selected_set = set(self.start_nodes.tolist())
+        self.neighbor_edges = [
+            (src, dst) for src, dst in edge_index.t().tolist() if src in selected_set or dst in selected_set
+        ]
+        self.neighbor_edge_ratio = len(self.neighbor_edges)/self.data.edge_index.shape[1]
+
+    def get_final_node_ratio(self):
+        return self.final_node_ratio
+    
+    def get_neighbor_edge_ratio(self):
+        return self.neighbor_edge_ratio
+       
 
     def select_edges(self):
         """
@@ -59,7 +73,6 @@ class RandomWalkEdgeSelector:
         4. Return indices of these edges in the original `edge_index`.
         """
         edge_index = self.data.edge_index.to(self.device)
-        start_nodes = self._get_start_nodes()
 
         # 檢查圖是否為無向圖
         is_undirected = self.data.is_undirected()
@@ -69,7 +82,7 @@ class RandomWalkEdgeSelector:
         walks = random_walk(
             edge_index[0], 
             edge_index[1], 
-            start=start_nodes.repeat_interleave(self.num_walks), 
+            start=self.start_nodes.repeat_interleave(self.num_walks), 
             walk_length=self.walk_length
         )
         print(f"Shape of walks: {walks.shape}")
