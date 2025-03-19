@@ -1,9 +1,8 @@
 import numpy as np
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import mutual_info_classif
-
 
 class FeatureSelector:
     """
@@ -25,10 +24,13 @@ class FeatureSelector:
         self.standardize = standardize
         self.pca = None
         self.tree_model = None
-        self.scaler = StandardScaler() if standardize else None
+        self.svd = None
+        self.scaler = StandardScaler() if standardize else None 
         self.top_features = None  # Store selected features
         self.top_n_features_per_pc = top_n_features_per_pc
+        self.top_n_pcs = top_n // top_n_features_per_pc
 
+    
     def fit(self, feature_matrix, labels=None):
         """
         Fits the feature selection model based on the chosen method.
@@ -44,8 +46,11 @@ class FeatureSelector:
             if labels is None:
                 raise ValueError("Mutual Information method requires labels (y).")
             self._fit_mutual_info(feature_matrix, labels)
+        elif self.method == "svd":
+            self._fit_svd(feature_matrix)
         else:
-            raise ValueError("Unsupported method. Choose 'pca', 'tree', or 'mutual_info'.")
+            raise ValueError("Unsupported method. Choose 'pca', 'tree', 'mutual_info', or 'svd'.")
+
 
 
     def _fit_pca(self, feature_matrix):
@@ -55,8 +60,7 @@ class FeatureSelector:
             print("Feature matrix scaled and standardized.")
 
         # Apply PCA
-        top_n_pcs = max(1, self.top_n // self.top_n_features_per_pc)
-        self.pca = PCA(n_components=top_n_pcs, svd_solver="randomized", random_state=42)
+        self.pca = PCA(n_components=self.top_n_pcs, svd_solver="randomized", random_state=42)
         self.pca.fit(feature_matrix)
 
         # Get loadings (absolute values to ignore direction)
@@ -64,20 +68,42 @@ class FeatureSelector:
 
         # Identify the top N features for each PCA component
         feature_sets = []
-        for i in range(top_n_pcs):
-            top_indices = np.argsort(loadings[i])[-self.top_n_features_per_pc:][::-1]  # Get top N features
+        for i in range(self.top_n_pcs):
+            top_indices = np.argsort(-loadings[i])[:self.top_n_features_per_pc]
             feature_sets.append(set(top_indices.tolist()))
 
         # Compute union of top features across PCs
         self.top_features = list(set.union(*feature_sets)) if feature_sets else []
         print(f"PCA Selected Features: {self.top_features}")
+    
+    # MCA: row 數可能比原始 One-Hot 特徵數還多，因為它基於「模態」(可能值) 來計算，而不是基於變數。
+
+    # 檢查SVD
+    def _fit_svd(self, feature_matrix):
+        """Applies Truncated SVD for feature selection."""
+        self.svd = TruncatedSVD(n_components=self.top_n_pcs, random_state=42)
+        self.svd.fit(feature_matrix)
+
+        # Get loadings (absolute values)
+        loadings = np.abs(self.svd.components_)
+
+        # Identify the top N features for each SVD component
+        feature_sets = []
+        for i in range(self.top_n_pcs):
+            top_indices = np.argsort(-loadings[i])[:self.top_n_features_per_pc]
+            feature_sets.append(set(top_indices.tolist()))
+
+        # Compute union of top features across components
+        self.top_features = list(set.union(*feature_sets)) if feature_sets else []
+        print(f"SVD Selected Features: {self.top_features}")
+
 
 
     # 以防禦方的角度，可以看到訓練集的y
     def _fit_tree(self, feature_matrix, labels):
         """Applies a tree-based model (Random Forest) for feature selection."""
 
-        self.tree_model = RandomForestRegressor(n_estimators=100, random_state=42)
+        self.tree_model = RandomForestClassifier(n_estimators=100, random_state=42)
 
         # Train the model
         self.tree_model.fit(feature_matrix, labels)
@@ -86,7 +112,7 @@ class FeatureSelector:
         feature_importance = self.tree_model.feature_importances_
 
         # Select top N important features
-        self.top_features = np.argsort(feature_importance)[-self.top_n:][::-1].tolist()
+        self.top_features = np.argsort(-feature_importance)[:self.top_n].tolist()
         print(f"Tree-Based Selected Features: {self.top_features}")
 
 

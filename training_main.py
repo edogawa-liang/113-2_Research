@@ -29,7 +29,7 @@ def parse_args():
     
     # Feature selection parameters
     parser.add_argument("--use_original_label", type=lambda x: x.lower() == "true", default=True, help="Use original labels (true/false)")
-    parser.add_argument("--feature_selection_method", type=str, default="pca", choices=["pca", "tree", "mutual_info"], help="Feature selection method")
+    parser.add_argument("--feature_selection_method", type=str, default="pca", choices=["pca", "svd", "tree", "mutual_info"], help="Feature selection method")
     parser.add_argument("--top_n", type=int, default=6, help="Number of top features to select")
 
     return parser.parse_args()
@@ -50,25 +50,22 @@ if __name__ == "__main__":
     data = data.to(device)
 
     if args.use_original_label is False:
-        # Feature selection using PCA
         print(f"Performing feature selection using {args.feature_selection_method.upper()}...")
 
-        if args.feature_selection_method == "pca":
-            selector = FeatureSelector(method="pca", top_n=args.top_n, standardize=True, top_n_features_per_pc=2)
+        # 初始化 FeatureSelector
+        selector = FeatureSelector(
+            method=args.feature_selection_method,
+            top_n=args.top_n,
+            top_n_features_per_pc=2
+        )
+
+        # 若方法需要 labels，則提供 labels
+        if args.feature_selection_method in ["tree", "mutual_info"]:
+            if data.y is None:
+                raise ValueError(f"{args.feature_selection_method} feature selection requires labels (y).")
+            selector.fit(data.x.cpu().numpy(), labels=data.y.cpu().numpy())
+        else:
             selector.fit(data.x.cpu().numpy())
-
-        elif args.feature_selection_method == "tree":
-            if data.y is None:
-                raise ValueError("Tree-based feature selection requires labels (y).")
-            selector = FeatureSelector(method="tree", top_n=args.top_n)
-            selector.fit(data.x.cpu().numpy(), labels=data.y.cpu().numpy())
-
-        elif args.feature_selection_method == "mutual_info":
-            if data.y is None:
-                raise ValueError("Mutual information feature selection requires labels (y).")
-            selector = FeatureSelector(method="mutual_info", top_n=args.top_n)
-            selector.fit(data.x.cpu().numpy(), labels=data.y.cpu().numpy())
-
 
         imp_features = selector.get_top_features()
         print(f"Selected important features: {imp_features}")
