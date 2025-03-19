@@ -38,13 +38,13 @@ class ClassificationEvaluator:
         # only use the positive class's probability for binary classification!!!
         num_classes = out.shape[1]
         if num_classes == 2:
-            y_pred_val = y_pred_val[:, 1]  
+            y_pred_val = y_pred_val[:, 1]
             y_pred_test = y_pred_test[:, 1]
             use_threshold = threshold
         else:
             use_threshold = None 
 
-        # Compute AUC (only if multiple classes exist)
+        # Compute AUC 
         val_auc = roc_auc_score(y_true_val, y_pred_val, multi_class="ovr", average="macro") if num_classes > 2 else roc_auc_score(y_true_val, y_pred_val)
         test_auc = roc_auc_score(y_true_test, y_pred_test, multi_class="ovr", average="macro") if num_classes > 2 else roc_auc_score(y_true_test, y_pred_test)
 

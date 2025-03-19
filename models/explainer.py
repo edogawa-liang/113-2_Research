@@ -10,7 +10,7 @@ class SubgraphExplainer:
 
     def __init__(self, model_class, dataset, data, model_path, trial_name, 
                  explainer_type="GNNExplainer", hop=2, epoch=100, 
-                 run_mode="stage2_expsubg", config=None, remove_feature=None, device=None, 
+                 run_mode="stage2", config=None, remove_feature=None, device=None, 
                  choose_nodes="random"):
         """
         Initializes the explainer.
@@ -51,7 +51,7 @@ class SubgraphExplainer:
         if "regressor" in model_name:
             return "regression"
         elif "classifier" in model_name:
-            return "classification"
+            return "binary_classification" if len(torch.unique(self.data.y)) == 2 else "multiclass_classification"
         else:
             raise ValueError("Model class name must contain 'Regressor' or 'Classifier' to determine task type.")
 

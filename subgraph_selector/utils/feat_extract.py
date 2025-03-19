@@ -36,7 +36,8 @@ class FeatureExtractorXLSX:
         result_file = self.find_latest_result_file()
         print(f"Using result file: {result_file}")
 
-        sheet_name = f"{dataset_name}_regression"
+        # sheet_name = f"{dataset_name}_regression"
+        sheet_name = f"{dataset_name}_classification"
         try:
             df = pd.read_excel(result_file, sheet_name=sheet_name, engine="openpyxl")
         except ValueError:
@@ -48,4 +49,7 @@ class FeatureExtractorXLSX:
         # get the correspinding trial names
         feature_trials = df["Trial"].tolist()
 
-        return feature_trials, feature_indices
+        # get the correspinding model names
+        model_names = df["Model"].tolist()
+
+        return feature_trials, feature_indices, model_names

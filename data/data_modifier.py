@@ -33,6 +33,7 @@ class GraphModifier:
 
             # Determine task type
             unique_values = torch.unique(new_data.y)
+            print(f"Unique values: {unique_values}")
             if torch.is_floating_point(new_data.y) and torch.all(unique_values == unique_values.int()):
                 new_data.task_type = "classification"  # Allow integer-like floats for classification
                 new_data.y = new_data.y.to(torch.long)

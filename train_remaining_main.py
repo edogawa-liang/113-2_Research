@@ -17,6 +17,8 @@ from utils.save_result import ExperimentLogger
 def parse_args():
     parser = argparse.ArgumentParser(description="Train GNN after removing a selected subgraph.")
     parser.add_argument("--dataset", type=str, required=True, help="Dataset name")
+    parser.add_argument("--normalize", type=lambda x: x.lower() == "true", default=False, help="Whether to normalize the dataset")
+
     parser.add_argument("--model", type=str, default="GCN2", choices=["GCN2", "GCN3"], help="Model type")
     parser.add_argument("--epochs", type=int, default=100, help="Number of training epochs")
     parser.add_argument("--lr", type=float, default=0.01, help="Learning rate")
@@ -50,8 +52,8 @@ if __name__ == "__main__":
     print(f"Using device: {device}")
 
     # Load dataset
-    loader = GraphDatasetLoader()
-    data, num_features, num_classes = loader.load_dataset(args.dataset)
+    loader = GraphDatasetLoader(args.normalize)
+    data, num_features, _ = loader.load_dataset(args.dataset)
     data = data.to(device)
 
     # Select subgraph

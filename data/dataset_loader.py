@@ -6,7 +6,7 @@ class GraphDatasetLoader:
     """
     A class for loading graph datasets using PyTorch Geometric.
     """
-    def __init__(self, normalize=True):
+    def __init__(self, normalize=False):
         """
         Initializes the dataset loader, sets device, and defines transformations.
         """

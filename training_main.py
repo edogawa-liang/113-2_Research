@@ -14,7 +14,7 @@ from utils.save_result import ExperimentLogger
 def parse_args():
     parser = argparse.ArgumentParser(description="Train a GNN model with specified parameters.")
     parser.add_argument("--dataset", type=str, required=True, help="Dataset name")
-    
+    parser.add_argument("--normalize", type=lambda x: x.lower() == "true", default=False, help="Whether to normalize the dataset")
     parser.add_argument("--model", type=str, default="GCN2", choices=["GCN2", "GCN3"], help="Model type")
     parser.add_argument("--epochs", type=int, default=2, help="Number of training epochs")
     parser.add_argument("--lr", type=float, default=0.01, help="Learning rate")
@@ -29,7 +29,7 @@ def parse_args():
     
     # Feature selection parameters
     parser.add_argument("--use_original_label", type=lambda x: x.lower() == "true", default=True, help="Use original labels (true/false)")
-    parser.add_argument("--feature_selection_method", type=str, default="pca", choices=["pca", "svd", "tree", "mutual_info"], help="Feature selection method")
+    parser.add_argument("--feature_selection_method", type=str, default="svd", choices=["pca", "svd", "tree", "mutual_info"], help="Feature selection method")
     parser.add_argument("--top_n", type=int, default=6, help="Number of top features to select")
 
     return parser.parse_args()
@@ -45,8 +45,8 @@ if __name__ == "__main__":
     print(f"Using device: {device}")
 
     # Load dataset
-    loader = GraphDatasetLoader()
-    data, num_features, num_classes = loader.load_dataset(args.dataset)
+    loader = GraphDatasetLoader(args.normalize)
+    data, num_features, _ = loader.load_dataset(args.dataset)
     data = data.to(device)
 
     if args.use_original_label is False:
@@ -108,6 +108,7 @@ if __name__ == "__main__":
         
         elif graph.task_type == "classification": 
             trial_number = logger.get_next_trial_number(args.dataset + "_classification")
+            num_classes = len(torch.unique(graph.y))
             print(f"Training Classification Model - Trial {trial_number}")
             trainer = GNNClassifierTrainer(dataset_name=args.dataset, data=graph, 
                                         num_features=num_features, num_classes=num_classes,  
