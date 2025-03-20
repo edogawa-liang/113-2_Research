@@ -1,4 +1,5 @@
-# 1. Original node classification
+# 1. Original node classification 
+1
 ------------------------------------------------------------
 python training_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode original --note basic_node_cls --use_original_label true
 python training_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode original --note basic_node_cls --use_original_label true
@@ -8,6 +9,7 @@ python training_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0.01 --r
 
 
 # 2. Train GNN model (node classification) after random subgraph selection
+1
 ------------------------------------------------------------
 python train_remaining_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult --note basic_node_cls --selector_type random --fraction 0.1
 python train_remaining_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult --note basic_node_cls --selector_type random --fraction 0.1
@@ -17,6 +19,7 @@ python train_remaining_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0
 
 
 # 3. using PCA for for feature selection and Train base GNN model (node regression) for explainer (multi features for y) 
+1
 ------------------------------------------------------------
 python training_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1 --note basic_node_reg --use_original_label false
 python training_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1 --note basic_node_reg --use_original_label false
@@ -26,6 +29,7 @@ python training_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0.01 --r
 
 
 # 4. Generate GNNExplainer explainable subgraph from random nodes (base on node regression model from #3)
+1
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset GitHub  --choose_nodes random --node_ratio 0.01
 python stage2_expsubg.py --dataset FacebookPagePage  --choose_nodes random --node_ratio 0.01
@@ -40,6 +44,7 @@ python stage2_expsubg.py --dataset PubMed  --choose_nodes random --node_ratio 0.
 
 # 5. Train GNN model (node classification) after explainable subgraph selection (base on #4)
 ------------------------------------------------------------
+1
 python train_remaining_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note remove_edge_from_GNNExplainer --selector_type explainer --fraction 0.1
 python train_remaining_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note remove_edge_from_GNNExplainer --selector_type explainer --fraction 0.1
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note remove_edge_from_GNNExplainer --selector_type explainer --fraction 0.1
@@ -52,7 +57,7 @@ python train_remaining_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0
 
 
 # 6. Generate GNNExplainer subgraph from Top PageRank nodes (base on node regression model from #3)
-# 跑完
+1
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset GitHub  --choose_nodes top_pagerank --node_ratio 0.01 --run_mode stage2_node_ratio_0.01 --explainer_type GNNExplainer
 python stage2_expsubg.py --dataset FacebookPagePage  --choose_nodes top_pagerank --node_ratio 0.01 --run_mode stage2_node_ratio_0.01 --explainer_type GNNExplainer
@@ -63,6 +68,7 @@ python stage2_expsubg.py --dataset PubMed  --choose_nodes top_pagerank --node_ra
 
 # 7. Generate Dummy explainable subgraph from random nodes (base on node regression model from #3)
 # 跑完 (刪掉了 太佔空間)
+1
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset GitHub  --choose_nodes random --node_ratio 0.01 --run_mode stage2_node_ratio_0.01 --explainer_type DummyExplainer
 python stage2_expsubg.py --dataset FacebookPagePage  --choose_nodes random --node_ratio 0.01 --run_mode stage2_node_ratio_0.01 --explainer_type DummyExplainer
@@ -73,6 +79,7 @@ python stage2_expsubg.py --dataset PubMed  --choose_nodes random --node_ratio 0.
 
 # 8. Generate Dummy explainable subgraph from Top PageRank nodes (base on node regression model from #3)
 # 跑完 (刪掉了 太佔空間)
+1
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset GitHub  --choose_nodes top_pagerank --node_ratio 0.01 --run_mode stage2_node_ratio_0.01 --explainer_type DummyExplainer
 python stage2_expsubg.py --dataset FacebookPagePage  --choose_nodes top_pagerank --node_ratio 0.01 --run_mode stage2_node_ratio_0.01 --explainer_type DummyExplainer
@@ -83,6 +90,7 @@ python stage2_expsubg.py --dataset PubMed  --choose_nodes top_pagerank --node_ra
 
 # 9. Train GNN model (node classification) after GNNExplainer from PageRank nodes selection (base on #6)
 # 跑完
+1
 ------------------------------------------------------------
 python train_remaining_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note remove_edge_from_GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_node_ratio_0.01 --explainer_name GNNExplainer --node_choose top_pagerank
 python train_remaining_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note remove_edge_from_GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_node_ratio_0.01 --explainer_name GNNExplainer --node_choose top_pagerank
@@ -93,6 +101,7 @@ python train_remaining_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0
 
 # 10. Train GNN model (node classification) after DummyExplainer from random nodes selection (base on #7)
 # 跑完
+1
 ------------------------------------------------------------
 python train_remaining_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note remove_edge_from_DummyExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_node_ratio_0.01 --explainer_name DummyExplainer --node_choose random
 python train_remaining_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note remove_edge_from_DummyExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_node_ratio_0.01 --explainer_name DummyExplainer --node_choose random
@@ -103,6 +112,7 @@ python train_remaining_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0
 
 # 11. Train GNN model (node classification) after DummyExplainer from Top PageRank nodes selection (base on #8)
 # 跑完
+1
 ------------------------------------------------------------
 
 python train_remaining_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note remove_edge_from_DummyExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_node_ratio_0.01 --explainer_name DummyExplainer --node_choose top_pagerank
@@ -115,6 +125,7 @@ python train_remaining_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0
 
 # 12 Using Tree(Random Forest) for feature selection and Train base GNN model (node regression) for explainer (multi features for y) 
 # 跑完
+1
 ------------------------------------------------------------
 python training_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1_tree --note node_reg_tree --use_original_label false --feature_selection_method tree --top_tree_features 6
 python training_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1_tree --note node_reg_tree --use_original_label false --feature_selection_method tree --top_tree_features 6
@@ -125,6 +136,7 @@ python training_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0.01 --r
 
 # 13. Generate GNNExplainer explainable subgraph from Top PageRank nodes Tree(base on node regression model from #12)
 # 跑完 (PubMed 沒跑完)
+1
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset GitHub  --choose_nodes top_pagerank --node_ratio 0.01 --run_mode stage2_tree_node_ratio_0.01 --explainer_type GNNExplainer
 python stage2_expsubg.py --dataset FacebookPagePage  --choose_nodes top_pagerank --node_ratio 0.01 --run_mode stage2_tree_node_ratio_0.01 --explainer_type GNNExplainer
@@ -145,6 +157,7 @@ python train_remaining_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0
 
 # 15. Generate GNNExplainer explainable subgraph from random nodes Tree(base on node regression model from #12)
 # 跑完 (PubMed 沒跑完)
+1
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset GitHub  --choose_nodes random --node_ratio 0.01 --run_mode stage2_tree_node_ratio_0.01 --explainer_type GNNExplainer
 python stage2_expsubg.py --dataset FacebookPagePage  --choose_nodes random --node_ratio 0.01 --run_mode stage2_tree_node_ratio_0.01 --explainer_type GNNExplainer
@@ -165,6 +178,7 @@ python train_remaining_main.py --dataset PubMed --model GCN2 --epochs 300 --lr 0
 
 # 17. Remove Edge by Random Walk (choose nodes by PageRank)
 # 跑完
+1
 ------------------------------------------------------------
 python train_remaining_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note remove_edge_by_PageRank_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose top_pagerank --node_ratio 0.05
 python train_remaining_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note remove_edge_by_PageRank_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose top_pagerank --node_ratio 0.05

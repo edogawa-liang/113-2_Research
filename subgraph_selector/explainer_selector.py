@@ -19,7 +19,7 @@ class ExplainerEdgeSelector:
         """
 
         self.base_path = os.path.join(base_dir, explainer_name, dataset_name, node_choose)
-        self.sub_dirs = sorted([d for d in os.listdir(self.base_path) if d.endswith("GCN2Regressor")])
+        self.sub_dirs = sorted([d for d in os.listdir(self.base_path) if d.endswith("GCN2Classifier")]) # GCN2Regressor
         self.edge_masks = []  # 存放所有 edge_mask
         self.edge_aggregated = None  # 平均 edge_mask
         self.top_k_percent = top_k_percent
@@ -53,7 +53,7 @@ class ExplainerEdgeSelector:
 
                     if edge_mask is not None:
                         self.edge_masks.append(edge_mask)  # 收集 edge_mask
-
+        
         # 計算所有 edge_mask 的均值
         if self.edge_masks:
             self.edge_aggregated = np.mean(self.edge_masks, axis=0)

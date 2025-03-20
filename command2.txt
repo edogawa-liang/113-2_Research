@@ -16,7 +16,26 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 python train_remaining_main.py --dataset Airport --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult --note basic_node_cls --selector_type random --fraction 0.1
 
 
-# 3. using SVD for for feature selection and Train base GNN model (node classification) for explainer (multi features for y) 
+# 3. Remove Edge by Random Walk (choose nodes by Random)
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note remove_edge_by_random_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose random --node_ratio auto --edge_ratio 0.5
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note remove_edge_by_random_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose random --node_ratio auto --edge_ratio 0.5
+python train_remaining_main.py --dataset KarateClub --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note remove_edge_by_random_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose random --node_ratio auto --edge_ratio 0.5
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note remove_edge_by_random_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose random --node_ratio auto --edge_ratio 0.5
+python train_remaining_main.py --dataset Airport --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note remove_edge_by_random_RandomWalk --selector_type random_walk --fraction 0.1 --node_choose random --node_ratio auto --edge_ratio 0.5
+
+
+# 4. Remove Edge by Random Walk (choose nodes by PageRank)
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note remove_edge_by_PageRank_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose top_pagerank --node_ratio auto --edge_ratio 0.5
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note remove_edge_by_PageRank_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose top_pagerank --node_ratio auto --edge_ratio 0.5
+python train_remaining_main.py --dataset KarateClub --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note remove_edge_by_PageRank_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose top_pagerank --node_ratio auto --edge_ratio 0.5
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note remove_edge_by_PageRank_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose top_pagerank --node_ratio auto --edge_ratio 0.5
+python train_remaining_main.py --dataset Airport --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note remove_edge_by_PageRank_RandomWalk --selector_type random_walk --fraction 0.1 --node_choose top_pagerank --node_ratio auto --edge_ratio 0.5
+
+
+
+# 5. using SVD for for feature selection and Train base GNN model (node classification) for explainer (multi features for y) 
 ------------------------------------------------------------
 python training_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1 --note basic_node_cls --use_original_label false --feature_selection_method svd --top_n 10
 python training_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1 --note basic_node_cls --use_original_label false --feature_selection_method svd --top_n 10
@@ -25,13 +44,118 @@ python training_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --r
 python training_main.py --dataset Airport --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1 --note basic_node_cls --use_original_label false --feature_selection_method svd --top_n 10
 
 
-# 4. Generate GNNExplainer explainable subgraph from random nodes (base on node classification model from #3)
+# 6. Generate Dummy explainable subgraph from random nodes (base on node classification model from #3)
 ------------------------------------------------------------
-python stage2_expsubg.py --dataset Cora  --choose_nodes random --node_ratio auto --edge_ratio 0.5
-python stage2_expsubg.py --dataset CiteSeer  --choose_nodes random --node_ratio auto --edge_ratio 0.5
-python stage2_expsubg.py --dataset KarateClub  --choose_nodes random --node_ratio auto --edge_ratio 0.5
-python stage2_expsubg.py --dataset Amazon  --choose_nodes random --node_ratio auto --edge_ratio 0.5
-python stage2_expsubg.py --dataset Airport  --choose_nodes random --node_ratio auto --edge_ratio 0.5
+python stage2_expsubg.py --dataset Cora  --choose_nodes random --node_ratio auto --edge_ratio 0.5 --run_mode stage2_svd_edge_0.5 --explainer_type DummyExplainer
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes random --node_ratio auto --edge_ratio 0.5 --run_mode stage2_svd_edge_0.5 --explainer_type DummyExplainer
+python stage2_expsubg.py --dataset KarateClub  --choose_nodes random --node_ratio auto --edge_ratio 0.5 --run_mode stage2_svd_edge_0.5 --explainer_type DummyExplainer
+python stage2_expsubg.py --dataset Amazon  --choose_nodes random --node_ratio auto --edge_ratio 0.5 --run_mode stage2_svd_edge_0.5 --explainer_type DummyExplainer
+python stage2_expsubg.py --dataset Airport  --choose_nodes random --node_ratio auto --edge_ratio 0.5 --run_mode stage2_svd_edge_0.5 --explainer_type DummyExplainer
 
 
-# 5.
+# 7. Generate Dummy explainable subgraph from Top PageRank nodes (base on node classification model from #3)
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.5 --run_mode stage2_svd_edge_0.5 --explainer_type DummyExplainer
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.5 --run_mode stage2_svd_edge_0.5 --explainer_type DummyExplainer
+python stage2_expsubg.py --dataset KarateClub  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.5 --run_mode stage2_svd_edge_0.5 --explainer_type DummyExplainer
+python stage2_expsubg.py --dataset Amazon  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.5 --run_mode stage2_svd_edge_0.5 --explainer_type DummyExplainer
+python stage2_expsubg.py --dataset Airport  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.5 --run_mode stage2_svd_edge_0.5 --explainer_type DummyExplainer
+
+
+# 8. Generate GNNExplainer explainable subgraph from random nodes (base on node classification model from #3)
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes random --node_ratio auto --edge_ratio 0.5 --run_mode stage2_svd_edge_0.5
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes random --node_ratio auto --edge_ratio 0.5 --run_mode stage2_svd_edge_0.5
+python stage2_expsubg.py --dataset KarateClub  --choose_nodes random --node_ratio auto --edge_ratio 0.5 --run_mode stage2_svd_edge_0.5
+python stage2_expsubg.py --dataset Amazon  --choose_nodes random --node_ratio auto --edge_ratio 0.5 --run_mode stage2_svd_edge_0.5
+python stage2_expsubg.py --dataset Airport  --choose_nodes random --node_ratio auto --edge_ratio 0.5 --run_mode stage2_svd_edge_0.5
+
+
+# 9. Generate GNNExplainer subgraph from Top PageRank nodes (base on node classification model from #3)
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.5 --run_mode stage2_svd_edge_0.5
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.5 --run_mode stage2_svd_edge_0.5
+python stage2_expsubg.py --dataset KarateClub  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.5 --run_mode stage2_svd_edge_0.5
+python stage2_expsubg.py --dataset Amazon  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.5 --run_mode stage2_svd_edge_0.5
+python stage2_expsubg.py --dataset Airport  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.5 --run_mode stage2_svd_edge_0.5
+
+
+# 10. Train GNN model (node classification) after DummyExplainer from random nodes selection (base on #4)
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note DummyExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.5 --explainer_name DummyExplainer --node_choose random
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01  --run_mode remove_from_DummyExplainer --note DummyExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.5 --explainer_name DummyExplainer --node_choose random
+python train_remaining_main.py --dataset KarateClub --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note DummyExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.5 --explainer_name DummyExplainer --node_choose random
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note DummyExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.5 --explainer_name DummyExplainer --node_choose random
+python train_remaining_main.py --dataset Airport --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note DummyExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.5 --explainer_name DummyExplainer --node_choose random
+
+
+# 11. Train GNN model (node classification) after DummyExplainer from Top PageRank nodes selection (base on #5)
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note DummyExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.5 --explainer_name DummyExplainer --node_choose top_pagerank
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note DummyExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.5 --explainer_name DummyExplainer --node_choose top_pagerank
+python train_remaining_main.py --dataset KarateClub --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note DummyExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.5 --explainer_name DummyExplainer --node_choose top_pagerank
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note DummyExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.5 --explainer_name DummyExplainer --node_choose top_pagerank
+python train_remaining_main.py --dataset Airport --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note DummyExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.5 --explainer_name DummyExplainer --node_choose top_pagerank
+
+
+# 12. Train GNN model (node classification) after GNNExplainer from random nodes selection (base on #6)
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note GNNExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.5 --explainer_name GNNExplainer --node_choose random
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note GNNExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.5 --explainer_name GNNExplainer --node_choose random
+python train_remaining_main.py --dataset KarateClub --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note GNNExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.5 --explainer_name GNNExplainer --node_choose random
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note GNNExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.5 --explainer_name GNNExplainer --node_choose random
+python train_remaining_main.py --dataset Airport --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note GNNExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.5 --explainer_name GNNExplainer --node_choose random
+
+
+# 13. Train GNN model (node classification) after GNNExplainer from Top PageRank nodes selection (base on #7)
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.5 --explainer_name GNNExplainer --node_choose top_pagerank
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.5 --explainer_name GNNExplainer --node_choose top_pagerank
+python train_remaining_main.py --dataset KarateClub --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.5 --explainer_name GNNExplainer --node_choose top_pagerank
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.5 --explainer_name GNNExplainer --node_choose top_pagerank
+python train_remaining_main.py --dataset Airport --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.5 --explainer_name GNNExplainer --node_choose top_pagerank
+
+
+# 14 Using Tree (Random Forest) for feature selection and Train base GNN model (node classification) for explainer (multi features for y) 
+------------------------------------------------------------
+python training_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1_tree --note node_cls_tree --use_original_label false --feature_selection_method tree --top_n 10
+python training_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1_tree --note node_cls_tree --use_original_label false --feature_selection_method tree --top_n 10
+python training_main.py --dataset KarateClub --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1_tree --note node_cls_tree --use_original_label false --feature_selection_method tree --top_n 10
+python training_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1_tree --note node_cls_tree --use_original_label false --feature_selection_method tree --top_n 10
+python training_main.py --dataset Airport --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1_tree --note node_cls_tree --use_original_label false --feature_selection_method tree --top_n 10
+
+
+# 15. Generate Tree GNNExplainer explainable subgraph from random nodes (base on #14)
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes random --node_ratio auto --edge_ratio 0.5 --run_mode stage2_tree_edge_0.5 --explainer_type GNNExplainer
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes random --node_ratio auto --edge_ratio 0.5 --run_mode stage2_tree_edge_0.5 --explainer_type GNNExplainer
+python stage2_expsubg.py --dataset KarateClub  --choose_nodes random --node_ratio auto --edge_ratio 0.5 --run_mode stage2_tree_edge_0.5 --explainer_type GNNExplainer
+python stage2_expsubg.py --dataset Amazon  --choose_nodes random --node_ratio auto --edge_ratio 0.5 --run_mode stage2_tree_edge_0.5 --explainer_type GNNExplainer
+python stage2_expsubg.py --dataset Airport  --choose_nodes random --node_ratio auto --edge_ratio 0.5 --run_mode stage2_tree_edge_0.5 --explainer_type GNNExplainer
+
+
+# 16. Generate Tree GNNExplainer explainable subgraph from Top PageRank nodes (base on #14)
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.5 --run_mode stage2_tree_edge_0.5 --explainer_type GNNExplainer
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.5 --run_mode stage2_tree_edge_0.5 --explainer_type GNNExplainer
+python stage2_expsubg.py --dataset KarateClub  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.5 --run_mode stage2_tree_edge_0.5 --explainer_type GNNExplainer
+python stage2_expsubg.py --dataset Amazon  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.5 --run_mode stage2_tree_edge_0.5 --explainer_type GNNExplainer
+python stage2_expsubg.py --dataset Airport  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.5 --run_mode stage2_tree_edge_0.5 --explainer_type GNNExplainer
+
+
+# 17. Train GNN model (node classification) after Tree GNNExplainer from random nodes selection (base on #15)
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note Tree_GNNExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_tree_edge_0.5 --explainer_name GNNExplainer --node_choose random
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note Tree_GNNExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_tree_edge_0.5 --explainer_name GNNExplainer --node_choose random
+python train_remaining_main.py --dataset KarateClub --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note Tree_GNNExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_tree_edge_0.5 --explainer_name GNNExplainer --node_choose random
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note Tree_GNNExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_tree_edge_0.5 --explainer_name GNNExplainer --node_choose random
+python train_remaining_main.py --dataset Airport --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note Tree_GNNExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_tree_edge_0.5 --explainer_name GNNExplainer --node_choose random
+
+
+# 18. Train GNN model (node classification) after Tree GNNExplainer from Top PageRank nodes selection (base on #16)
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note Tree_GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_tree_edge_0.5 --explainer_name GNNExplainer --node_choose top_pagerank
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note Tree_GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_tree_edge_0.5 --explainer_name GNNExplainer --node_choose top_pagerank
+python train_remaining_main.py --dataset KarateClub --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note Tree_GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_tree_edge_0.5 --explainer_name GNNExplainer --node_choose top_pagerank
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note Tree_GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_tree_edge_0.5 --explainer_name GNNExplainer --node_choose top_pagerank
+python train_remaining_main.py --dataset Airport --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note Tree_GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_tree_edge_0.5 --explainer_name GNNExplainer --node_choose top_pagerank

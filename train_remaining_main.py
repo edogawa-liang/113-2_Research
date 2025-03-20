@@ -20,7 +20,7 @@ def parse_args():
     parser.add_argument("--normalize", type=lambda x: x.lower() == "true", default=False, help="Whether to normalize the dataset")
 
     parser.add_argument("--model", type=str, default="GCN2", choices=["GCN2", "GCN3"], help="Model type")
-    parser.add_argument("--epochs", type=int, default=100, help="Number of training epochs")
+    parser.add_argument("--epochs", type=int, default=300, help="Number of training epochs")
     parser.add_argument("--lr", type=float, default=0.01, help="Learning rate")
     parser.add_argument("--weight_decay", type=float, default=1e-4, help="Weight decay for optimizer")
     
@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     # Load dataset
     loader = GraphDatasetLoader(args.normalize)
-    data, num_features, _ = loader.load_dataset(args.dataset)
+    data, num_features, num_classes = loader.load_dataset(args.dataset)
     data = data.to(device)
 
     # Select subgraph
