@@ -168,6 +168,7 @@ python stage2_expsubg.py --dataset PubMed  --choose_nodes random --node_ratio 0.
 
 # 16. Train GNN model (node classification) after Tree + GNNExplainer from random nodes selection (base on #15)
 # 跑完 (PubMed 沒跑)
+1
 ------------------------------------------------------------
 python train_remaining_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note remove_edge_from_Tree_GNNExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_tree_node_ratio_0.01 --explainer_name GNNExplainer --node_choose random
 python train_remaining_main.py --dataset FacebookPagePage --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note remove_edge_from_Tree_GNNExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_tree_node_ratio_0.01 --explainer_name GNNExplainer --node_choose random
