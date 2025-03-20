@@ -68,6 +68,7 @@ if __name__ == "__main__":
         model_class = model_mapping[model_names[i]]
         # model path
         model_path = os.path.join(args.stage1_path, "model", args.dataset, f"{feature_trials[i]}_{model_class.__name__}.pth")
+        
         explainer = SubgraphExplainer(
             model_class=model_class,
             dataset=args.dataset,

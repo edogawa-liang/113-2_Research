@@ -1,6 +1,8 @@
 import os
 import torch
 import numpy as np
+from torch_geometric.explain import ModelConfig
+from torch_geometric.explain.config import ModelMode
 from torch_geometric.explain import Explainer, GNNExplainer, PGExplainer, DummyExplainer
 
 class SubgraphExplainer:
@@ -49,12 +51,15 @@ class SubgraphExplainer:
         """Determines whether the model is for regression or classification based on its name."""
         model_name = self.model_class.__name__.lower()
         if "regressor" in model_name:
-            return "regression"
+            return ModelMode.regression
         elif "classifier" in model_name:
-            return "binary_classification" if len(torch.unique(self.data.y)) == 2 else "multiclass_classification"
+            # return ModelMode.binary_classification if len(torch.unique(self.data.y)) == 2 else ModelMode.multiclass_classification
+            # 由於我的 model 匯出是 #class 維度，直接使用 multiclass_classification 就好，用 binary 還要轉換...
+            return ModelMode.multiclass_classification
         else:
             raise ValueError("Model class name must contain 'Regressor' or 'Classifier' to determine task type.")
-
+        
+        
     def _load_model(self):
         """Loads the GNN regression model and weights."""
         num_features = self.data.x.shape[1]
@@ -64,6 +69,7 @@ class SubgraphExplainer:
         if os.path.exists(self.model_path):
             model.load_state_dict(torch.load(self.model_path, map_location=self.device))
             print(f"Loaded trained model weights from {self.model_path}")
+            print(model)
         else:
             raise FileNotFoundError(f"Model checkpoint {self.model_path} not found!")
 
@@ -81,26 +87,21 @@ class SubgraphExplainer:
         else:
             raise ValueError(f"Unsupported explainer type: {explainer_type}")
 
-        return Explainer(
-            model=self.model,
-            algorithm=algorithm,
-            explanation_type='model',
-            node_mask_type='attributes',
-            edge_mask_type='object',
-            model_config=dict(
-                mode=self.task_type,
-                task_level='node',
-                return_type='raw',
-            ),
-        )
+        print(f"Task Type: {self.task_type}") 
+        
+        return Explainer(model=self.model, algorithm=algorithm, explanation_type='model',
+                         node_mask_type='attributes', edge_mask_type='object',
+                         model_config=ModelConfig(mode=self.task_type, task_level='node', 
+                                                  return_type='probs' if "classification" in self.task_type.name else 'raw'))
 
 
     def explain_node(self, node_idx, data, save=True):
         """Explains a node and saves its explanation result."""
         self.model.eval()
         data = data.to(self.device)  # 確保數據也移動到對應裝置
+        data.y = data.y.long()
+        explanation = self.explainer(data.x, data.edge_index, index=node_idx) # 這邊問題
 
-        explanation = self.explainer(data.x, data.edge_index, index=node_idx)
         y_value = data.y[node_idx].item()  # 取得節點的回歸目標數值
 
         if save:
