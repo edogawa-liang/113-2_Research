@@ -31,8 +31,10 @@ class ChooseNodeSelector:
         
         if self.node_ratio == "auto":
             target_edges = self.edge_ratio * self.data.edge_index.shape[1]  # 目標邊數
-            num_selected_nodes = target_edges / avg_degree  # 需要的節點數
+            num_selected_nodes = target_edges / (avg_degree ** 2)  # 需要的節點數
             node_ratio = num_selected_nodes / self.data.x.shape[0]
+            print(f"{num_selected_nodes} nodes required to ensure {self.edge_ratio * 100}% edges in the subgraph.")
+            print(f"Node ratio: {node_ratio}")
         else:
             node_ratio = float(self.node_ratio)
 
@@ -48,6 +50,7 @@ class ChooseNodeSelector:
         num_selected = max(1, int(self.data.x.shape[0] * node_ratio))
 
         if self.strategy == "random":
+            random.seed(42)
             return random.sample(train_nodes, num_selected)
 
         elif self.strategy == "high_degree":

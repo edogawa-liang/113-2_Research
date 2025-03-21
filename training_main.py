@@ -93,29 +93,38 @@ if __name__ == "__main__":
         print(f"\nTraining on Graph {i+1}/{len(modified_graphs)} - Task: {graph.task_type}")
         label_source = "Original Label" if args.use_original_label else f"Feature {imp_features[i]}"
 
-        if graph.task_type == "regression":
-            trial_number = logger.get_next_trial_number(args.dataset + "_regression")
-            print(f"Training Regression Model - Trial {trial_number}")
-            trainer = GNNRegressorTrainer(dataset_name=args.dataset, data=graph, 
-                                        num_features=num_features, 
-                                        model_class=GCN2Regressor if args.model == "GCN2" else GCN3Regressor,
-                                        trial_number=trial_number, device=device,
-                                        epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
-                                        run_mode=args.run_mode)
-            result = trainer.run()
-            logger.log_experiment(args.dataset + "_regression", result, label_source, feat_sel_method=args.feature_selection_method)
+        try:
+            if graph.task_type == "regression":
+                trial_number = logger.get_next_trial_number(args.dataset + "_regression")
+                print(f"Training Regression Model - Trial {trial_number}")
+                trainer = GNNRegressorTrainer(dataset_name=args.dataset, data=graph, 
+                                            num_features=num_features, 
+                                            model_class=GCN2Regressor if args.model == "GCN2" else GCN3Regressor,
+                                            trial_number=trial_number, device=device,
+                                            epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
+                                            run_mode=args.run_mode)
+                result = trainer.run()
+                logger.log_experiment(args.dataset + "_regression", result, label_source, feat_sel_method=args.feature_selection_method)
 
-        
-        elif graph.task_type == "classification": 
-            trial_number = logger.get_next_trial_number(args.dataset + "_classification")
-            num_classes = len(torch.unique(graph.y))
-            print(f"Training Classification Model - Trial {trial_number}")
-            trainer = GNNClassifierTrainer(dataset_name=args.dataset, data=graph, 
-                                        num_features=num_features, num_classes=num_classes,  
-                                        model_class=GCN2Classifier if args.model == "GCN2" else GCN3Classifier,
-                                        trial_number=trial_number, device=device,
-                                        epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay, 
-                                        run_mode=args.run_mode, threshold=args.threshold)
-            result = trainer.run()
-            logger.log_experiment(args.dataset + "_classification", result, label_source, feat_sel_method=args.feature_selection_method)
+            
+            elif graph.task_type == "classification": 
+                trial_number = logger.get_next_trial_number(args.dataset + "_classification")
+                num_classes = len(torch.unique(graph.y))
+                print(f"Training Classification Model - Trial {trial_number}")
+                trainer = GNNClassifierTrainer(dataset_name=args.dataset, data=graph, 
+                                            num_features=num_features, num_classes=num_classes,  
+                                            model_class=GCN2Classifier if args.model == "GCN2" else GCN3Classifier,
+                                            trial_number=trial_number, device=device,
+                                            epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay, 
+                                            run_mode=args.run_mode, threshold=args.threshold)
+                result = trainer.run()
+                logger.log_experiment(args.dataset + "_classification", result, label_source, feat_sel_method=args.feature_selection_method)
 
+        except ValueError as e:
+            # 只跳過這個特定錯誤
+            if "Only one class present in y_true" in str(e):
+                print(f"[Skip] Graph {i+1}, Feature {imp_features[i]} skipped due to ROC AUC error: {e}")
+                continue
+            else:
+                # 其他錯誤照常丟出
+                raise

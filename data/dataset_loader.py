@@ -1,5 +1,5 @@
 import torch
-from torch_geometric.datasets import FacebookPagePage, GitHub, Planetoid, KarateClub, Amazon, Airports, Actor
+from torch_geometric.datasets import FacebookPagePage, GitHub, Planetoid, KarateClub, Amazon, Airports, Actor, Flickr
 import torch_geometric.transforms as T
 
 class GraphDatasetLoader:
@@ -29,8 +29,10 @@ class GraphDatasetLoader:
             "PubMed": lambda: Planetoid(root='/tmp/PubMed', name='PubMed', transform=self.transform),
             "KarateClub": lambda: KarateClub(transform=self.transform),
             "Amazon": lambda: Amazon(root='/tmp/Amazon', name='Computers', transform=self.transform),
-            "Airports": lambda: Airports(root='/tmp/Airports', name='USA', transform=self.transform),
+            # "Airports": lambda: Airports(root='/tmp/Airports', name='USA', transform=self.transform),
+            "Airports": lambda: Airports(root='/tmp/Airports', name='Europe', transform=self.transform),
             "Actor": lambda: Actor(root='/tmp/Actor', transform=self.transform),
+            "Flickr": lambda: Flickr(root='/tmp/Flickr', transform=self.transform) # feature 應該是 ordinal
         }
     
     def load_dataset(self, name: str):
