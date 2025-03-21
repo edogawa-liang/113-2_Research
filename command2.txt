@@ -44,7 +44,7 @@ python training_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --r
 
 
 # 6. Generate Dummy explainable subgraph from random nodes (base on node classification model from #5)
-running
+done
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset Cora  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --run_mode stage2_svd_edge_0.3 --explainer_type DummyExplainer --stage1_path saved/stage1_svd
 python stage2_expsubg.py --dataset CiteSeer  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --run_mode stage2_svd_edge_0.3 --explainer_type DummyExplainer --stage1_path saved/stage1_svd
@@ -53,7 +53,7 @@ python stage2_expsubg.py --dataset Amazon  --choose_nodes random --node_ratio au
 
 
 # 7. Generate Dummy explainable subgraph from Top PageRank nodes (base on node classification model from #5)
-running
+done
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset Cora  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --run_mode stage2_svd_edge_0.3 --explainer_type DummyExplainer --stage1_path saved/stage1_svd
 python stage2_expsubg.py --dataset CiteSeer  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --run_mode stage2_svd_edge_0.3 --explainer_type DummyExplainer --stage1_path saved/stage1_svd
@@ -62,6 +62,7 @@ python stage2_expsubg.py --dataset Amazon  --choose_nodes top_pagerank --node_ra
 
 
 # 8. Generate GNNExplainer explainable subgraph from random nodes (base on node classification model from #5)
+done
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset Cora  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --run_mode stage2_svd_edge_0.3 --stage1_path saved/stage1_svd
 python stage2_expsubg.py --dataset CiteSeer  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --run_mode stage2_svd_edge_0.3 --stage1_path saved/stage1_svd
@@ -70,6 +71,7 @@ python stage2_expsubg.py --dataset Amazon  --choose_nodes random --node_ratio au
 
 
 # 9. Generate GNNExplainer subgraph from Top PageRank nodes (base on node classification model from #5)
+done
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset Cora  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --run_mode stage2_svd_edge_0.3 --stage1_path saved/stage1_svd
 python stage2_expsubg.py --dataset CiteSeer  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --run_mode stage2_svd_edge_0.3 --stage1_path saved/stage1_svd
@@ -78,6 +80,7 @@ python stage2_expsubg.py --dataset Amazon  --choose_nodes top_pagerank --node_ra
 
 
 # 10. Train GNN model (node classification) after DummyExplainer from random nodes selection (base on #6)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note DummyExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.3 --explainer_name DummyExplainer --node_choose random
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01  --run_mode remove_from_DummyExplainer --note DummyExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.3 --explainer_name DummyExplainer --node_choose random
@@ -86,6 +89,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 11. Train GNN model (node classification) after DummyExplainer from Top PageRank nodes selection (base on #7)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note DummyExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.3 --explainer_name DummyExplainer --node_choose top_pagerank
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note DummyExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.3 --explainer_name DummyExplainer --node_choose top_pagerank
@@ -94,6 +98,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 12. Train GNN model (node classification) after GNNExplainer from random nodes selection (base on #8)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note GNNExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.3 --explainer_name GNNExplainer --node_choose random
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note GNNExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.3 --explainer_name GNNExplainer --node_choose random
@@ -102,6 +107,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 13. Train GNN model (node classification) after GNNExplainer from Top PageRank nodes selection (base on #9)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.3 --explainer_name GNNExplainer --node_choose top_pagerank
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.3 --explainer_name GNNExplainer --node_choose top_pagerank
@@ -109,7 +115,8 @@ python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.
 python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_svd_edge_0.3 --explainer_name GNNExplainer --node_choose top_pagerank
 
 
-# 14 Using Tree (Random Forest) for feature selection and Train base GNN model (node classification) for explainer (multi features for y) 
+# 14 Using Tree (Random Forest) for feature selection and Train base GNN model (node classification) for explainer (multi features for y)
+done
 ------------------------------------------------------------
 python training_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1_tree --note node_cls_tree --use_original_label false --feature_selection_method tree --top_n 6
 python training_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode stage1_tree --note node_cls_tree --use_original_label false --feature_selection_method tree --top_n 6
@@ -118,6 +125,7 @@ python training_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --r
 
 
 # 15. Generate Tree GNNExplainer explainable subgraph from random nodes (base on #14)
+running
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset Cora  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --run_mode stage2_tree_edge_0.3 --explainer_type GNNExplainer --stage1_path saved/stage1_tree
 python stage2_expsubg.py --dataset CiteSeer  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --run_mode stage2_tree_edge_0.3 --explainer_type GNNExplainer --stage1_path saved/stage1_tree
@@ -126,6 +134,7 @@ python stage2_expsubg.py --dataset Amazon  --choose_nodes random --node_ratio au
 
 
 # 16. Generate Tree GNNExplainer explainable subgraph from Top PageRank nodes (base on #14)
+running
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset Cora  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --run_mode stage2_tree_edge_0.3 --explainer_type GNNExplainer --stage1_path saved/stage1_tree
 python stage2_expsubg.py --dataset CiteSeer  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --run_mode stage2_tree_edge_0.3 --explainer_type GNNExplainer --stage1_path saved/stage1_tree
