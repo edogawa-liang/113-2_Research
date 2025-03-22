@@ -125,7 +125,7 @@ python training_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --r
 
 
 # 15. Generate Tree GNNExplainer explainable subgraph from random nodes (base on #14)
-running
+done
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset Cora  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --run_mode stage2_tree_edge_0.3 --explainer_type GNNExplainer --stage1_path saved/stage1_tree
 python stage2_expsubg.py --dataset CiteSeer  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --run_mode stage2_tree_edge_0.3 --explainer_type GNNExplainer --stage1_path saved/stage1_tree
@@ -134,7 +134,7 @@ python stage2_expsubg.py --dataset Amazon  --choose_nodes random --node_ratio au
 
 
 # 16. Generate Tree GNNExplainer explainable subgraph from Top PageRank nodes (base on #14)
-running
+done
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset Cora  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --run_mode stage2_tree_edge_0.3 --explainer_type GNNExplainer --stage1_path saved/stage1_tree
 python stage2_expsubg.py --dataset CiteSeer  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --run_mode stage2_tree_edge_0.3 --explainer_type GNNExplainer --stage1_path saved/stage1_tree
@@ -143,6 +143,7 @@ python stage2_expsubg.py --dataset Amazon  --choose_nodes top_pagerank --node_ra
 
 
 # 17. Train GNN model (node classification) after Tree GNNExplainer from random nodes selection (base on #15)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note Tree_GNNExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_tree_edge_0.3 --explainer_name GNNExplainer --node_choose random
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note Tree_GNNExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_tree_edge_0.3 --explainer_name GNNExplainer --node_choose random
@@ -151,11 +152,14 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 18. Train GNN model (node classification) after Tree GNNExplainer from Top PageRank nodes selection (base on #16)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note Tree_GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_tree_edge_0.3 --explainer_name GNNExplainer --node_choose top_pagerank
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note Tree_GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_tree_edge_0.3 --explainer_name GNNExplainer --node_choose top_pagerank
 python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note Tree_GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_tree_edge_0.3 --explainer_name GNNExplainer --node_choose top_pagerank
 python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note Tree_GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_tree_edge_0.3 --explainer_name GNNExplainer --node_choose top_pagerank
 
+
+# 已將 result 存到本地端
 
 
