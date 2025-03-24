@@ -75,7 +75,6 @@ class GNNClassifierTrainer:
         self.optimizer.step()
         return float(loss)
 
-    # 還沒驗證
     def save_model(self):
         training_params = {"model_name": self.model_name, "epochs": self.epochs, "lr": self.lr, "weight_decay": self.weight_decay}
         save_model_and_config(self.model, self.save_model_path, self.save_config_path, training_params)
