@@ -12,7 +12,7 @@ class SubgraphExplainer:
 
     def __init__(self, model_class, dataset, data, model_path, trial_name, 
                  explainer_type="GNNExplainer", hop=2, epoch=100, 
-                 run_mode="stage2", config=None, remove_feature=None, device=None, 
+                 run_mode="stage2", remove_feature=None, device=None, 
                  choose_nodes="random"):
         """
         Initializes the explainer.
@@ -25,7 +25,6 @@ class SubgraphExplainer:
         :param epoch: Number of training epochs.
         :param run_mode: Run mode (base folder for saving explanations).
         :param trial_name: Name of the trial for saving explanations.
-        :param config: Additional configuration for the model.
         :param device: The device to use ('cpu' or 'cuda').
         :param task_type: Type of task ("regression" or "classification").
         """
@@ -37,7 +36,6 @@ class SubgraphExplainer:
         self.model_class = model_class
         self.trial_name = trial_name
         self.run_mode = run_mode
-        self.config = config if config else {}
         self.remove_feature = remove_feature
         self.choose_nodes = choose_nodes
 
@@ -61,17 +59,27 @@ class SubgraphExplainer:
         
         
     def _load_model(self):
-        """Loads the GNN regression model and weights."""
-        num_features = self.data.x.shape[1]
-        model = self.model_class(in_channels=num_features, **self.config).to(self.device)
+        """Loads the model config and weights."""
+        # 假設 config 檔名與 model_path 同名，只是多了 `_config`
+        config_path = self.model_path.replace(".pth", "_config.pth")
+        if not os.path.exists(config_path):
+            raise FileNotFoundError(f"Model config not found: {config_path}")
 
-        # Load trained weights
-        if os.path.exists(self.model_path):
-            model.load_state_dict(torch.load(self.model_path, map_location=self.device))
-            print(f"Loaded trained model weights from {self.model_path}")
-            print(model)
-        else:
-            raise FileNotFoundError(f"Model checkpoint {self.model_path} not found!")
+        full_config = torch.load(config_path, map_location=self.device)
+        print("Full config loaded:", full_config)
+
+        # 只取出模型需要的參數
+        allowed_keys = ['in_channels', 'hidden_channels', 'hidden_channels1', 'hidden_channels2', 'out_channels']
+        model_config = {k: v for k, v in full_config.items() if k in allowed_keys}
+
+        model = self.model_class(**model_config).to(self.device)
+
+        # 載入訓練好的權重
+        if not os.path.exists(self.model_path):
+            raise FileNotFoundError(f"Model checkpoint not found: {self.model_path}")
+
+        model.load_state_dict(torch.load(self.model_path, map_location=self.device))
+        model.eval()
 
         return model
 

@@ -3,6 +3,8 @@ import torch
 import torch.nn.functional as F
 from utils.plot import ClassificationPlotter, RegressionPlotter
 from utils.evaluation import ClassificationEvaluator, RegressionEvaluator
+from utils.save_model import save_model_and_config
+
 
 class GNNClassifierTrainer:
     """
@@ -73,20 +75,10 @@ class GNNClassifierTrainer:
         self.optimizer.step()
         return float(loss)
 
+    # 還沒驗證
     def save_model(self):
-        """Saves the trained model along with its hyperparameters."""
-        torch.save(self.model.state_dict(), self.save_model_path)
-        config = {
-            "model_name": self.model_name,
-            "in_channels": self.num_features,
-            "out_channels": self.num_classes,
-            "epochs": self.epochs, # 存的是原始的epochs 而不是最佳模型的epochs
-            "lr": self.lr,
-            "weight_decay": self.weight_decay
-        }
-        torch.save(config, self.save_config_path)
-        print(f"\nModel saved at {self.save_model_path}")
-        print(f"Config saved at {self.save_config_path}")
+        training_params = {"model_name": self.model_name, "epochs": self.epochs, "lr": self.lr, "weight_decay": self.weight_decay}
+        save_model_and_config(self.model, self.save_model_path, self.save_config_path, training_params)
 
 
     def run(self):

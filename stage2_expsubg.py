@@ -28,6 +28,9 @@ def parse_args():
     parser.add_argument("--run_mode", type=str, default="stage2_edge_0.5", help="Run mode")
     parser.add_argument("--stage1_path", type=str, default="saved/stage1", help="Directory for stage1 results")
     
+    # 使用 data 的原始 y 生成解釋
+    parser.add_argument("--use_raw_data", action="store_true", help="If set, use original data without removing any feature")
+
     return parser.parse_args()
 
 
@@ -41,17 +44,24 @@ if __name__ == "__main__":
     data, num_features, _ = loader.load_dataset(args.dataset)
     data = data.to(device)
 
-    # Read feature selection results 
-    ## 因為 Explainer 也需要 input data，需給他移除一個 feature 後的 data
-    feature_extractor = FeatureExtractorXLSX(os.path.join(args.stage1_path, "result"))
-    feature_trials, feature_indices, model_names = feature_extractor.extract_feature_numbers(args.dataset)
-    print(f"Feature trials: {feature_trials}")
-    print(f"Feature indices: {feature_indices}")
+    if args.use_raw_data:
+        print("Using raw data without removing any feature.")
+        feature_trials = [1]
+        feature_indices = [None]  # 表示不移除任何 feature
+        model_names = [f"{args.model}Classifier"]  # 若為regression 這裡要改
+        modified_graphs = [data]
+    else:
+        # Read feature selection results 
+        ## 因為 Explainer 也需要 input data，需給他移除一個 feature 後的 data
+        feature_extractor = FeatureExtractorXLSX(os.path.join(args.stage1_path, "result"))
+        feature_trials, feature_indices, model_names = feature_extractor.extract_feature_numbers(args.dataset)
+        print(f"Feature trials: {feature_trials}")
+        print(f"Feature indices: {feature_indices}")
 
-    # Modify graph by removing the selected feature
-    modifier = GraphModifier(data)
-    modified_graphs = modifier.modify_graph(feature_indices) 
-    print(modified_graphs[0])
+        # Modify graph by removing the selected feature
+        modifier = GraphModifier(data)
+        modified_graphs = modifier.modify_graph(feature_indices) 
+        print(modified_graphs[0])
 
     # Model mapping
     model_mapping = {"GCN2Regressor": GCN2Regressor, "GCN3Regressor": GCN3Regressor, "GCN2Classifier": GCN2Classifier, "GCN3Classifier": GCN3Classifier}
@@ -68,7 +78,7 @@ if __name__ == "__main__":
         model_class = model_mapping[model_names[i]]
         # model path
         model_path = os.path.join(args.stage1_path, "model", args.dataset, f"{feature_trials[i]}_{model_class.__name__}.pth")
-        
+        print(f"Loading model from {model_path}")
         explainer = SubgraphExplainer(
             model_class=model_class,
             dataset=args.dataset,
@@ -79,7 +89,7 @@ if __name__ == "__main__":
             epoch=args.epoch,
             run_mode=args.run_mode,
             trial_name=feature_trials[i],
-            remove_feature=feature_indices[i],
+            remove_feature=feature_indices[i] if feature_indices[i] is not None else -1,
             device=device,
             choose_nodes=args.choose_nodes,
         )
