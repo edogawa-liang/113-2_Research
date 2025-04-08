@@ -13,6 +13,7 @@ from trainer.gnn_trainer import GNNClassifierTrainer
 from utils.save_result import ExperimentLogger
 
 # 核心子圖包含整個節點
+# 移除部分邊後的節點分類結果
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train GNN after removing a selected subgraph.")

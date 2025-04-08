@@ -2,6 +2,7 @@ import os
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
+import pandas as pd
 
 # 核心子圖包含整個節點
 class ExplainerEdgeSelector:
@@ -18,47 +19,58 @@ class ExplainerEdgeSelector:
         :param top_k_percent: The percentage of top important edges to select.
         """
 
-        self.base_path = os.path.join(base_dir, explainer_name, dataset_name, node_choose)
+        self.base_path = os.path.join(base_dir, explainer_name, dataset_name)
         self.sub_dirs = sorted([d for d in os.listdir(self.base_path) if d.endswith("GCN2Classifier")]) # GCN2Regressor
         self.edge_masks = []  # 存放所有 edge_mask
         self.edge_aggregated = None  # 平均 edge_mask
         self.top_k_percent = top_k_percent
         self.device = device
-
+        self.node_choose = node_choose
 
     def load_data(self):
         """
-        Loads edge masks from multiple experiment folders (in .npz format) 
-        and computes the mean for each edge.
+        根據每個 model 的 node_record.csv 中某欄位的 one-hot 選擇節點，
+        並從 share_nodes/ 中載入 edge_mask 後加總。
         """
-
+        self.edge_masks = []
         self.node_count = 0
-        self.edge_masks = [] 
 
-        for sub_dir in self.sub_dirs:
-            sub_path = os.path.join(self.base_path, sub_dir)
+        for sub_dir in self.sub_dirs:  # ex: '1_GCN2Classifier'
+            model_dir = os.path.join(self.base_path, sub_dir)
+            share_node_dir = os.path.join(model_dir, "share_nodes")
+            csv_path = os.path.join(model_dir, "node_record.csv")
+
+            if not os.path.exists(csv_path):
+                print(f"Warning: node_record.csv not found in {model_dir}")
+                continue
+
+            df = pd.read_csv(csv_path)
+            if self.node_choose not in df.columns:
+                print(f"Warning: column '{self.node_choose}' not found in {csv_path}")
+                continue
+
+            selected_nodes = df[df[self.node_choose] == 1]["Node"].tolist()
 
             # 設定 node 數量（僅需計算一次）
             if self.node_count == 0:
-                self.node_count = len([f for f in os.listdir(sub_path) if f.startswith("node_") and f.endswith(".npz")])
+                self.node_count = len(selected_nodes) 
 
-            # 遍歷目錄下的所有 .npz 檔案
-            for file in os.listdir(sub_path):
-                if file.startswith("node_") and file.endswith(".npz"):
-                    file_path = os.path.join(sub_path, file)
+            for node_id in selected_nodes:
+                file_path = os.path.join(share_node_dir, f"node_{node_id}.npz")
+                if not os.path.exists(file_path):
+                    print(f"File {file_path} does not exist. Warn!!!!.")
+                    continue
 
-                    # 載入 .npz 文件
-                    data = np.load(file_path, allow_pickle=True)
-                    edge_mask = data.get("edge_mask", None)
+                data = np.load(file_path, allow_pickle=True)
+                edge_mask = data.get("edge_mask", None)
 
-                    if edge_mask is not None:
-                        self.edge_masks.append(edge_mask)  # 收集 edge_mask
-        
-        # 計算所有 edge_mask 的均值 
-        # # 改成加總!
+                if edge_mask is not None:
+                    self.edge_masks.append(edge_mask)
+
         if self.edge_masks:
-            # self.edge_aggregated = np.mean(self.edge_masks, axis=0)
-            self.edge_aggregated = np.sum(self.edge_masks, axis=0)
+            # 將同一解釋子圖內不同node的重要度相加，並把不同模型的解釋子圖的重要度也相加
+            self.edge_aggregated = np.sum(self.edge_masks, axis=0) 
+            print(f"Number of nodes selected: {self.node_count}")
             print(f"Number of edges picked in the subgraph: {np.count_nonzero(self.edge_aggregated)}")
 
 
