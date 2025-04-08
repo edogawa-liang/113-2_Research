@@ -45,7 +45,11 @@ See `command.txt`
 	```bash 
 	python stage2_expsubg.py
 	```	
-
+4. save the space of explanation subgraph
+	```bash 
+	python stage2_node_share.py
+	```
+	
 ## Saved folder
 - original\: Node classification for original graph
 - stage1\: Node regression for explainer, used for subgraph selection 

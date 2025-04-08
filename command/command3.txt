@@ -1,3 +1,5 @@
+# 將解釋子圖重要度由平均改為相加，多嘗試 random, high_betweenness
+
 # 1.  Generate original y DummyExplainer explainable subgraph from random nodes (base on command2 #1 Original node classification)
 done
 ------------------------------------------------------------
@@ -307,4 +309,53 @@ python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr
 python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_high_betweenness --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose high_betweenness
 python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_high_betweenness --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose high_betweenness
 
+
+# 節省儲存解釋子圖的空間
+- 不同 classifier 內挑的節點是一樣的，因為要同節點相加 (即random, top_pagerank, high_betweenness 也會一樣)。
+- 也就是 不同 classifier 的 node_record.csv 會相同，但解釋子圖會不同，因為解釋不同的模型 (share_nodes 內的 .npz 存不一樣的東西)
+
+# 35. saved the space of explainer subgraph from DummyExplainer and svd feature
+done
+------------------------------------------------------------
+python stage2_node_share.py --stage_dir stage2_svd_edge_0.3 --explainer DummyExplainer --dataset Cora
+python stage2_node_share.py --stage_dir stage2_svd_edge_0.3 --explainer DummyExplainer --dataset CiteSeer
+python stage2_node_share.py --stage_dir stage2_svd_edge_0.3 --explainer DummyExplainer --dataset Actor
+python stage2_node_share.py --stage_dir stage2_svd_edge_0.3 --explainer DummyExplainer --dataset Amazon
+
+
+# 36. saved the space of explainer subgraph from GNNExplainer and svd feature
+done
+------------------------------------------------------------
+python stage2_node_share.py --stage_dir stage2_svd_edge_0.3 --explainer GNNExplainer --dataset Cora
+python stage2_node_share.py --stage_dir stage2_svd_edge_0.3 --explainer GNNExplainer --dataset CiteSeer
+python stage2_node_share.py --stage_dir stage2_svd_edge_0.3 --explainer GNNExplainer --dataset Actor
+python stage2_node_share.py --stage_dir stage2_svd_edge_0.3 --explainer GNNExplainer --dataset Amazon
+
+
+
+# 37. saved the space of explainer subgraph from GNNExplainer and tree feature
+done
+------------------------------------------------------------
+python stage2_node_share.py --stage_dir stage2_tree_edge_0.3 --explainer GNNExplainer --dataset Cora
+python stage2_node_share.py --stage_dir stage2_tree_edge_0.3 --explainer GNNExplainer --dataset CiteSeer
+python stage2_node_share.py --stage_dir stage2_tree_edge_0.3 --explainer GNNExplainer --dataset Actor
+python stage2_node_share.py --stage_dir stage2_tree_edge_0.3 --explainer GNNExplainer --dataset Amazon
+
+
+# 38. saved the space of explainer subgraph from DummyExplainer and y
+done
+------------------------------------------------------------
+python stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer DummyExplainer --dataset Cora
+python stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer DummyExplainer --dataset CiteSeer
+python stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer DummyExplainer --dataset Actor
+python stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer DummyExplainer --dataset Amazon
+
+
+# 40. saved the space of explainer subgraph from GNNExplainer and y
+done
+------------------------------------------------------------
+python stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer GNNExplainer --dataset Cora
+python stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer GNNExplainer --dataset CiteSeer
+python stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer GNNExplainer --dataset Actor
+python stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer GNNExplainer --dataset Amazon
 
