@@ -17,7 +17,7 @@ def parse_args():
     parser.add_argument("--normalize", type=lambda x: x.lower() == "true", default=False, help="Whether to normalize the dataset")
 
     parser.add_argument("--model", type=str, default="GCN2", choices=["GCN2", "GCN3"], help="Model type")
-    parser.add_argument("--choose_nodes", type=str, default='random', choices=["random", "high_degree", "top_pagerank", "manual"], help="Node selection strategy")
+    parser.add_argument("--choose_nodes", type=str, default='random', choices=["random", "high_degree", "top_pagerank", "manual", "high_betweenness"], help="Node selection strategy")
     parser.add_argument("--manual_nodes", type=str, default=None, help="Comma-separated list of node indices to explain")
     
     parser.add_argument("--node_ratio", type=str, default="auto", help="'auto' for automatic calculation or a numeric value to manually set node selection ratio")

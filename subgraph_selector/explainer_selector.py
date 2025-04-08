@@ -54,9 +54,11 @@ class ExplainerEdgeSelector:
                     if edge_mask is not None:
                         self.edge_masks.append(edge_mask)  # 收集 edge_mask
         
-        # 計算所有 edge_mask 的均值
+        # 計算所有 edge_mask 的均值 
+        # # 改成加總!
         if self.edge_masks:
-            self.edge_aggregated = np.mean(self.edge_masks, axis=0)
+            # self.edge_aggregated = np.mean(self.edge_masks, axis=0)
+            self.edge_aggregated = np.sum(self.edge_masks, axis=0)
             print(f"Number of edges picked in the subgraph: {np.count_nonzero(self.edge_aggregated)}")
 
 

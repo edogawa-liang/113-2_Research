@@ -12,7 +12,7 @@ class ChooseNodeSelector:
         :param data: PyG data object
         :param node_ratio: "auto" for automatic calculation or a numeric value to manually set node selection ratio
         :param edge_ratio: Ensures sufficient edges in the subgraph, required only if node_ratio is 'auto'
-        :param strategy: Node selection strategy (e.g., "random", "high_degree", "top_pagerank", "manual")
+        :param strategy: Node selection strategy (e.g., "random", "high_degree", "top_pagerank", "manual", "high_betweenness")
         :param manual_nodes: Comma-separated list of node indices if using 'manual' strategy
         """
         self.data = data
@@ -62,10 +62,13 @@ class ChooseNodeSelector:
         elif self.strategy == "manual":
             return self._select_manual_nodes()
 
+        elif self.strategy == "high_betweenness":
+            return self._select_high_betweeness(train_nodes, num_selected)
+
         else:
             raise ValueError(f"Unsupported choose_nodes strategy: {self.strategy}")
 
-    # 還沒看
+
     def _select_high_degree_nodes(self, train_nodes, num_selected):
         """
         Select nodes with the highest degree centrality.
@@ -100,3 +103,15 @@ class ChooseNodeSelector:
             return [int(n) for n in self.manual_nodes.split(",")]
         except ValueError:
             raise ValueError("Invalid node index format in manual selection. Use comma-separated integers.")
+
+    def _select_high_betweeness(self, train_nodes, num_selected):
+        """
+        Select nodes with the highest betweenness centrality.
+        """
+        G = to_networkx(self.data, to_undirected=True)
+        G = G.subgraph(train_nodes)  # 限制只在訓練節點上計算 centrality
+
+        betweenness = nx.betweenness_centrality(G)
+        sorted_nodes = sorted(train_nodes, key=lambda n: betweenness.get(n, 0), reverse=True)
+        return sorted_nodes[:num_selected]
+
