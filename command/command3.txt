@@ -37,6 +37,7 @@ python stage2_expsubg.py --dataset Amazon  --choose_nodes high_betweenness --nod
 - dummy explainer
 
 # 5. Train GNN model (node classification) after y DummyExplainer from random nodes selection, fraction 0.1 (base on #1)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose random
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose random
@@ -45,6 +46,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 6. Train GNN model (node classification) after y DummyExplainer from Top PageRank nodes selection, fraction 0.1 (base on command2 #29)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose top_pagerank
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose top_pagerank
@@ -53,6 +55,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 7. Train GNN model (node classification) after y DummyExplainer from high betweenness nodes selection, fraction 0.1 (base on #2)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_high_betweenness --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose high_betweenness
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_high_betweenness --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose high_betweenness
@@ -61,6 +64,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 8. Train GNN model (node classification) after y DummyExplainer from random nodes selection, fraction 0.2 (base on #1)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_random --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose random
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_random --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose random
@@ -69,6 +73,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 9. Train GNN model (node classification) after y DummyExplainer from Top PageRank nodes selection, fraction 0.2 (base on command2 #29)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_PageRank --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose top_pagerank
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_PageRank --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose top_pagerank
@@ -77,6 +82,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 10. Train GNN model (node classification) after y DummyExplainer from high betweenness nodes selection, fraction 0.2 (base on #2)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_high_betweenness --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose high_betweenness
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_high_betweenness --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose high_betweenness
@@ -85,6 +91,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 11. Train GNN model (node classification) after y DummyExplainer from random nodes selection, fraction 0.3 (base on #1)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_random --selector_type explainer --fraction 0.3 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose random
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_random --selector_type explainer --fraction 0.3 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose random
@@ -93,6 +100,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 12. Train GNN model (node classification) after y DummyExplainer from Top PageRank nodes selection, fraction 0.3 (base on command2 #29)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_PageRank --selector_type explainer --fraction 0.3 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose top_pagerank
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_PageRank --selector_type explainer --fraction 0.3 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose top_pagerank
@@ -101,6 +109,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 13. Train GNN model (node classification) after y DummyExplainer from high betweenness nodes selection, fraction 0.3 (base on #2)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_high_betweenness --selector_type explainer --fraction 0.3 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose high_betweenness
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_high_betweenness --selector_type explainer --fraction 0.3 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose high_betweenness
@@ -109,6 +118,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 14. Train GNN model (node classification) after y DummyExplainer from random nodes selection, fraction 0.4 (base on #1)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_random --selector_type explainer --fraction 0.4 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose random
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_random --selector_type explainer --fraction 0.4 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose random
@@ -117,6 +127,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 15. Train GNN model (node classification) after y DummyExplainer from Top PageRank nodes selection, fraction 0.4 (base on command2 #29)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_PageRank --selector_type explainer --fraction 0.4 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose top_pagerank
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_PageRank --selector_type explainer --fraction 0.4 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose top_pagerank
@@ -125,6 +136,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 16. Train GNN model (node classification) after y DummyExplainer from high betweenness nodes selection, fraction 0.4 (base on #2)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_high_betweenness --selector_type explainer --fraction 0.4 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose high_betweenness
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_high_betweenness --selector_type explainer --fraction 0.4 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose high_betweenness
@@ -133,6 +145,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 17. Train GNN model (node classification) after y DummyExplainer from random nodes selection, fraction 0.5 (base on #1)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_random --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose random
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_random --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose random
@@ -141,6 +154,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 18. Train GNN model (node classification) after y DummyExplainer from Top PageRank nodes selection, fraction 0.5 (base on command2 #29)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_PageRank --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose top_pagerank
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_PageRank --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose top_pagerank
@@ -149,6 +163,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 19. Train GNN model (node classification) after y DummyExplainer from high betweenness nodes selection, fraction 0.5 (base on #2)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_high_betweenness --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose high_betweenness
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_high_betweenness --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose high_betweenness
@@ -159,6 +174,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 - GNNExplainer
 
 # 20. Train GNN model (node classification) after y GNNExplainer from random nodes selection, fraction 0.1 (base on #3)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose random
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_random --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose random
@@ -167,6 +183,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 21. Train GNN model (node classification) after y GNNExplainer from Top PageRank nodes selection, fraction 0.1 (base on command2 #19)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose top_pagerank
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_PageRank --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose top_pagerank
@@ -175,6 +192,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 22. Train GNN model (node classification) after y GNNExplainer from high betweenness nodes selection, fraction 0.1 (base on #4)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_high_betweenness --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose high_betweenness
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_high_betweenness --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose high_betweenness
@@ -183,6 +201,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 23. Train GNN model (node classification) after y GNNExplainer from random nodes selection, fraction 0.2 (base on #3)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_random --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose random
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_random --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose random
@@ -191,6 +210,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 24. Train GNN model (node classification) after y GNNExplainer from Top PageRank nodes selection, fraction 0.2 (base on command2 #19)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_PageRank --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose top_pagerank
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_PageRank --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose top_pagerank
@@ -199,6 +219,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 25. Train GNN model (node classification) after y GNNExplainer from high betweenness nodes selection, fraction 0.2 (base on #4)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_high_betweenness --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose high_betweenness
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_high_betweenness --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose high_betweenness
@@ -207,6 +228,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 26. Train GNN model (node classification) after y GNNExplainer from random nodes selection, fraction 0.3 (base on #3)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_random --selector_type explainer --fraction 0.3 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose random
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_random --selector_type explainer --fraction 0.3 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose random
@@ -215,6 +237,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 27. Train GNN model (node classification) after y GNNExplainer from Top PageRank nodes selection, fraction 0.3 (base on command2 #19)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_PageRank --selector_type explainer --fraction 0.3 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose top_pagerank
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_PageRank --selector_type explainer --fraction 0.3 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose top_pagerank
@@ -223,6 +246,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 28. Train GNN model (node classification) after y GNNExplainer from high betweenness nodes selection, fraction 0.3 (base on #4)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_high_betweenness --selector_type explainer --fraction 0.3 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose high_betweenness
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_high_betweenness --selector_type explainer --fraction 0.3 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose high_betweenness
@@ -231,6 +255,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 29. Train GNN model (node classification) after y GNNExplainer from random nodes selection, fraction 0.4 (base on #3)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_random --selector_type explainer --fraction 0.4 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose random
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_random --selector_type explainer --fraction 0.4 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose random
@@ -239,6 +264,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 30. Train GNN model (node classification) after y GNNExplainer from Top PageRank nodes selection, fraction 0.4 (base on command2 #19)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_PageRank --selector_type explainer --fraction 0.4 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose top_pagerank
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_PageRank --selector_type explainer --fraction 0.4 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose top_pagerank
@@ -247,6 +273,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 31. Train GNN model (node classification) after y GNNExplainer from high betweenness nodes selection, fraction 0.4 (base on #4)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_high_betweenness --selector_type explainer --fraction 0.4 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose high_betweenness
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_high_betweenness --selector_type explainer --fraction 0.4 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose high_betweenness
@@ -255,6 +282,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 32. Train GNN model (node classification) after y GNNExplainer from random nodes selection, fraction 0.5 (base on #3)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_random --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose random
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_random --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose random
@@ -263,6 +291,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 33. Train GNN model (node classification) after y GNNExplainer from Top PageRank nodes selection, fraction 0.5 (base on command2 #19)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_PageRank --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose top_pagerank
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_PageRank --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose top_pagerank
@@ -271,6 +300,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 34. Train GNN model (node classification) after y GNNExplainer from high betweenness nodes selection, fraction 0.5 (base on #4)
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_high_betweenness --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose high_betweenness
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_high_betweenness --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose high_betweenness
