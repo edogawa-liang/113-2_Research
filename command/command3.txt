@@ -351,11 +351,131 @@ python stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer DummyExpla
 python stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer DummyExplainer --dataset Amazon
 
 
-# 40. saved the space of explainer subgraph from GNNExplainer and y
+# 39. saved the space of explainer subgraph from GNNExplainer and y
 done
 ------------------------------------------------------------
 python stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer GNNExplainer --dataset Cora
 python stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer GNNExplainer --dataset CiteSeer
 python stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer GNNExplainer --dataset Actor
 python stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer GNNExplainer --dataset Amazon
+
+
+- random Walk
+
+# 40. Remove Edge by Random Walk (choose nodes by high betweenness), fraction 0.1
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
+
+
+# 41. Remove Edge by Random Walk (choose nodes by Random), fraction 0.2
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note random_RandomWalk --selector_type random_walk --fraction 0.2  --node_choose random --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note random_RandomWalk --selector_type random_walk --fraction 0.2  --node_choose random --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note random_RandomWalk --selector_type random_walk --fraction 0.2  --node_choose random --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note random_RandomWalk --selector_type random_walk --fraction 0.2  --node_choose random --node_ratio auto --edge_ratio 0.3
+
+
+# 42. Remove Edge by Random Walk (choose nodes by PageRank), fraction 0.2
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note PageRank_RandomWalk --selector_type random_walk --fraction 0.2  --node_choose top_pagerank --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note PageRank_RandomWalk --selector_type random_walk --fraction 0.2  --node_choose top_pagerank --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note PageRank_RandomWalk --selector_type random_walk --fraction 0.2  --node_choose top_pagerank --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note PageRank_RandomWalk --selector_type random_walk --fraction 0.2  --node_choose top_pagerank --node_ratio auto --edge_ratio 0.3
+
+
+# 43. Remove Edge by Random Walk (choose nodes by high betweenness), fraction 0.2
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.2  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.2  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.2  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.2  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
+
+
+# 44. Remove Edge by Random Walk (choose nodes by Random), fraction 0.3
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note random_RandomWalk --selector_type random_walk --fraction 0.3  --node_choose random --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note random_RandomWalk --selector_type random_walk --fraction 0.3  --node_choose random --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note random_RandomWalk --selector_type random_walk --fraction 0.3  --node_choose random --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note random_RandomWalk --selector_type random_walk --fraction 0.3  --node_choose random --node_ratio auto --edge_ratio 0.3
+
+
+# 45. Remove Edge by Random Walk (choose nodes by PageRank), fraction 0.3
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note PageRank_RandomWalk --selector_type random_walk --fraction 0.3  --node_choose top_pagerank --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note PageRank_RandomWalk --selector_type random_walk --fraction 0.3  --node_choose top_pagerank --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note PageRank_RandomWalk --selector_type random_walk --fraction 0.3  --node_choose top_pagerank --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note PageRank_RandomWalk --selector_type random_walk --fraction 0.3  --node_choose top_pagerank --node_ratio auto --edge_ratio 0.3
+
+
+# 46. Remove Edge by Random Walk (choose nodes by high betweenness), fraction 0.3
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.3  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.3  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.3  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.3  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
+
+
+# 47. Remove Edge by Random Walk (choose nodes by Random), fraction 0.4
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note random_RandomWalk --selector_type random_walk --fraction 0.4  --node_choose random --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note random_RandomWalk --selector_type random_walk --fraction 0.4  --node_choose random --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note random_RandomWalk --selector_type random_walk --fraction 0.4  --node_choose random --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note random_RandomWalk --selector_type random_walk --fraction 0.4  --node_choose random --node_ratio auto --edge_ratio 0.3
+
+
+# 48. Remove Edge by Random Walk (choose nodes by PageRank), fraction 0.4
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note PageRank_RandomWalk --selector_type random_walk --fraction 0.4  --node_choose top_pagerank --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note PageRank_RandomWalk --selector_type random_walk --fraction 0.4  --node_choose top_pagerank --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note PageRank_RandomWalk --selector_type random_walk --fraction 0.4  --node_choose top_pagerank --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note PageRank_RandomWalk --selector_type random_walk --fraction 0.4  --node_choose top_pagerank --node_ratio auto --edge_ratio 0.3
+
+
+# 49. Remove Edge by Random Walk (choose nodes by high betweenness), fraction 0.4
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.4  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.4  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.4  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.4  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
+
+
+# 50. Remove Edge by Random Walk (choose nodes by Random), fraction 0.5
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note random_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose random --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note random_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose random --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note random_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose random --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note random_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose random --node_ratio auto --edge_ratio 0.3
+
+
+# 51. Remove Edge by Random Walk (choose nodes by PageRank), fraction 0.5
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note PageRank_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose top_pagerank --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note PageRank_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose top_pagerank --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note PageRank_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose top_pagerank --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note PageRank_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose top_pagerank --node_ratio auto --edge_ratio 0.3
+
+
+# 52. Remove Edge by Random Walk (choose nodes by high betweenness), fraction 0.5
+runnnig
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
+
 
