@@ -471,7 +471,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 52. Remove Edge by Random Walk (choose nodes by high betweenness), fraction 0.5
-runnnig
+done
 ------------------------------------------------------------
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note high_betweenness_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose high_betweenness --node_ratio auto --edge_ratio 0.3
