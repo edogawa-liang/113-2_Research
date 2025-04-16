@@ -1,7 +1,7 @@
 import os
 import torch
 import numpy as np
-from torch_geometric.utils import dense_to_sparse
+from torch_geometric.utils import dense_to_sparse, to_dense_adj
 from torch_geometric.explain import ModelConfig
 from torch_geometric.explain.config import ModelMode
 from torch_geometric.explain import Explainer, GNNExplainer, PGExplainer, DummyExplainer
@@ -136,10 +136,15 @@ class SubgraphExplainer:
         labels = self.data.y
 
         # 模型看到 n hop，解釋時候給它 n+1 的鄰居，才不會因為邊界效應而失真。 (CF-Explainer這樣使用)
-        sub_adj, sub_feat, sub_labels, node_dict = get_neighbourhood(int(node_idx), edge_index, self.hop + 1, features, labels)
+        sub_edge_index, sub_feat, sub_labels, node_dict = get_neighbourhood(int(node_idx), edge_index, self.hop + 1, features, labels)
         new_idx = node_dict[int(node_idx)]
-        norm_adj = normalize_adj(sub_adj)
-        sub_edge_index, sub_edge_weight = dense_to_sparse(norm_adj)
+        print("node_dict:", node_dict)
+        
+        sub_adj = to_dense_adj(sub_edge_index, max_num_nodes=sub_feat.size(0)).squeeze()
+        # norm_adj = normalize_adj(sub_adj)
+
+        # 模型用 sparse edge_index
+        sub_edge_weight = torch.ones(sub_edge_index.size(1), device=sub_feat.device)
         y_pred_orig = self.model(sub_feat, sub_edge_index, sub_edge_weight)
         y_pred_orig = torch.argmax(y_pred_orig, dim=1) 
         print("original model prediction:", y_pred_orig[new_idx].item())
@@ -167,6 +172,7 @@ class SubgraphExplainer:
             num_epochs=self.epoch
         )
         print(cf_example) # 沒有save
+
         return cf_example
 
     def _save_explanation(self, node_idx, explanation, explainer_type, y_value):

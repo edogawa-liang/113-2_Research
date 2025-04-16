@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import torch.optim as optim
-from torch.nn.utils import clip_grad_norm
+from torch.nn.utils import clip_grad_norm_
 from .utils.utils import get_degree_matrix
 from .basic_GCN_perturb import GCNSyntheticPerturb
 from .utils.utils import normalize_adj
@@ -125,7 +125,9 @@ class CFExplainer:
 		# loss_pred indicator should be based on y_pred_new_actual NOT y_pred_new!
 		loss_total, loss_pred, loss_graph_dist, cf_adj = self.cf_model.loss(output[self.new_idx], self.y_pred_orig, y_pred_new_actual)
 		loss_total.backward()
-		clip_grad_norm(self.cf_model.parameters(), 2.0)
+		# add
+		print("P_vec.grad", self.cf_model.P_vec.grad)
+		clip_grad_norm_(self.cf_model.parameters(), 2.0)
 		self.cf_optimizer.step()
 
 		# optimizer.step() 之後再比較 P_vec

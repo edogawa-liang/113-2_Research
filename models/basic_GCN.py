@@ -8,8 +8,8 @@ class GCN2Classifier(torch.nn.Module):
         Initializes a 2-layer GCN model.
         """
         super().__init__()
-        self.conv1 = GCNConv(in_channels, hidden_channels, cached=True, normalize=True)
-        self.conv2 = GCNConv(hidden_channels, out_channels, cached=True, normalize=True)
+        self.conv1 = GCNConv(in_channels, hidden_channels, cached=False, normalize=True)
+        self.conv2 = GCNConv(hidden_channels, out_channels, cached=False, normalize=True)
 
     def forward(self, x, edge_index, edge_weight=None):
         x = self.conv1(x, edge_index, edge_weight).relu()

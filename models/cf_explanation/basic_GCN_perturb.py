@@ -56,8 +56,11 @@ class GCNSyntheticPerturb(nn.Module):
 		if self.edge_additions:
 			self.P_vec = Parameter(torch.FloatTensor(torch.zeros(self.P_vec_size))) # 新增擾亂邊
 		else:
-			self.P_vec = Parameter(torch.FloatTensor(torch.ones(self.P_vec_size))) # 刪除邊
-		# self.P_vec = Parameter(torch.full((self.P_vec_size,), 0.49)) 
+			# self.P_vec = Parameter(torch.FloatTensor(torch.ones(self.P_vec_size))) # 刪除邊 (Ori CF)
+			# self.P_vec = Parameter(torch.FloatTensor(self.P_vec_size).fill_(0.0))
+			# self.P_vec = Parameter(torch.empty(self.P_vec_size).uniform_(-0.1, 0.1))
+			self.P_vec = Parameter(torch.full((self.P_vec_size,), -0.04)) # sigmoid後會0.49，即所有邊都移除
+
 
 		self.reset_parameters()
 
@@ -78,8 +81,6 @@ class GCNSyntheticPerturb(nn.Module):
 				torch.add(self.P_vec, torch.FloatTensor(adj_vec))       #self.P_vec is all 0s
 			else:
 				torch.sub(self.P_vec, eps) # 意圖是讓 sigmoid(P_vec) 稍微小於 0.73，接近 0.5，有機會「不保留原來的邊」
-				# torch.nn.init.constant_(self.P_vec, 0.0)  # sigmoid(0) = 0.5
-
 
 
 
@@ -94,6 +95,7 @@ class GCNSyntheticPerturb(nn.Module):
 		print("self.P_hat_symm", self.P_hat_symm)
 		if self.edge_additions:         # Learn new adj matrix directly
 			A_tilde = F.sigmoid(self.P_hat_symm) + torch.eye(self.num_nodes)  # Use sigmoid to bound P_hat in [0,1]
+			
 		else:       # Learn P_hat that gets multiplied element-wise with adj -- only edge deletions
 			A_tilde = F.sigmoid(self.P_hat_symm) * self.sub_adj + torch.eye(self.num_nodes)       # Use sigmoid to bound P_hat in [0,1]
 
@@ -111,6 +113,7 @@ class GCNSyntheticPerturb(nn.Module):
 		x = F.dropout(x, self.dropout, training=self.training)
 		x = self.gc2(x, norm_adj)
 		# print('x.shape after gc2: ', x.shape)
+		# print("forward x", x)
 		return F.log_softmax(x, dim=1)
 
 
@@ -163,7 +166,10 @@ class GCNSyntheticPerturb(nn.Module):
 			cf_adj = self.P * self.adj
 		cf_adj.requires_grad = True  # Need to change this otherwise loss_graph_dist has no gradient
 
-
+		# Calculate the k-hop edge from this node
+		num_edges = torch.sum(self.adj == 1).item() // 2
+		print("number of edges from node: ", num_edges)
+		
 		# Want negative in front to maximize loss instead of minimizing it to find CFs
 		loss_pred = - F.nll_loss(output, y_pred_orig)
 		print('loss_pred', loss_pred)
