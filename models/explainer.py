@@ -1,19 +1,23 @@
 import os
 import torch
 import numpy as np
+from torch_geometric.utils import dense_to_sparse
 from torch_geometric.explain import ModelConfig
 from torch_geometric.explain.config import ModelMode
 from torch_geometric.explain import Explainer, GNNExplainer, PGExplainer, DummyExplainer
+from .cf_explanation.utils.utils import get_neighbourhood, normalize_adj
+from .cf_explanation.cf_explainer import CFExplainer
+
 
 class SubgraphExplainer:
     """
-    A flexible GNN explainer for node regression, supporting multiple algorithms (GNNExplainer, PGExplainer).
+    A flexible GNN explainer for node regression, supporting multiple algorithms (GNNExplainer, PGExplainer, DummyExplainer, CFExplainer).
     """
 
     def __init__(self, model_class, dataset, data, model_path, trial_name, 
-                 explainer_type="GNNExplainer", hop=2, epoch=100, 
+                 explainer_type="GNNExplainer", hop=2, epoch=100, lr=0.01,
                  run_mode="stage2", remove_feature=None, device=None, 
-                 choose_nodes="random"):
+                 choose_nodes="random", cf_beta=0.5):
         """
         Initializes the explainer.
 
@@ -30,6 +34,7 @@ class SubgraphExplainer:
         """
         self.epoch = epoch
         self.hop = hop
+        self.lr = lr
         self.dataset = dataset
         self.data = data
         self.model_path = model_path
@@ -38,11 +43,13 @@ class SubgraphExplainer:
         self.run_mode = run_mode
         self.remove_feature = remove_feature
         self.choose_nodes = choose_nodes
+        self.cf_beta = cf_beta
+        self.explainer_type = explainer_type
 
         self.device = device if device else ("cuda:1" if torch.cuda.is_available() else "cpu")
-        self.model = self._load_model()
+        self.model, self.model_config_dict = self._load_model()
         self.task_type = self._determine_task_type()
-        self.explainer = self._explainer_setting(explainer_type)  # 設定 explainer
+        self.explainer = self._explainer_setting()  # 設定 explainer
 
     
     def _determine_task_type(self):
@@ -74,26 +81,28 @@ class SubgraphExplainer:
 
         model = self.model_class(**model_config).to(self.device)
 
-        # 載入訓練好的權重
         if not os.path.exists(self.model_path):
             raise FileNotFoundError(f"Model checkpoint not found: {self.model_path}")
 
+        # 載入訓練好的權重
         model.load_state_dict(torch.load(self.model_path, map_location=self.device))
         model.eval()
 
-        return model
+        return model, model_config
 
 
-    def _explainer_setting(self, explainer_type):
+    def _explainer_setting(self):
         """Sets up the explainer for node regression."""
-        if explainer_type == "GNNExplainer":
-            algorithm = GNNExplainer(epochs=self.epoch, num_hops=self.hop)
-        elif explainer_type == "PGExplainer":
+        if self.explainer_type == "GNNExplainer":
+            algorithm = GNNExplainer(epochs=self.epoch, num_hops=self.hop, lr=self.lr)
+        elif self.explainer_type == "PGExplainer":
             algorithm = PGExplainer(epochs=self.epoch, num_hops=self.hop)
-        elif explainer_type == "DummyExplainer":
+        elif self.explainer_type == "DummyExplainer":
             algorithm = DummyExplainer()
+        elif self.explainer_type == "CFExplainer":
+            return None  # 不走 PyG explainer API
         else:
-            raise ValueError(f"Unsupported explainer type: {explainer_type}")
+            raise ValueError(f"Unsupported explainer type: {self.explainer_type}")
 
         print(f"Task Type: {self.task_type}") 
         
@@ -108,16 +117,57 @@ class SubgraphExplainer:
         self.model.eval()
         data = data.to(self.device)  # 確保數據也移動到對應裝置
         data.y = data.y.long()
-        explanation = self.explainer(data.x, data.edge_index, index=node_idx) # 這邊問題
 
-        y_value = data.y[node_idx].item()  # 取得節點的回歸目標數值
+        if self.explainer_type == "CFExplainer":
+            return self._run_cf_explainer(node_idx)
+        
+        else: # 其餘 PyG 支援的 Explainer
+            explanation = self.explainer(data.x, data.edge_index, index=node_idx)
+            y_value = data.y[node_idx].item()  # 取得節點的回歸目標數值
+            if save:
+                self._save_explanation(node_idx, explanation, self.explainer.algorithm.__class__.__name__, y_value)
 
-        if save:
-            self._save_explanation(node_idx, explanation, self.explainer.algorithm.__class__.__name__, y_value)
-
-        return explanation.node_mask, explanation.edge_mask
+            return explanation.node_mask, explanation.edge_mask
 
 
+    def _run_cf_explainer(self, node_idx):
+        edge_index = self.data.edge_index
+        features = self.data.x
+        labels = self.data.y
+
+        # 模型看到 n hop，解釋時候給它 n+1 的鄰居，才不會因為邊界效應而失真。 (CF-Explainer這樣使用)
+        sub_adj, sub_feat, sub_labels, node_dict = get_neighbourhood(int(node_idx), edge_index, self.hop + 1, features, labels)
+        new_idx = node_dict[int(node_idx)]
+        norm_adj = normalize_adj(sub_adj)
+        sub_edge_index, sub_edge_weight = dense_to_sparse(norm_adj)
+        y_pred_orig = self.model(sub_feat, sub_edge_index, sub_edge_weight)
+        y_pred_orig = torch.argmax(y_pred_orig, dim=1) 
+        print("original model prediction:", y_pred_orig[new_idx].item())
+
+
+        explainer = CFExplainer(
+            model=self.model,
+            sub_adj=sub_adj,
+            sub_feat=sub_feat,
+            n_hid=self.model_config_dict.get("hidden_channels", 64), #使用GCN2, 如果使用GCN3則改成hidden_channels1, hidden_channels2 也需要一併修改cf_explainer
+            dropout=0.0,
+            sub_labels=sub_labels,
+            y_pred_orig=y_pred_orig[new_idx],
+            num_classes=self.model_config_dict.get("out_channels", len(torch.unique(labels))),
+            beta=self.cf_beta,
+            device=self.device
+        )
+
+        cf_example = explainer.explain(
+            node_idx=node_idx,
+            cf_optimizer="SGD",
+            new_idx=new_idx,
+            lr=self.lr,
+            n_momentum=0.0,
+            num_epochs=self.epoch
+        )
+        print(cf_example) # 沒有save
+        return cf_example
 
     def _save_explanation(self, node_idx, explanation, explainer_type, y_value):
         """

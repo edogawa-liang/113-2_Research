@@ -1,0 +1,3 @@
+# try
+python stage2_expsubg.py --dataset Cora  --choose_nodes top_pagerank --node_ratio 0.001 --run_mode cf_try --explainer_type CFExplainer --stage1_path saved/original --use_raw_data --epoch 10
+

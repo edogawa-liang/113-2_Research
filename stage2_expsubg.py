@@ -1,6 +1,6 @@
 import argparse
-import os
 import torch
+import os
 from data.dataset_loader import GraphDatasetLoader
 from data.data_modifier import GraphModifier
 from subgraph_selector.utils.choose_node import ChooseNodeSelector
@@ -23,13 +23,17 @@ def parse_args():
     parser.add_argument("--node_ratio", type=str, default="auto", help="'auto' for automatic calculation or a numeric value to manually set node selection ratio")
     parser.add_argument("--edge_ratio", type=float, default=0.5, help="Ensures sufficient edges in the subgraph, required only if node_ratio is 'auto'")
 
-    parser.add_argument("--explainer_type", type=str, default="GNNExplainer", choices=["GNNExplainer", "PGExplainer", "DummyExplainer", "CF-Explainer"], help="Type of explainer to use")
+    parser.add_argument("--explainer_type", type=str, default="GNNExplainer", choices=["GNNExplainer", "PGExplainer", "DummyExplainer", "CFExplainer"], help="Type of explainer to use")
     parser.add_argument("--epoch", type=int, default=100, help="Number of training epochs for explainer")
+    parser.add_argument("--lr", type=float, default=0.01, help="Learning rate for explainer")
     parser.add_argument("--run_mode", type=str, default="stage2_edge_0.5", help="Run mode")
     parser.add_argument("--stage1_path", type=str, default="saved/stage1", help="Directory for stage1 results")
     
     # 使用 data 的原始 y 生成解釋
     parser.add_argument("--use_raw_data", action="store_true", help="If set, use original data without removing any feature")
+
+    # cf_explainer
+    parser.add_argument("--cf_beta", type=float, default=0.5, help="Tradeoff for dist loss")
 
     return parser.parse_args()
 
@@ -87,11 +91,13 @@ if __name__ == "__main__":
             explainer_type=args.explainer_type,
             hop= 2 if args.model == "GCN2" else 3,
             epoch=args.epoch,
+            lr=args.lr,
             run_mode=args.run_mode,
             trial_name=feature_trials[i],
             remove_feature=feature_indices[i] if feature_indices[i] is not None else -1,
             device=device,
             choose_nodes=args.choose_nodes,
+            cf_beta=args.cf_beta,
         )
 
         # Explain each node
