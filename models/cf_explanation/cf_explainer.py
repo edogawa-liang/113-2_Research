@@ -1,6 +1,5 @@
 # Based on https://github.com/RexYing/gnn-model-explainer/blob/master/explainer/explain.py
 
-import math
 import time
 import torch
 import torch.nn as nn
@@ -85,20 +84,22 @@ class CFExplainer:
 			self.cf_optimizer = optim.Adadelta(self.cf_model.parameters(), lr=lr)
 
 
-		best_cf_example = []
 		best_loss = np.inf
 		num_cf_examples = 0
+		best_cf_example = []
+
 		for epoch in range(num_epochs):
 			print("Epoch: ", epoch)
 			new_example, loss_total = self.train(epoch)
 			if new_example != [] and loss_total < best_loss:
-				best_cf_example.append(new_example)
+				best_cf_example = new_example
+				self.best_cf_adj = self.cf_adj.detach().clone()
 				best_loss = loss_total
 				num_cf_examples += 1 # 紀錄成功產出的 CF 數量
 		# print("{} CF examples for node_idx = {}".format(num_cf_examples, self.node_idx))
 		# print(" ")
-
-		return(best_cf_example)
+		print("Best CF example: ", best_cf_example)
+		return best_cf_example
 
 
 	def train(self, epoch):
@@ -123,7 +124,7 @@ class CFExplainer:
 			P_before = self.cf_model.P_vec.clone()
 			
 		# loss_pred indicator should be based on y_pred_new_actual NOT y_pred_new!
-		loss_total, loss_pred, loss_graph_dist, cf_adj = self.cf_model.loss(output[self.new_idx], self.y_pred_orig, y_pred_new_actual)
+		loss_total, loss_pred, loss_graph_dist, self.cf_adj = self.cf_model.loss(output[self.new_idx], self.y_pred_orig, y_pred_new_actual)
 		loss_total.backward()
 		# add
 		print("P_vec.grad", self.cf_model.P_vec.grad)
@@ -151,7 +152,7 @@ class CFExplainer:
 		if y_pred_new_actual != self.y_pred_orig:
 			print(y_pred_new_actual, self.y_pred_orig)
 			cf_stats = [self.node_idx, self.new_idx,
-			            cf_adj.detach().numpy(), self.sub_adj.detach().numpy(),
+			            self.cf_adj.detach().numpy(), self.sub_adj.detach().numpy(),
 			            self.y_pred_orig.item(), y_pred_new.item(),
 			            y_pred_new_actual.item(), self.sub_labels[self.new_idx].numpy(),
 			            self.sub_adj.shape[0], loss_total.item(),
@@ -159,3 +160,29 @@ class CFExplainer:
 
 
 		return(cf_stats, loss_total.item())
+	
+
+	# 額外加的 (還沒驗證)
+	def get_removed_edges_from_original_index(self, node_dict):
+		"""
+		回傳原圖節點編號與從原圖中被 perturb 掉的邊（edge_index 格式）
+
+		Args:
+			node_dict: dict，原圖 -> 子圖的節點編號對應
+
+		Returns:
+			dict:
+				- "target_node": 原圖節點編號
+				- "removed_edges": tensor [2, num_edges]，原圖中的 edge_index 表示
+		"""
+		reverse_node_dict = {v: k for k, v in node_dict.items()}
+		edge_mask = (self.sub_adj - self.best_cf_adj) > 0 # 最好的那次CF
+		removed_edge_indices = edge_mask.nonzero(as_tuple=False)
+
+		removed_edges_global = torch.tensor([
+			[reverse_node_dict[i.item()], reverse_node_dict[j.item()]]
+			for i, j in removed_edge_indices
+		]).T  # shape: [2, num_edges]
+
+		return removed_edges_global
+
