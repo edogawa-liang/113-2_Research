@@ -7,7 +7,8 @@ from subgraph_selector.utils.feat_sel import FeatureSelector
 from models.basic_GCN import GCN2Classifier, GCN3Classifier, GCN2Regressor, GCN3Regressor
 from trainer.gnn_trainer import GNNClassifierTrainer, GNNRegressorTrainer
 from utils.save_result import ExperimentLogger
-
+from models.basic_mlp import MLPClassifier, MLPRegressor
+from trainer.mlp_trainer import MLPClassifierTrainer, MLPRegressorTrainer
 
 
 
@@ -15,7 +16,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Train a GNN model with specified parameters.")
     parser.add_argument("--dataset", type=str, required=True, help="Dataset name")
     parser.add_argument("--normalize", type=lambda x: x.lower() == "true", default=False, help="Whether to normalize the dataset")
-    parser.add_argument("--model", type=str, default="GCN2", choices=["GCN2", "GCN3"], help="Model type")
+    parser.add_argument("--model", type=str, default="GCN2", choices=["GCN2", "GCN3", "MLP"], help="Model type")
     parser.add_argument("--epochs", type=int, default=2, help="Number of training epochs")
     parser.add_argument("--lr", type=float, default=0.01, help="Learning rate")
     parser.add_argument("--weight_decay", type=float, default=1e-4, help="Weight decay for optimizer")
@@ -95,14 +96,21 @@ if __name__ == "__main__":
 
         try:
             if graph.task_type == "regression":
-                trial_number = logger.get_next_trial_number(args.dataset + "_regression")
                 print(f"Training Regression Model - Trial {trial_number}")
-                trainer = GNNRegressorTrainer(dataset_name=args.dataset, data=graph, 
-                                            num_features=num_features, 
-                                            model_class=GCN2Regressor if args.model == "GCN2" else GCN3Regressor,
-                                            trial_number=trial_number, device=device,
-                                            epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
-                                            run_mode=args.run_mode)
+                trial_number = logger.get_next_trial_number(args.dataset + "_regression")
+                if args.model == "MLP":
+                    trainer = MLPRegressorTrainer(dataset_name=args.dataset, data=graph,
+                                                model_class= MLPRegressor, 
+                                                trial_number=trial_number, device=device,
+                                                epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
+                                                run_mode=args.run_mode)
+                else: # GNN
+                    trainer = GNNRegressorTrainer(dataset_name=args.dataset, data=graph, 
+                                                num_features=num_features, 
+                                                model_class=GCN2Regressor if args.model == "GCN2" else GCN3Regressor,
+                                                trial_number=trial_number, device=device,
+                                                epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
+                                                run_mode=args.run_mode)
                 result = trainer.run()
                 logger.log_experiment(args.dataset + "_regression", result, label_source, feat_sel_method=args.feature_selection_method)
 
@@ -111,12 +119,21 @@ if __name__ == "__main__":
                 trial_number = logger.get_next_trial_number(args.dataset + "_classification")
                 num_classes = len(torch.unique(graph.y))
                 print(f"Training Classification Model - Trial {trial_number}")
-                trainer = GNNClassifierTrainer(dataset_name=args.dataset, data=graph, 
-                                            num_features=num_features, num_classes=num_classes,  
-                                            model_class=GCN2Classifier if args.model == "GCN2" else GCN3Classifier,
-                                            trial_number=trial_number, device=device,
-                                            epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay, 
-                                            run_mode=args.run_mode, threshold=args.threshold)
+                
+                if args.model == "MLP":
+                    trainer = MLPClassifierTrainer(dataset_name=args.dataset, data=graph,
+                                           num_features=num_features, num_classes=num_classes,
+                                           model_class= MLPClassifier, 
+                                           trial_number=trial_number, device=device,
+                                           epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
+                                           run_mode=args.run_mode, threshold=args.threshold)
+                else: # GNN
+                    trainer = GNNClassifierTrainer(dataset_name=args.dataset, data=graph, 
+                                                num_features=num_features, num_classes=num_classes,  
+                                                model_class=GCN2Classifier if args.model == "GCN2" else GCN3Classifier,
+                                                trial_number=trial_number, device=device,
+                                                epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay, 
+                                                run_mode=args.run_mode, threshold=args.threshold)
                 result = trainer.run()
                 logger.log_experiment(args.dataset + "_classification", result, label_source, feat_sel_method=args.feature_selection_method)
 
