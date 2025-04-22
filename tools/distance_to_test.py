@@ -31,12 +31,12 @@ class NodeDistanceToTestSaver:
         results = []
         for node in nodes:
             if node not in self.graph:
-                results.append((float("inf"), float("inf"), float("inf")))
+                results.append((np.nan, np.nan, np.nan))
                 continue
             dist_dict = nx.single_source_shortest_path_length(self.graph, source=node)
             dists = [dist for tgt, dist in dist_dict.items() if tgt in test_nodes_set]
             if not dists:
-                results.append((float("inf"), float("inf"), float("inf")))
+                results.append((np.nan, np.nan, np.nan))
             else:
                 dists.sort()
                 topk = dists[:self.k] if len(dists) >= self.k else dists
