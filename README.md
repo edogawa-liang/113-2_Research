@@ -47,9 +47,14 @@ See `command.txt`
 	```	
 4. save the space of explanation subgraph
 	```bash 
-	python stage2_node_share.py
+	python utils/stage2_node_share.py
 	```
-	
+5. Calculate the distance of node between chosen and test
+	```bash 
+	python  utils/distance_to_test.py
+	```
+
+
 ## Saved folder
 - original\: Node classification for original graph
 - stage1\: Node regression for explainer, used for subgraph selection 

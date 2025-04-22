@@ -13,7 +13,7 @@ class MLPClassifier(nn.Module):
             nn.Linear(hidden_dim2, output_dim)
         )
 
-    def forward(self, x):
+    def forward(self, x, edge_index=None):
         return self.net(x)
 
 
@@ -30,5 +30,5 @@ class MLPRegressor(nn.Module):
             nn.Linear(hidden_dim2, 1)
         )
 
-    def forward(self, x):
+    def forward(self, x, edge_index=None):
         return self.net(x).squeeze(1)

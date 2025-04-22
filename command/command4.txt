@@ -143,3 +143,11 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 18. MLP
+python training_main.py --dataset Cora --model MLP --epochs 1000 --lr 0.01 --run_mode mlp --note mlp --use_original_label true
+python training_main.py --dataset CiteSeer --model MLP --epochs 1000 --lr 0.01 --run_mode mlp --note mlp --use_original_label true
+python training_main.py --dataset Actor --model MLP --epochs 1000 --lr 0.01 --run_mode mlp --note mlp --use_original_label true
+python training_main.py --dataset Amazon --model MLP --epochs 1000 --lr 0.01 --run_mode mlp --note mlp --use_original_label true
+
+     
+
+# calculate the distance between choose node and test node
