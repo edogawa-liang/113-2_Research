@@ -58,7 +58,7 @@ class DistanceChecker:
         print(f"Unchanged nodes: {len(unchanged_idx)}, Changed nodes: {len(changed_idx)}")
         return unchanged_idx.tolist(), changed_idx.tolist()
 
-    def summarize_distances(self):
+    def summarize_distances(self, target_strategy=None):
         df = pd.read_csv(self.csv_path)
         if "TestNode" not in df.columns:
             raise ValueError("CSV must contain 'TestNode'")
@@ -78,10 +78,11 @@ class DistanceChecker:
         df_unchanged.to_csv(os.path.join(save_dir, f"unchanged_distances_{self.model_name}.csv"), index=False)
         df_changed.to_csv(os.path.join(save_dir, f"changed_distances_{self.model_name}.csv"), index=False)
 
-        self.plot_distance_summary(df_unchanged, df_changed, save_dir)
+        self.plot_distance_summary(df_unchanged, df_changed, save_dir, target_strategy)
         return df_unchanged, df_changed
 
-    def plot_distance_summary(self, df1, df2, save_dir):
+    def plot_distance_summary(self, df1, df2, save_dir, strategy):
+        # 自動找出 k 值
         k_vals = []
         for col in df1.columns:
             if col.startswith("top") and col.endswith("_avg_dist"):
@@ -98,54 +99,35 @@ class DistanceChecker:
             (f"top{k}_avg_dist", f"Top-{k} Avg")
         ]
 
-        strategies = sorted({
-            col[: -len(metric_key) - 1]
-            for col in df1.columns
-            for metric_key, _ in metrics
-            if col.endswith(metric_key)
-        })
+        unchanged_vals = []
+        changed_vals = []
+        xtick_labels = []
 
-        data1 = {metric_label: [] for _, metric_label in metrics}  # unchanged
-        data2 = {metric_label: [] for _, metric_label in metrics}  # changed
-        valid_strategies = []
+        for metric_key, metric_label in metrics:
+            col = f"{strategy}_{metric_key}"
+            if col not in df1.columns or col not in df2.columns:
+                raise ValueError(f"Missing column '{col}' in DataFrame for strategy '{strategy}'")
+            unchanged_vals.append(df1[col].mean())
+            changed_vals.append(df2[col].mean())
+            xtick_labels.append(metric_label)
 
-        for strategy in strategies:
-            has_any = False
-            for metric_key, metric_label in metrics:
-                col = f"{strategy}_{metric_key}"
-                v1 = df1.get(col, pd.Series(dtype=float)).mean()
-                v2 = df2.get(col, pd.Series(dtype=float)).mean()
-                data1[metric_label].append(v1)
-                data2[metric_label].append(v2)
-                if not np.isnan(v1) or not np.isnan(v2):
-                    has_any = True
-            if has_any:
-                valid_strategies.append(strategy)
-
-        x = np.arange(len(valid_strategies))
+        x = np.arange(len(metrics))
         width = 0.35
 
-        fig, axs = plt.subplots(1, 3, figsize=(max(12, len(valid_strategies) * 2), 4))
-        fig.suptitle("Distance from Test Nodes to Selected Nodes: Unchanged vs Changed Predictions", fontsize=14)
-        colors = ['#1f77b4', '#ff7f0e']
-        labels = ['Unchanged', 'Changed']
+        unchanged_count = len(df1)
+        changed_count = len(df2)
+        fig, ax = plt.subplots(figsize=(6, 4))
+        ax.bar(x - width/2, unchanged_vals, width, label=f"Unchanged (n={unchanged_count})", color="#1f77b4")
+        ax.bar(x + width/2, changed_vals, width, label=f"Changed (n={changed_count})", color="#ff7f0e")
 
-        for i, metric_label in enumerate(data1.keys()):
-            ax = axs[i]
-            values1 = [data1[metric_label][j] for j in range(len(valid_strategies))]
-            values2 = [data2[metric_label][j] for j in range(len(valid_strategies))]
+        ax.set_title(f"{strategy.replace('_', ' ').title()} Node Selection – Changed vs Unchanged Predictions", fontsize=12)
+        ax.set_xticks(x)
+        ax.set_xticklabels(xtick_labels)
+        ax.set_ylabel("Average Distance")
+        ax.legend()
 
-            ax.bar(x - width/2, values1, width=width, label=labels[0], color=colors[0])
-            ax.bar(x + width/2, values2, width=width, label=labels[1], color=colors[1])
-
-            ax.set_title(metric_label)
-            ax.set_xticks(x)
-            ax.set_xticklabels([s.replace("_", " ").title() for s in valid_strategies], rotation=30)
-            ax.set_ylabel("Average Distance")
-            ax.legend()
-
-        plt.tight_layout(rect=[0, 0, 1, 0.95])
-        save_path = os.path.join(save_dir, f"distance_summary_{self.model_name}.png")
+        plt.tight_layout()
+        save_path = os.path.join(save_dir, f"distance_summary_{self.model_name}_{strategy}.png")
         plt.savefig(save_path)
         plt.close()
         print(f"Saved bar chart to: {save_path}")
@@ -153,12 +135,14 @@ class DistanceChecker:
 
 
 
-# python tools/check_result.py --dataset Actor --run_mode remove_from_GNNExplainer --distance_csv_dir stage2_y_edge_0.3/GNNExplainer
+
+# python tools/check_result.py --dataset Actor --run_mode remove_from_GNNExplainer --strategy random --model_name 1_GCN2Classifier --distance_csv_dir stage2_y_edge_0.3/GNNExplainer
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, default="Cora")
     parser.add_argument("--base_dir", type=str, default="saved")
     parser.add_argument("--run_mode", type=str, default="remove_from_GNNExplainer")
+    parser.add_argument("--strategy", type=str, default="random")
     parser.add_argument("--model_name", type=str, default="1_GCN2Classifier")
     parser.add_argument("--distance_csv_dir", type=str, default="stage2_y_edge_0.3/GNNExplainer", help="Path to distance_from_test_to_selected.csv")
     parser.add_argument("--device", type=str, default="cpu")
@@ -166,8 +150,7 @@ if __name__ == "__main__":
 
     model_path = os.path.join(args.base_dir, args.run_mode, "model", args.dataset, f"{args.model_name}.pth")
     config_path = os.path.join(args.base_dir, args.run_mode, "model", args.dataset, f"{args.model_name}_config.pth")
-    # 只是要算測試節點離被選中節點的距離，計算1_GCN2Classifier內就夠
-    distance_csv_path = os.path.join(args.base_dir, args.distance_csv_dir, args.dataset, "1_GCN2Classifier", "distance_from_test_to_selected.csv")
+    distance_csv_path = os.path.join(args.base_dir, args.distance_csv_dir, args.dataset, "1_GCN2Classifier", "distance_from_test_to_selected.csv")  # 只是要算測試節點離被選中節點的距離，計算1_GCN2Classifier內就夠
 
     checker = DistanceChecker(
         model_path=model_path,
@@ -178,4 +161,4 @@ if __name__ == "__main__":
         run_mode=args.run_mode,
         device=args.device
     )
-    checker.summarize_distances()
+    checker.summarize_distances(target_strategy=args.strategy)

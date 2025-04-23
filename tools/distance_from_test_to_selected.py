@@ -116,8 +116,8 @@ class TestToNodeDistanceSaver:
         print(f"Saved grouped bar chart: {save_path}")
 
 
-# python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --explainer GNNExplainer --dataset Actor --k 3
-
+# python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset Actor --k 3
+# explainer, model_name 的不同跟選取的節點沒有關係。
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -143,6 +143,7 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 
 
 # 18. MLP
+------------------------------------------------------------
 python training_main.py --dataset Cora --model MLP --epochs 1000 --lr 0.01 --run_mode mlp --note mlp --use_original_label true
 python training_main.py --dataset CiteSeer --model MLP --epochs 1000 --lr 0.01 --run_mode mlp --note mlp --use_original_label true
 python training_main.py --dataset Actor --model MLP --epochs 1000 --lr 0.01 --run_mode mlp --note mlp --use_original_label true
@@ -150,4 +151,23 @@ python training_main.py --dataset Amazon --model MLP --epochs 1000 --lr 0.01 --r
 
      
 以上跑完
-# calculate the distance between choose node and test node
+
+# 19. calculate the distance between test node and choose node
+------------------------------------------------------------
+python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset Cora --k 3
+python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset CiteSeer --k 3
+python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset Actor --k 3
+python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset Amazon --k 3
+
+
+# 20. Check the distance between test node and selected node
+------------------------------------------------------------
+python tools/check_result.py --dataset Actor --run_mode remove_from_GNNExplainer --distance_csv_dir stage2_y_edge_0.3/GNNExplainer
+
+# generate explainable subgraph from test node
+
+
+
+
+
+
