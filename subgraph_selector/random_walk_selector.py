@@ -10,7 +10,7 @@ class RandomWalkEdgeSelector:
     """
 
     def __init__(self, data, node_ratio="auto", edge_ratio=0.5, fraction=0.1,  
-                 walk_length=10, num_walks=5, node_choose="top_pagerank", device="cpu", manual_nodes=None):
+                 walk_length=10, num_walks=5, node_choose="top_pagerank", device="cpu", manual_nodes=None, mask_type="train"):
         """
         :param data: PyG graph data
         :param node_ratio: "auto" for automatic calculation or a numeric value to manually set node selection ratio
@@ -31,6 +31,7 @@ class RandomWalkEdgeSelector:
         self.node_choose = node_choose
         self.device = device
         self.manual_nodes = manual_nodes
+        self.mask_type = mask_type
 
         self._get_start_nodes()
         self._calculate_neighbor_edges()
@@ -41,7 +42,7 @@ class RandomWalkEdgeSelector:
         Uses `ChooseNodeSelector` to select the starting nodes based on the given strategy.
         """
         node_selector = ChooseNodeSelector(self.data, node_ratio=self.node_ratio, edge_ratio=self.edge_ratio,
-                                           strategy=self.node_choose, manual_nodes=self.manual_nodes)
+                                           strategy=self.node_choose, manual_nodes=self.manual_nodes, mask_type=self.mask_type)
         
         selected_nodes = node_selector.select_nodes()
         self.start_nodes = torch.tensor(selected_nodes, dtype=torch.long, device=self.device)

@@ -13,7 +13,7 @@ class ChooseNodeSelector:
         :param data: PyG data object
         :param node_ratio: "auto" for automatic calculation or a numeric value to manually set node selection ratio
         :param edge_ratio: Ensures sufficient edges in the subgraph, required only if node_ratio is 'auto'
-        :param strategy: Node selection strategy (e.g., "random", "high_degree", "top_pagerank", "manual", "high_betweenness", "stratified_by_degree")
+        :param strategy: Node selection strategy (e.g., "random", "high_degree", "top_pagerank", "manual", "high_betweenness", "stratified_by_degree", "all")
         :param manual_nodes: Comma-separated list of node indices if using 'manual' strategy
         :param mask_type: Which subset of data to select nodes from ('train', 'test', or 'all')
         """
@@ -43,17 +43,23 @@ class ChooseNodeSelector:
 
         return node_ratio
 
-    def select_nodes(self):
-        """
-        Selects nodes based on the chosen strategy.
-        """
+    def _get_node_pool(self):
         if self.mask_type == "train":
-            node_pool = self.data.train_mask.nonzero().view(-1).tolist()
+            return self.data.train_mask.nonzero().view(-1).tolist()
         elif self.mask_type == "test":
-            node_pool = self.data.test_mask.nonzero().view(-1).tolist()
+            return self.data.test_mask.nonzero().view(-1).tolist()
+        elif self.mask_type == "all":
+            return list(range(self.data.x.shape[0]))
         else:
-            node_pool = list(range(self.data.x.shape[0]))
+            raise ValueError(f"Unsupported mask_type: {self.mask_type}")
 
+    def select_nodes(self):
+        node_pool = self._get_node_pool()
+
+        if self.strategy == "all": # 用在測試集上
+            return node_pool
+        
+        # else 要選擇節點
         node_ratio = self._calculate_node_ratio()
         num_selected = max(1, int(self.data.x.shape[0] * node_ratio))
 
@@ -75,7 +81,7 @@ class ChooseNodeSelector:
         
         elif self.strategy == "stratified_by_degree":
             return self._select_stratified_by_degree(node_pool, num_selected)
-
+    
         else:
             raise ValueError(f"Unsupported choose_nodes strategy: {self.strategy}")
 

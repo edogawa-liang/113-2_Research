@@ -17,8 +17,9 @@ def parse_args():
     parser.add_argument("--normalize", type=lambda x: x.lower() == "true", default=False, help="Whether to normalize the dataset")
 
     parser.add_argument("--model", type=str, default="GCN2", choices=["GCN2", "GCN3"], help="Model type")
-    parser.add_argument("--choose_nodes", type=str, default='random', choices=["random", "high_degree", "top_pagerank", "manual", "high_betweenness", "stratified_by_degree"], help="Node selection strategy")
+    parser.add_argument("--choose_nodes", type=str, default='random', choices=["random", "high_degree", "top_pagerank", "manual", "high_betweenness", "stratified_by_degree", "all"], help="Node selection strategy")
     parser.add_argument("--manual_nodes", type=str, default=None, help="Comma-separated list of node indices to explain")
+    parser.add_argument("--mask_type", type=str, default="train", choices=["train", "test", "all"], help="Mask type for node selection")
     
     parser.add_argument("--node_ratio", type=str, default="auto", help="'auto' for automatic calculation or a numeric value to manually set node selection ratio")
     parser.add_argument("--edge_ratio", type=float, default=0.5, help="Ensures sufficient edges in the subgraph, required only if node_ratio is 'auto'")
@@ -26,7 +27,7 @@ def parse_args():
     parser.add_argument("--explainer_type", type=str, default="GNNExplainer", choices=["GNNExplainer", "PGExplainer", "DummyExplainer", "CFExplainer"], help="Type of explainer to use")
     parser.add_argument("--epoch", type=int, default=100, help="Number of training epochs for explainer")
     parser.add_argument("--lr", type=float, default=0.01, help="Learning rate for explainer")
-    parser.add_argument("--run_mode", type=str, default="stage2_edge_0.5", help="Run mode")
+    parser.add_argument("--run_mode", type=str, default="stage2_edge_0.5", help="Run mode") # 如果生成test的解釋子圖, run_mode前改成 "test_stage2_edge_0.5"
     parser.add_argument("--stage1_path", type=str, default="saved/stage1", help="Directory for stage1 results")
     
     # 使用 data 的原始 y 生成解釋
@@ -71,7 +72,7 @@ if __name__ == "__main__":
     model_mapping = {"GCN2Regressor": GCN2Regressor, "GCN3Regressor": GCN3Regressor, "GCN2Classifier": GCN2Classifier, "GCN3Classifier": GCN3Classifier}
 
     # Select nodes to explain
-    node_selector = ChooseNodeSelector(data, node_ratio=args.node_ratio, edge_ratio=args.edge_ratio, strategy=args.choose_nodes, manual_nodes=args.manual_nodes)
+    node_selector = ChooseNodeSelector(data, node_ratio=args.node_ratio, edge_ratio=args.edge_ratio, strategy=args.choose_nodes, manual_nodes=args.manual_nodes, mask_type=args.mask_type)
     node_indices = node_selector.select_nodes()
     print(f"Selected {len(node_indices)} nodes using strategy: {args.choose_nodes}")
 

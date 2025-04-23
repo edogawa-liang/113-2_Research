@@ -32,14 +32,15 @@ def parse_args():
     # explainer
     parser.add_argument("--base_dir", type=str, default="saved/stage2_node_ratio_0.01", help="Base directory for explainer results")
     parser.add_argument("--explainer_name", type=str, default="GNNExplainer", choices=["GNNExplainer", "PGExplainer", "DummyExplainer"], help="Name of the explainer model")
-    parser.add_argument("--node_choose", type=str, default="random", choices=["random", "high_degree", "top_pagerank", "manual", "high_betweenness", "stratified_by_degree"],  help="Name of the experiment folder") # both for explainer and random walk
+    parser.add_argument("--node_choose", type=str, default="random", choices=["random", "high_degree", "top_pagerank", "manual", "high_betweenness", "stratified_by_degree", "all"],  help="Name of the experiment folder") # both for explainer and random walk
     # random walk
     parser.add_argument("--walk_length", type=int, default=10, help="Number of steps per random walk")
     parser.add_argument("--num_walks", type=int, default=5, help="Number of walks per selected node")
     parser.add_argument("--node_ratio", type=str, default="auto", help="'auto' for automatic calculation or a numeric value to manually set node selection ratio")
     parser.add_argument("--edge_ratio", type=float, default=0.5, help="Ensures sufficient edges in the subgraph, required only if node_ratio is 'auto'")
+    parser.add_argument("--mask_type", type=str, default="train", choices=["train", "test", "all"], help="Mask type for node selection")
 
-    parser.add_argument("--run_mode", type=str, default="try", help="Run mode")
+    parser.add_argument("--run_mode", type=str, default="try", help="Run mode") # 如果跑的是移除test的子圖，run_mode 前加入"test"
     parser.add_argument("--filename", type=str, default="result", help="File name for saving results")
     parser.add_argument("--note", type=str, default="", help="Note for the experiment")
     return parser.parse_args()
@@ -73,7 +74,7 @@ if __name__ == "__main__":
     elif args.selector_type == "random_walk":
         print("Using Random Walk Selector")
         selector = RandomWalkEdgeSelector(data, node_ratio=args.node_ratio, edge_ratio =args.edge_ratio , fraction=args.fraction, 
-                                          walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, device=device)
+                                          walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, device=device, mask_type=args.mask_type)
         node_start_ratio = selector.get_final_node_ratio()
         edge_neighbor_ratio = selector.get_neighbor_edge_ratio()
 
