@@ -47,11 +47,15 @@ See `command.txt`
 	```	
 4. save the space of explanation subgraph
 	```bash 
-	python utils/stage2_node_share.py
+	python tools/stage2_node_share.py
 	```
-5. Calculate the distance of node between chosen and test
+5. Calculate the distance of node between selected and test
 	```bash 
-	python  utils/distance_to_test.py
+	python  tools/distance_to_test.py
+	```
+6. Calculate the distance of node between selected and test for changed and unchanged after modeling
+	```bash 
+	python  check_result.py
 	```
 
 

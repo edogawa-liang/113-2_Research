@@ -1,4 +1,4 @@
-# calculate the distance between choose node and test node
+# 被選中節點到測試節點的距離。
 # 1_GCN2Classifier, 2_GCN2Classifier, 3_GCN2Classifier.....只要使用同一種節點選取方式，選出來的節點都會一樣，因此只要算 1_GCN2Classifier
 import sys
 import os
@@ -16,7 +16,7 @@ class NodeDistanceToTestSaver:
     def __init__(self, csv_dir, data, k=3):
         self.csv_dir = csv_dir
         self.record_path = os.path.join(csv_dir, "node_record.csv")
-        self.output_path = os.path.join(csv_dir, "distance_to_test.csv")
+        self.output_path = os.path.join(csv_dir, "distance_from_selected_to_test.csv")
         self.data = data.clone()
         self.k = k
 
@@ -114,13 +114,13 @@ class NodeDistanceToTestSaver:
         plt.legend()
         plt.tight_layout()
 
-        save_path = os.path.join(save_dir, "distance_summary_by_strategy.png")
+        save_path = os.path.join(save_dir, "distance_from_selected_to_test.png")
         plt.savefig(save_path)
         plt.close()
         print(f"Saved bar chart to: {save_path}")
 
 
-# python tools/distance_to_test.py --base_dir stage2_y_edge_0.3 --explainer GNNExplainer --dataset Actor --k 3
+# python tools/distance_from_selected_to_test.py --base_dir stage2_y_edge_0.3 --explainer GNNExplainer --dataset Actor --k 3
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
