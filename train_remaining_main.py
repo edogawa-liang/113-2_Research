@@ -7,6 +7,7 @@ from subgraph_selector.random_selector import RandomEdgeSelector
 from subgraph_selector.explainer_selector import ExplainerEdgeSelector
 from subgraph_selector.random_walk_selector import RandomWalkEdgeSelector
 from subgraph_selector.remaining_graph import RemainingGraphConstructor
+from subgraph_selector.cf_remaining_graph import CFSubgraphRemover
 
 from models.basic_GCN import GCN2Classifier, GCN3Classifier
 from trainer.gnn_trainer import GNNClassifierTrainer
@@ -31,7 +32,7 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
     # explainer
     parser.add_argument("--base_dir", type=str, default="saved/stage2_node_ratio_0.01", help="Base directory for explainer results")
-    parser.add_argument("--explainer_name", type=str, default="GNNExplainer", choices=["GNNExplainer", "PGExplainer", "DummyExplainer"], help="Name of the explainer model")
+    parser.add_argument("--explainer_name", type=str, default="GNNExplainer", choices=["GNNExplainer", "PGExplainer", "DummyExplainer", "CFExplainer"], help="Name of the explainer model")
     parser.add_argument("--node_choose", type=str, default="random", choices=["random", "high_degree", "top_pagerank", "manual", "high_betweenness", "stratified_by_degree", "all"],  help="Name of the experiment folder") # both for explainer and random walk
     # random walk
     parser.add_argument("--walk_length", type=int, default=10, help="Number of steps per random walk")
@@ -62,14 +63,17 @@ if __name__ == "__main__":
     if args.selector_type == "random":
         print("Using Random Selector")
         selector = RandomEdgeSelector(data, fraction=args.fraction, seed=args.seed, device=device)
+        selected_edges = selector.select_edges()
     
-    elif args.selector_type == "explainer":
-        print("Using Explainer Selector")
-        selector = ExplainerEdgeSelector(args.base_dir, args.explainer_name, args.dataset, args.node_choose, args.fraction, device=device)
-        selector.load_data()
-        selector.plot_edge_distribution()
-        num_node = selector.get_node_count()
-        num_edge = selector.get_edge_count()
+    elif args.selector_type == "explainer": # 處理PyG支援的可解釋方法
+        if args.explainer_name != "CFExplainer": # CF另外處理
+            print("Using Explainer Selector")
+            selector = ExplainerEdgeSelector(args.base_dir, args.explainer_name, args.dataset, args.node_choose, args.fraction, device=device)
+            selector.load_data()
+            selector.plot_edge_distribution()
+            num_node = selector.get_node_count()
+            num_edge = selector.get_edge_count()
+            selected_edges = selector.select_edges()
 
     elif args.selector_type == "random_walk":
         print("Using Random Walk Selector")
@@ -77,12 +81,19 @@ if __name__ == "__main__":
                                           walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, device=device, mask_type=args.mask_type)
         node_start_ratio = selector.get_final_node_ratio()
         edge_neighbor_ratio = selector.get_neighbor_edge_ratio()
+        selected_edges = selector.select_edges()
 
-    selected_edges = selector.select_edges()
 
     # Remove subgraph from the original graph
-    remaining_graph_constructor = RemainingGraphConstructor(data, selected_edges, device=device)
-    remaining_graph = remaining_graph_constructor.get_remaining_graph()
+    if args.explainer_name == "CFExplainer":
+        remaining_graph_constructor = CFSubgraphRemover(data, args.base_dir, args.explainer_name, args.dataset, args.node_choose, device=device)
+        remaining_graph_constructor.load_data()
+        remaining_graph = remaining_graph_constructor.get_remaining_graph()
+        num_node = remaining_graph_constructor.get_node_count()
+        num_edge = remaining_graph_constructor.get_edge_count()
+    else:
+        remaining_graph_constructor = RemainingGraphConstructor(data, selected_edges, device=device)
+        remaining_graph = remaining_graph_constructor.get_remaining_graph()
 
     # Train GNN on the remaining graph
     print("\nTraining GNN on the remaining graph after removing subgraph...")

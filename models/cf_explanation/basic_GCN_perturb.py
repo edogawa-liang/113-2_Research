@@ -87,6 +87,7 @@ class GCNSyntheticPerturb(nn.Module):
 	def forward(self, x, sub_adj):
 		self.sub_adj = sub_adj
 		# Same as normalize_adj in utils.py except includes P_hat in A_tilde
+		self.sub_adj = sub_adj.to(self.P_vec.device)
 		self.P_hat_symm = create_symm_matrix_from_vec(self.P_vec, self.num_nodes)      # Ensure symmetry
 
 		A_tilde = torch.FloatTensor(self.num_nodes, self.num_nodes)
@@ -94,10 +95,10 @@ class GCNSyntheticPerturb(nn.Module):
 
 		print("self.P_hat_symm", self.P_hat_symm)
 		if self.edge_additions:         # Learn new adj matrix directly
-			A_tilde = F.sigmoid(self.P_hat_symm) + torch.eye(self.num_nodes)  # Use sigmoid to bound P_hat in [0,1]
+			A_tilde = F.sigmoid(self.P_hat_symm) + torch.eye(self.num_nodes, device=self.P_hat_symm.device)  # Use sigmoid to bound P_hat in [0,1]
 			
 		else:       # Learn P_hat that gets multiplied element-wise with adj -- only edge deletions
-			A_tilde = F.sigmoid(self.P_hat_symm) * self.sub_adj + torch.eye(self.num_nodes)       # Use sigmoid to bound P_hat in [0,1]
+			A_tilde = F.sigmoid(self.P_hat_symm) * self.sub_adj + torch.eye(self.num_nodes, device=self.P_hat_symm.device)       # Use sigmoid to bound P_hat in [0,1]
 
 		D_tilde = get_degree_matrix(A_tilde).detach() + 1e-6      # Don't need gradient of this
 		# Raise to power -1/2, set all infs to 0s
@@ -106,6 +107,7 @@ class GCNSyntheticPerturb(nn.Module):
 
 		# Create norm_adj = (D + I)^(-1/2) * (A + I) * (D + I) ^(-1/2)
 		norm_adj = torch.mm(torch.mm(D_tilde_exp, A_tilde), D_tilde_exp)
+		norm_adj = norm_adj.to(x.device)
 
 		# print('x shape initially', x.shape)
 		x = F.relu(self.gc1(x, norm_adj))
@@ -125,13 +127,14 @@ class GCNSyntheticPerturb(nn.Module):
 		# print("self.P_hat_symm")
 		# print(self.P_hat_symm)
 		self.P = (F.sigmoid(self.P_hat_symm) >= 0.5).float()      # threshold P_hat
+		self.adj = self.adj.to(self.P.device)
 		print("self.P")
 		print(self.P)
 
 		if self.edge_additions:
 			A_tilde = self.P + torch.eye(self.num_nodes)
 		else:
-			A_tilde = self.P * self.adj + torch.eye(self.num_nodes)
+			A_tilde = self.P * self.adj + torch.eye(self.num_nodes, device=self.P.device)
 
 		D_tilde = get_degree_matrix(A_tilde) + 1e-6
 		# Raise to power -1/2, set all infs to 0s
@@ -144,6 +147,7 @@ class GCNSyntheticPerturb(nn.Module):
 
 		# Create norm_adj = (D + I)^(-1/2) * (A + I) * (D + I) ^(-1/2)
 		norm_adj = torch.mm(torch.mm(D_tilde_exp, A_tilde), D_tilde_exp)
+		norm_adj = norm_adj.to(x.device)
 
 		x = F.relu(self.gc1(x, norm_adj))
 		x = F.dropout(x, self.dropout, training=self.training)
