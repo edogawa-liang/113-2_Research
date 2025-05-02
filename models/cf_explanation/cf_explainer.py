@@ -117,7 +117,7 @@ class CFExplainer:
 		# Need to use new_idx from now on since sub_adj is reindexed
 		y_pred_new = torch.argmax(output[self.new_idx])  # 解釋模型下的預測
 		y_pred_new_actual = torch.argmax(output_actual[self.new_idx]) # binary mask 下的預測，可檢查是否真的 flip 預測結果
-		print("y_pred_new: ", y_pred_new, "y_pred_new_actual: ", y_pred_new_actual, "y_pred_orig: ", self.y_pred_orig)
+		print("y_pred_new_actual: ", y_pred_new_actual, "y_pred_orig: ", self.y_pred_orig)
 
 		# 在 training loop 中，optimizer.step() 之前加上以下檢查：
 		with torch.no_grad():
@@ -126,8 +126,10 @@ class CFExplainer:
 		# loss_pred indicator should be based on y_pred_new_actual NOT y_pred_new!
 		loss_total, loss_pred, loss_graph_dist, self.cf_adj = self.cf_model.loss(output[self.new_idx], self.y_pred_orig, y_pred_new_actual)
 		loss_total.backward()
+		
 		# add
-		print("P_vec.grad", self.cf_model.P_vec.grad)
+		# print("P_vec.grad", self.cf_model.P_vec.grad)
+
 		clip_grad_norm_(self.cf_model.parameters(), 2.0)
 		self.cf_optimizer.step()
 
@@ -150,11 +152,10 @@ class CFExplainer:
 		# print(" ")
 		cf_stats = []
 		if y_pred_new_actual != self.y_pred_orig:
-			print(y_pred_new_actual, self.y_pred_orig)
 			cf_stats = [self.node_idx, self.new_idx,
 			            self.cf_adj.detach().cpu().numpy(), self.sub_adj.detach().cpu().numpy(),
 			            self.y_pred_orig.item(), y_pred_new.item(),
-			            y_pred_new_actual.item(), self.sub_labels[self.new_idx].numpy(),
+			            y_pred_new_actual.item(), self.sub_labels[self.new_idx].cpu().numpy(),
 			            self.sub_adj.shape[0], loss_total.item(),
 			            loss_pred.item(), loss_graph_dist.item()]
 
@@ -176,7 +177,7 @@ class CFExplainer:
 				- "removed_edges": tensor [2, num_edges]，原圖中的 edge_index 表示
 		"""
 		reverse_node_dict = {v: k for k, v in node_dict.items()}
-		edge_mask = (self.sub_adj - self.best_cf_adj) > 0 # 最好的那次CF
+		edge_mask = (self.sub_adj - self.best_cf_adj.to(self.sub_adj.device)) > 0 # 最好的那次CF
 		removed_edge_indices = edge_mask.nonzero(as_tuple=False)
 
 		removed_edges_global = torch.tensor([

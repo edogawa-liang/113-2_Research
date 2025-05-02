@@ -143,9 +143,16 @@ class SubgraphExplainer:
         # 模型看到 n hop，解釋時候給它 n+1 的鄰居，才不會因為邊界效應而失真。 (CF-Explainer這樣使用)
         sub_edge_index, sub_feat, sub_labels, node_dict = get_neighbourhood(int(node_idx), edge_index, self.hop + 1, features, labels)
         new_idx = node_dict[int(node_idx)]
-        print("node_dict:", node_dict)
+        # print("node_dict:", node_dict)
+
+        # 檢查是否為孤立節點（無邊情況）
+        if sub_edge_index.size(1) == 0:
+            print(f"Skip node {node_idx}: isolated node (no edges in subgraph).")
+            return None
         
         sub_adj = to_dense_adj(sub_edge_index, max_num_nodes=sub_feat.size(0)).squeeze()
+        # self.adj tensor(0.)
+        sub_adj = sub_adj.to(sub_feat.device)
         # norm_adj = normalize_adj(sub_adj)
 
         # 模型用 sparse edge_index
@@ -153,7 +160,6 @@ class SubgraphExplainer:
         y_pred_orig = self.model(sub_feat, sub_edge_index, sub_edge_weight)
         y_pred_orig = torch.argmax(y_pred_orig, dim=1) 
         print("original model prediction:", y_pred_orig[new_idx].item())
-
 
         explainer = CFExplainer(
             model=self.model, sub_adj=sub_adj, sub_feat=sub_feat,
@@ -178,7 +184,7 @@ class SubgraphExplainer:
             removed_edges_global = explainer.get_removed_edges_from_original_index(node_dict)
 
             cf_info = {
-                "node_idx": self.node_idx,              # 原圖中的節點編號
+                "node_idx": node_idx,              # 原圖中的節點編號
                 "cf_explanation": removed_edges_global      # [2, num_edges] 的 edge_index 格式
             }
             return cf_info
@@ -186,7 +192,7 @@ class SubgraphExplainer:
             return None
 
 
-    def _save_explanation(self, node_idx, explanation, explainer_type, y_value):
+    def _save_explanation(self, node_idx, explanation, explainer_type):
         """
         Saves node ID, node mask, and edge mask into a structured folder hierarchy.
         """

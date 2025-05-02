@@ -47,6 +47,7 @@ class GCNSyntheticPerturb(nn.Module):
 		self.adj = adj
 		self.nclass = nclass
 		self.beta = beta
+		print("self.adj", self.adj)
 		self.num_nodes = self.adj.shape[0]
 		self.edge_additions = edge_additions      # are edge additions included in perturbed matrix
 
@@ -57,10 +58,11 @@ class GCNSyntheticPerturb(nn.Module):
 			self.P_vec = Parameter(torch.FloatTensor(torch.zeros(self.P_vec_size))) # 新增擾亂邊
 		else:
 			# self.P_vec = Parameter(torch.FloatTensor(torch.ones(self.P_vec_size))) # 刪除邊 (Ori CF)
-			# self.P_vec = Parameter(torch.FloatTensor(self.P_vec_size).fill_(0.0))
-			# self.P_vec = Parameter(torch.empty(self.P_vec_size).uniform_(-0.1, 0.1))
-			self.P_vec = Parameter(torch.full((self.P_vec_size,), -0.04)) # sigmoid後會0.49，即所有邊都移除
 
+			self.P_vec = Parameter(torch.FloatTensor(self.P_vec_size).fill_(0.0))
+			# self.P_vec = Parameter(torch.empty(self.P_vec_size).uniform_(-0.1, 0.1))
+			# self.P_vec = Parameter(torch.full((self.P_vec_size,), -0.001)) # sigmoid後不到但接近，即所有邊都移除
+			# self.P_vec = Parameter(torch.full((self.P_vec_size,), 0.001)) # sigmoid後比0.5大一點點，但很容易變成小於0.5並移除邊
 
 		self.reset_parameters()
 
@@ -93,7 +95,7 @@ class GCNSyntheticPerturb(nn.Module):
 		A_tilde = torch.FloatTensor(self.num_nodes, self.num_nodes)
 		A_tilde.requires_grad = True
 
-		print("self.P_hat_symm", self.P_hat_symm)
+		print("self.P_hat_symm after sigmoid", F.sigmoid(self.P_hat_symm))
 		if self.edge_additions:         # Learn new adj matrix directly
 			A_tilde = F.sigmoid(self.P_hat_symm) + torch.eye(self.num_nodes, device=self.P_hat_symm.device)  # Use sigmoid to bound P_hat in [0,1]
 			
@@ -116,6 +118,7 @@ class GCNSyntheticPerturb(nn.Module):
 		x = self.gc2(x, norm_adj)
 		# print('x.shape after gc2: ', x.shape)
 		# print("forward x", x)
+		x = x / torch.clamp(x.abs().max(), min=1e-6) # add
 		return F.log_softmax(x, dim=1)
 
 
@@ -128,8 +131,7 @@ class GCNSyntheticPerturb(nn.Module):
 		# print(self.P_hat_symm)
 		self.P = (F.sigmoid(self.P_hat_symm) >= 0.5).float()      # threshold P_hat
 		self.adj = self.adj.to(self.P.device)
-		print("self.P")
-		print(self.P)
+		print("self.P", self.P)
 
 		if self.edge_additions:
 			A_tilde = self.P + torch.eye(self.num_nodes)
@@ -171,8 +173,8 @@ class GCNSyntheticPerturb(nn.Module):
 		cf_adj.requires_grad = True  # Need to change this otherwise loss_graph_dist has no gradient
 
 		# Calculate the k-hop edge from this node
-		num_edges = torch.sum(self.adj == 1).item() // 2
-		print("number of edges from node: ", num_edges)
+		# num_edges = torch.sum(self.adj == 1).item() // 2
+		# print("number of edges from node: ", num_edges)
 		
 		# Want negative in front to maximize loss instead of minimizing it to find CFs
 		loss_pred = - F.nll_loss(output, y_pred_orig)
