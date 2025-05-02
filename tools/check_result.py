@@ -1,3 +1,4 @@
+# 經過模型有改變預測與沒改變預測的節點，並且計算這些節點與測試節點的距離
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

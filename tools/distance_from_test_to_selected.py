@@ -64,6 +64,57 @@ class TestToNodeDistanceSaver:
         print(f"Saved distance file: {self.output_path}")
         return existing
 
+    # def plot_distance_summary(self, df, save_dir):
+    #     import matplotlib.pyplot as plt
+    #     import numpy as np
+
+    #     metrics = [
+    #         ("min_dist", "Minimum"),
+    #         ("mean_dist", "Mean"),
+    #         (f"top{self.k}_avg_dist", f"Top-{self.k} Avg")
+    #     ]
+
+    #     # 正確找出所有策略（去掉 metric 結尾）
+    #     strategies = sorted({
+    #         col[: -len(metric_key) - 1]  # 去掉 "_mean_dist" 之類尾巴
+    #         for col in df.columns
+    #         for metric_key, _ in metrics
+    #         if col.endswith(metric_key)
+    #     })
+
+    #     data = {s: [] for s in strategies}
+    #     labels = [label for _, label in metrics]
+
+    #     for s in strategies:
+    #         for metric_key, _ in metrics:
+    #             col = f"{s}_{metric_key}"
+    #             if col in df.columns and pd.notna(df[col]).any():
+    #                 val = df[col].mean()
+    #             else:
+    #                 val = np.nan
+    #             data[s].append(val)
+
+    #     x = np.arange(len(labels))
+    #     width = 0.8 / len(strategies)
+    #     colors = plt.cm.tab10.colors
+
+    #     plt.figure(figsize=(max(8, len(labels) * 2.5), 5))
+
+    #     for i, s in enumerate(strategies):
+    #         values = data[s]
+    #         plt.bar(x + i * width, values, width=width, label=s.replace("_", " ").title(), color=colors[i % len(colors)])
+
+    #     plt.xticks(x + width * (len(strategies) - 1) / 2, labels)
+    #     plt.ylabel("Average Distance")
+    #     plt.title("Distance from Test Nodes to Selected Nodes")
+    #     plt.legend()
+    #     plt.tight_layout()
+
+    #     save_path = os.path.join(save_dir, "distance_from_test_to_selected.png")
+    #     plt.savefig(save_path)
+    #     plt.close()
+    #     print(f"Saved grouped bar chart: {save_path}")
+
     def plot_distance_summary(self, df, save_dir):
         import matplotlib.pyplot as plt
         import numpy as np
@@ -74,46 +125,61 @@ class TestToNodeDistanceSaver:
             (f"top{self.k}_avg_dist", f"Top-{self.k} Avg")
         ]
 
-        # 正確找出所有策略（去掉 metric 結尾）
         strategies = sorted({
-            col[: -len(metric_key) - 1]  # 去掉 "_mean_dist" 之類尾巴
+            col[: -len(metric_key) - 1]
             for col in df.columns
             for metric_key, _ in metrics
             if col.endswith(metric_key)
         })
 
-        data = {s: [] for s in strategies}
-        labels = [label for _, label in metrics]
+        # 準備資料
+        all_data = {metric_label: [] for _, metric_label in metrics}
+        strategy_labels = []
 
-        for s in strategies:
-            for metric_key, _ in metrics:
+        for metric_key, metric_label in metrics:
+            for s in strategies:
                 col = f"{s}_{metric_key}"
-                if col in df.columns and pd.notna(df[col]).any():
-                    val = df[col].mean()
-                else:
-                    val = np.nan
-                data[s].append(val)
+                if col in df.columns:
+                    values = df[col].dropna().tolist()
+                    all_data[metric_label].append(values)
+            if not strategy_labels:
+                strategy_labels = strategies  # 確保只設定一次
 
-        x = np.arange(len(labels))
-        width = 0.8 / len(strategies)
+        # 顏色設定 (固定策略的顏色)
         colors = plt.cm.tab10.colors
+        color_map = {s: colors[i % len(colors)] for i, s in enumerate(strategies)}
 
-        plt.figure(figsize=(max(8, len(labels) * 2.5), 5))
+        fig, axs = plt.subplots(1, 3, figsize=(18, 6), sharey=True)
 
-        for i, s in enumerate(strategies):
-            values = data[s]
-            plt.bar(x + i * width, values, width=width, label=s.replace("_", " ").title(), color=colors[i % len(colors)])
+        for ax, (metric_label, data_list) in zip(axs, all_data.items()):
+            bp = ax.boxplot(data_list, patch_artist=True)
 
-        plt.xticks(x + width * (len(strategies) - 1) / 2, labels)
-        plt.ylabel("Average Distance")
-        plt.title("Distance from Test Nodes to Selected Nodes")
-        plt.legend()
-        plt.tight_layout()
+            # 填色
+            for patch, s in zip(bp['boxes'], strategies):
+                patch.set_facecolor(color_map[s])
 
-        save_path = os.path.join(save_dir, "distance_from_test_to_selected.png")
+            ax.set_title(metric_label)
+            # ax.set_xticks(np.arange(1, len(strategies) + 1))
+            # ax.set_xticklabels(strategies, rotation=45, ha="right")
+            ax.set_xticks([])
+            ax.yaxis.set_ticks_position('left')
+            ax.yaxis.set_tick_params(labelleft=True)
+            ax.set_ylabel("Distance")
+
+        # 加 legend
+        handles = [plt.Rectangle((0, 0), 1, 1, color=color_map[s]) for s in strategies]
+        labels = [s.replace("_", " ").title() for s in strategies]
+        fig.legend(handles, labels, loc="upper right")
+
+        plt.suptitle("Distance from Test Nodes to Selected Nodes", fontsize=16)
+        plt.tight_layout(rect=[0, 0, 0.95, 0.95])
+
+        save_path = os.path.join(save_dir, "distance_from_test_to_selected_boxplot_grid.png")
         plt.savefig(save_path)
         plt.close()
-        print(f"Saved grouped bar chart: {save_path}")
+        print(f"Saved boxplot grid chart: {save_path}")
+
+
 
 
 # python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset Actor --k 3

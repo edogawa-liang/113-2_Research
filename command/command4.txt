@@ -416,6 +416,13 @@ python stage2_expsubg.py --dataset Actor  --choose_nodes all --node_ratio auto -
 python stage2_expsubg.py --dataset Amazon  --choose_nodes all --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type test --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
 
 
+# 43. check the distance between test and selected nodes
+done
+------------------------------------------------------------
+python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset Cora --k 3
+python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset CiteSeer --k 3
+python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset Actor --k 3
+python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset Amazon --k 3
 
 
 
