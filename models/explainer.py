@@ -153,7 +153,13 @@ class SubgraphExplainer:
             return None
         
         # 模型用 sparse edge_index
-        sub_adj = to_dense_adj(sub_edge_index, max_num_nodes=sub_feat.size(0)).squeeze()
+        sub_adj = to_dense_adj(sub_edge_index, max_num_nodes=sub_feat.size(0))
+        # 防止孤立 or 無邊 subgraph 導致 sub_adj 變成空的
+        if sub_adj.numel() == 0 or sub_adj.shape[-1] == 0:
+            print(f"Skip node {node_idx}: sub_adj is empty (no edges in subgraph).")
+            return None
+
+        sub_adj = sub_adj.squeeze()
         sub_adj = sub_adj.to(self.device)
         sub_edge_weight = torch.ones(sub_edge_index.size(1), device=self.device)
         self.model = self.model.to(self.device)

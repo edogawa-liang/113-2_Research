@@ -372,6 +372,7 @@ python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --da
 - CF-Explainer 
 
 # 38. generate explainable subgraph from random node (CF-Explainer)
+running
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset Cora  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
 python stage2_expsubg.py --dataset CiteSeer  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
@@ -380,6 +381,7 @@ python stage2_expsubg.py --dataset Amazon  --choose_nodes random --node_ratio au
 
 
 # 39. generate explainable subgraph from top_pagerank node (CF-Explainer)
+running
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset Cora  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
 python stage2_expsubg.py --dataset CiteSeer  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
@@ -412,8 +414,3 @@ python stage2_expsubg.py --dataset Amazon  --choose_nodes all --node_ratio auto 
 
 
 
-
-
-
-
-     

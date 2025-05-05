@@ -82,7 +82,7 @@ class GCNPerturb(nn.Module):
 		return self.model(x, edge_index_bin, edge_weight_bin), adj_bin
 
 
-	def loss(self, output, y_pred_orig, y_pred_new_actual, adj_bin, P_used, alpha=20):
+	def loss(self, output, y_pred_orig, y_pred_new_actual, adj_bin, P_used, alpha=10):
 		# output 是 forward 的結果, y_pred_new_actual 是 forward_prediction 的結果
 		pred_same = (y_pred_new_actual == y_pred_orig).float()
 
@@ -92,10 +92,10 @@ class GCNPerturb(nn.Module):
 		loss_pred = -F.nll_loss(output, y_pred_orig)
 
 		# 計算 perturbed 與原始的差異
-		num_changed = (adj_bin - self.sub_adj).abs().sum().float() / 2
+		num_changed = ((adj_bin - self.sub_adj).abs() > 0).float().sum() / 2
 		
 		# 計算原始圖的邊數
-		num_edges_orig = self.sub_adj.sum().float() / 2
+		num_edges_orig = (self.sub_adj.numel() - self.sub_adj.shape[0]) / 2
 		# print("self.sub_adj", self.sub_adj)
 
 		# 讓目標儘量靠近 0 或 1，而不是靠近 0.5
@@ -105,6 +105,6 @@ class GCNPerturb(nn.Module):
 
 		loss_total = pred_same * loss_pred + self.beta * num_changed + alpha * loss_reg
 
-		print(f"原本有幾條邊: {num_edges_orig.item()}, 移除的邊數: {num_changed.item()}")
+		print(f"原本有幾條邊: {num_edges_orig}, 移除的邊數: {num_changed}")
 
 		return loss_total, num_changed
