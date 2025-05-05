@@ -27,7 +27,9 @@ def parse_args():
     parser.add_argument("--weight_decay", type=float, default=1e-4, help="Weight decay for optimizer")
     
     parser.add_argument("--selector_type", type=str, default="random", choices=["random", "explainer", "random_walk"], help="Subgraph selector type")
-    parser.add_argument("--fraction", type=float, default=0.1, help="Fraction of edges to remove for the subgraph") # random, explainer, random_walk
+    # parser.add_argument("--fraction", type=float, default=0.1, help="Fraction of edges to remove for the subgraph") # random, explainer, random_walk
+    parser.add_argument("--fraction", type=float, default=None, help="Fraction of edges to remove for the subgraph (None means not used)")
+
     # random
     parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
     # explainer

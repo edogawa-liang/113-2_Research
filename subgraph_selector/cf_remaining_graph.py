@@ -30,13 +30,11 @@ class CFSubgraphRemover:
             csv_path = os.path.join(model_dir, "node_record.csv")
 
             if not os.path.exists(csv_path):
-                print(f"Warning: node_record.csv not found in {model_dir}")
-                continue
+                raise FileNotFoundError(f"'{share_node_dir}' not found. Please run stage2_node_share first.")
 
             df = pd.read_csv(csv_path)
             if self.node_choose not in df.columns:
-                print(f"Warning: column '{self.node_choose}' not found in {csv_path}")
-                continue
+                raise ValueError(f"Column '{self.node_choose}' not found in {csv_path}. Please check if stage2_node_share has been correctly executed.")
 
             selected_nodes = df[df[self.node_choose] == 1]["Node"].tolist()
             if self.node_count == 0:
@@ -60,15 +58,18 @@ class CFSubgraphRemover:
             edges_t = self.cf_removed_edges.t()  # [num_edges, 2]
             edges_t_unique = torch.unique(edges_t, dim=0)
             self.cf_removed_edges = edges_t_unique.t()  # 還原為 [2, num_edges]
+            print(f"Found {self.cf_removed_edges.size(1)} CF removed edges.")   
 
         else:
             self.cf_removed_edges = torch.empty((2, 0), dtype=torch.long, device=self.device)
             print("No CF removed edges found.")
 
     def get_node_count(self):
+        print(f"Number of nodes selected: {self.node_count}")
         return self.node_count
 
     def get_edge_count(self):
+        print(f"Number of edges selected: {self.cf_removed_edges.size(1)}")
         return self.cf_removed_edges.size(1)
 
     def get_remaining_graph(self):

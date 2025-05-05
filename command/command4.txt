@@ -417,4 +417,41 @@ python stage2_expsubg.py --dataset Actor  --choose_nodes all --node_ratio auto -
 python stage2_expsubg.py --dataset Amazon  --choose_nodes all --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type test --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
 
 
+# node share
+------------------------------------------------------------
+python tools/stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer CFExplainer --dataset Cora
+python tools/stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer CFExplainer --dataset CiteSeer
+python tools/stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer CFExplainer --dataset Actor
+python tools/stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer CFExplainer --dataset Amazon
 
+try
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 1 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_random --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose random
+
+
+# 44.  Train GNN model (node classification) after y CF-Explainer from random nodes selection
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_random --selector_type explainer --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose random
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_random --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose random
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_random --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose random
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_random --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose random
+
+# 45.  Train GNN model (node classification) after y CF-Explainer from PageRank nodes selection
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_top_pagerank --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose top_pagerank
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_top_pagerank --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose top_pagerank
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_top_pagerank --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose top_pagerank
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_top_pagerank --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose top_pagerank
+
+# 46.  Train GNN model (node classification) after y CF-Explainer from high_betweenness nodes selection
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_high_betweenness --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose high_betweenness
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_high_betweenness --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose high_betweenness
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_high_betweenness --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose high_betweenness
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_high_betweenness --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose high_betweenness
+
+# 47.  Train GNN model (node classification) after y CF-Explainer from stratified_by_degree nodes selection
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_stratified_by_degree --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_stratified_by_degree --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_stratified_by_degree --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_stratified_by_degree --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose stratified_by_degree
