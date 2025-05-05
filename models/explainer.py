@@ -1,5 +1,6 @@
 import os
 import torch
+from utils.device import DEVICE
 import numpy as np
 from torch_geometric.utils import dense_to_sparse, to_dense_adj
 from torch_geometric.explain import ModelConfig
@@ -16,7 +17,7 @@ class SubgraphExplainer:
 
     def __init__(self, model_class, dataset, data, model_path, trial_name, 
                  explainer_type="GNNExplainer", hop=2, epoch=100, lr=0.01,
-                 run_mode="stage2", remove_feature=None, device=None, 
+                 run_mode="stage2", remove_feature=None, 
                  choose_nodes="random", cf_beta=0.5):
         """
         Initializes the explainer.
@@ -46,7 +47,7 @@ class SubgraphExplainer:
         self.cf_beta = cf_beta
         self.explainer_type = explainer_type
 
-        self.device = device if device else ("cuda:1" if torch.cuda.is_available() else "cpu")
+        self.device = DEVICE
         self.model, self.model_config_dict = self._load_model()
         self.task_type = self._determine_task_type()
         self.explainer = self._explainer_setting()  # 設定 explainer
@@ -133,12 +134,16 @@ class SubgraphExplainer:
 
 
     def _run_cf_explainer(self, node_idx):
+        self.model = self.model.to(self.device)
         edge_index = self.data.edge_index
         features = self.data.x
         labels = self.data.y
 
-        # 模型看到 n hop，解釋時候給它 n+1 的鄰居，才不會因為邊界效應而失真。 (CF-Explainer這樣使用)
-        sub_edge_index, sub_feat, sub_labels, node_dict = get_neighbourhood(int(node_idx), edge_index, self.hop + 1, features, labels)
+        sub_edge_index, sub_feat, sub_labels, node_dict = get_neighbourhood(int(node_idx), edge_index, self.hop, features, labels)
+        sub_edge_index = sub_edge_index.to(self.device)
+        sub_feat = sub_feat.to(self.device)
+        sub_labels = sub_labels.to(self.device)
+
         new_idx = node_dict[int(node_idx)]
         # print("node_dict:", node_dict)
 
@@ -147,19 +152,18 @@ class SubgraphExplainer:
             print(f"Skip node {node_idx}: isolated node (no edges in subgraph).")
             return None
         
-        sub_adj = to_dense_adj(sub_edge_index, max_num_nodes=sub_feat.size(0)).squeeze()
-        # self.adj tensor(0.)
-        sub_adj = sub_adj.to(sub_feat.device)
-        # norm_adj = normalize_adj(sub_adj)
-
         # 模型用 sparse edge_index
-        sub_edge_weight = torch.ones(sub_edge_index.size(1), device=sub_feat.device)
+        sub_adj = to_dense_adj(sub_edge_index, max_num_nodes=sub_feat.size(0)).squeeze()
+        sub_adj = sub_adj.to(self.device)
+        sub_edge_weight = torch.ones(sub_edge_index.size(1), device=self.device)
+        self.model = self.model.to(self.device)
+
         y_pred_orig = self.model(sub_feat, sub_edge_index, sub_edge_weight)
         y_pred_orig = torch.argmax(y_pred_orig, dim=1) 
 
         self.cf_explainer = CFExplainer(model=self.model, sub_adj=sub_adj, sub_feat=sub_feat, 
                                 sub_labels=sub_labels, y_pred_orig=y_pred_orig[new_idx], 
-                                beta=0.5, device="cuda")
+                                beta=0.5, device=self.device)
 
         cf_explanation = self.cf_explainer.explain(cf_optimizer="SGD", node_idx=node_idx, 
                                   new_idx=new_idx, lr=self.lr, 

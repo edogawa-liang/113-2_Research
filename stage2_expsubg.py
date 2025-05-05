@@ -1,6 +1,7 @@
 import argparse
 import torch
 import os
+from utils.device import DEVICE
 from data.dataset_loader import GraphDatasetLoader
 from data.data_modifier import GraphModifier
 from subgraph_selector.utils.choose_node import ChooseNodeSelector
@@ -43,7 +44,7 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+    device = DEVICE
     print(f"Using device: {device}")
 
     # Load dataset
@@ -98,7 +99,6 @@ if __name__ == "__main__":
             run_mode=args.run_mode,
             trial_name=feature_trials[i],
             remove_feature=feature_indices[i] if feature_indices[i] is not None else -1,
-            device=device,
             choose_nodes=args.choose_nodes,
             cf_beta=args.cf_beta,
         )

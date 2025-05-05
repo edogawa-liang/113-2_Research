@@ -360,22 +360,16 @@ python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr
 python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.5 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
 python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.5 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
 
+# 43. check the distance between test and selected nodes
+done
+------------------------------------------------------------
+python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset Cora --k 3
+python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset CiteSeer --k 3
+python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset Actor --k 3
+python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset Amazon --k 3
+
 
 - CF-Explainer 
-
-try
-python stage2_expsubg.py --dataset Cora  --choose_nodes stratified_by_degree --node_ratio 0.001 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data
-python stage2_expsubg.py --dataset Amazon  --choose_nodes stratified_by_degree --node_ratio 0.001 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data
-
-python stage2_expsubg.py --dataset CiteSeer  --choose_nodes random --lr 0.08 --node_ratio 0.00005 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
-
-# 試不同資料集會不會都有orig 和 new 在第一個epoch就不一樣的情況
-# cora 同, CiteSeer 不同, Actor 不同, Amazon不同
-python stage2_expsubg.py --dataset Cora  --choose_nodes random --node_ratio 0.001 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 3 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
-python stage2_expsubg.py --dataset CiteSeer  --choose_nodes random --node_ratio 0.001 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 3 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
-python stage2_expsubg.py --dataset Actor  --choose_nodes random --node_ratio 0.001 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 1 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
-python stage2_expsubg.py --dataset Amazon  --choose_nodes random --node_ratio 0.001 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 3 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
-
 
 # 38. generate explainable subgraph from random node (CF-Explainer)
 ------------------------------------------------------------
@@ -408,6 +402,7 @@ python stage2_expsubg.py --dataset CiteSeer  --choose_nodes stratified_by_degree
 python stage2_expsubg.py --dataset Actor  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
 python stage2_expsubg.py --dataset Amazon  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
 
+
 # 42. generate explainable subgraph from all test node (CF-Explainer)
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset Cora  --choose_nodes all --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type test --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
@@ -415,14 +410,6 @@ python stage2_expsubg.py --dataset CiteSeer  --choose_nodes all --node_ratio aut
 python stage2_expsubg.py --dataset Actor  --choose_nodes all --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type test --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
 python stage2_expsubg.py --dataset Amazon  --choose_nodes all --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type test --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
 
-
-# 43. check the distance between test and selected nodes
-done
-------------------------------------------------------------
-python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset Cora --k 3
-python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset CiteSeer --k 3
-python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset Actor --k 3
-python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset Amazon --k 3
 
 
 

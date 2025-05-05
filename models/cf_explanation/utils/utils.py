@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from torch_geometric.utils import k_hop_subgraph, dense_to_sparse, to_dense_adj, subgraph
 from torch_geometric.utils import to_undirected, is_undirected
+from utils.device import DEVICE
 
 
 
@@ -82,12 +83,13 @@ def get_neighbourhood(node_idx, edge_index, n_hops, features, labels):
 # 	# print("Num nodes in subgraph: {}".format(len(edge_subset[0])))
 # 	return sub_adj, sub_feat, sub_labels, node_dict
 
-def create_symm_matrix_from_vec(vector, n_rows):
-	matrix = torch.zeros(n_rows, n_rows)
-	idx = torch.tril_indices(n_rows, n_rows)
-	matrix[idx[0], idx[1]] = vector
-	symm_matrix = torch.tril(matrix) + torch.tril(matrix, -1).t()
-	return symm_matrix
+def create_symm_matrix_from_vec(vector, size):
+    device = vector.device  # <-- 讓 matrix 跟 vector 一樣的 device
+    matrix = torch.zeros(size, size, device=device)
+    idx = torch.triu_indices(size, size, offset=1, device=device)  # <-- 讓 idx 也在相同 device
+    matrix[idx[0], idx[1]] = vector
+    matrix[idx[1], idx[0]] = vector
+    return matrix
 
 
 def create_vec_from_symm_matrix(matrix, P_vec_size):

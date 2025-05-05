@@ -6,6 +6,8 @@ from torch.nn.utils import clip_grad_norm_
 from .basic_GCN_perturb import GCNPerturb
 from .utils.utils import get_degree_matrix
 import matplotlib.pyplot as plt
+from utils.device import DEVICE
+
 
 
 class CFExplainer:
@@ -15,16 +17,17 @@ class CFExplainer:
 
     def __init__(self, model, sub_adj, sub_feat, sub_labels, y_pred_orig, beta, device):
         super(CFExplainer, self).__init__()
+        
 
-        self.model = model  # PyG GCNConv based model
+        self.model = model.to(device) # PyG GCNConv based model
         self.model.eval()
-
-        self.sub_adj = sub_adj
-        self.sub_feat = sub_feat
-        self.sub_labels = sub_labels
-        self.y_pred_orig = y_pred_orig
+        self.device = DEVICE
+        self.sub_adj = sub_adj.to(self.device)
+        self.sub_feat = sub_feat.to(self.device)
+        self.sub_labels = sub_labels.to(self.device)
+        self.y_pred_orig = y_pred_orig.to(self.device)
+        
         self.beta = beta
-        self.device = device
         self.loss_total_list = []
 
         # Create perturbed version of the model
@@ -68,7 +71,7 @@ class CFExplainer:
         # 回傳結果
         cf_info = {
             "node_idx": node_idx,
-            "cf_explanation": removed_edges_global
+            "cf_explanation": removed_edges_global.cpu()
         }
 
         return cf_info
@@ -113,7 +116,7 @@ class CFExplainer:
         removed_edges_global = torch.tensor([
             [reverse_node_dict[i.item()], reverse_node_dict[j.item()]]
             for i, j in removed_edge_indices
-        ]).T  # [2, num_edges]
+        ], device=self.device).T  # [2, num_edges]
 
         return removed_edges_global
     
