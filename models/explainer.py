@@ -152,14 +152,14 @@ class SubgraphExplainer:
             print(f"Skip node {node_idx}: isolated node (no edges in subgraph).")
             return None
         
-        # 模型用 sparse edge_index
-        sub_adj = to_dense_adj(sub_edge_index, max_num_nodes=sub_feat.size(0))
-        # 防止孤立 or 無邊 subgraph 導致 sub_adj 變成空的
-        if sub_adj.numel() == 0 or sub_adj.shape[-1] == 0:
-            print(f"Skip node {node_idx}: sub_adj is empty (no edges in subgraph).")
+        # 轉 dense adjacency，並檢查 adj 是否異常
+        sub_adj = to_dense_adj(sub_edge_index, max_num_nodes=sub_feat.size(0)).squeeze()
+
+        # 這裡要注意 sub_adj 可能 squeeze 後變成 0-dim (完全沒有邊)
+        if sub_adj.numel() == 0 or sub_adj.dim() < 2 or sub_adj.shape[0] == 0:
+            print(f"Skip node {node_idx}: sub_adj is empty or invalid.")
             return None
 
-        sub_adj = sub_adj.squeeze()
         sub_adj = sub_adj.to(self.device)
         sub_edge_weight = torch.ones(sub_edge_index.size(1), device=self.device)
         self.model = self.model.to(self.device)
@@ -169,7 +169,7 @@ class SubgraphExplainer:
 
         self.cf_explainer = CFExplainer(model=self.model, sub_adj=sub_adj, sub_feat=sub_feat, 
                                 sub_labels=sub_labels, y_pred_orig=y_pred_orig[new_idx], 
-                                beta=0.5, device=self.device)
+                                beta=self.cf_beta, device=self.device)
 
         cf_explanation = self.cf_explainer.explain(cf_optimizer="SGD", node_idx=node_idx, 
                                   new_idx=new_idx, lr=self.lr, 
@@ -200,7 +200,10 @@ class SubgraphExplainer:
                 print(f"Saved {explainer_type} explanation for node {node_idx} at {file_path}")
             else:
                 print("No Counterfactual explanation is generated")
-            self.cf_explainer.plot_loss(fig_path)
+                
+            if hasattr(self, "cf_explainer") and self.cf_explainer is not None:
+                self.cf_explainer.plot_loss(fig_path)
+        
         
         else:
             # Prepare explanation data

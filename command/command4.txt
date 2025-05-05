@@ -360,6 +360,7 @@ python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr
 python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.5 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
 python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.5 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
 
+
 # 43. check the distance between test and selected nodes
 done
 ------------------------------------------------------------
@@ -372,7 +373,7 @@ python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --da
 - CF-Explainer 
 
 # 38. generate explainable subgraph from random node (CF-Explainer)
-running
+done
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset Cora  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
 python stage2_expsubg.py --dataset CiteSeer  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
@@ -381,7 +382,7 @@ python stage2_expsubg.py --dataset Amazon  --choose_nodes random --node_ratio au
 
 
 # 39. generate explainable subgraph from top_pagerank node (CF-Explainer)
-running
+done
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset Cora  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
 python stage2_expsubg.py --dataset CiteSeer  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
@@ -390,6 +391,7 @@ python stage2_expsubg.py --dataset Amazon  --choose_nodes top_pagerank --node_ra
 
 
 # 40. generate explainable subgraph from high_betweenness node (CF-Explainer)
+done
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset Cora  --choose_nodes high_betweenness --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
 python stage2_expsubg.py --dataset CiteSeer  --choose_nodes high_betweenness --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
@@ -398,6 +400,7 @@ python stage2_expsubg.py --dataset Amazon  --choose_nodes high_betweenness --nod
 
 
 # 41. generate explainable subgraph from stratified_by_degree node (CF-Explainer)
+done
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset Cora  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
 python stage2_expsubg.py --dataset CiteSeer  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
@@ -406,6 +409,7 @@ python stage2_expsubg.py --dataset Amazon  --choose_nodes stratified_by_degree -
 
 
 # 42. generate explainable subgraph from all test node (CF-Explainer)
+running
 ------------------------------------------------------------
 python stage2_expsubg.py --dataset Cora  --choose_nodes all --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type test --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
 python stage2_expsubg.py --dataset CiteSeer  --choose_nodes all --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type test --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
