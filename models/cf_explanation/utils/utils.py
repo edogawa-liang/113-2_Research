@@ -4,6 +4,8 @@ import torch
 import numpy as np
 import pandas as pd
 from torch_geometric.utils import k_hop_subgraph, dense_to_sparse, to_dense_adj, subgraph
+from torch_geometric.utils import to_undirected, is_undirected
+
 
 
 def mkdir_p(path):
@@ -45,13 +47,25 @@ def normalize_adj(adj):
 	norm_adj = torch.mm(torch.mm(D_tilde_exp, A_tilde), D_tilde_exp)
 	return norm_adj
 
+
 def get_neighbourhood(node_idx, edge_index, n_hops, features, labels):
-	# 使用 relabel_nodes=True，自動將 node_id 映射為 0~N-1
+    """
+    取得子圖，並根據原圖是否為 undirected，自動決定是否將子圖轉為 undirected。
+    """
+    # 先判斷原圖是不是 undirected
+    original_is_undirected = is_undirected(edge_index)
+
+    # 擷取 k-hop 子圖（這時可能 directed 也可能 undirected，看 edge_index 來決定）
     subset, sub_edge_index, _, _ = k_hop_subgraph(node_idx, n_hops, edge_index, relabel_nodes=True)
-    
+
+    # 如果原圖是 undirected，就確保子圖也是 undirected
+    if original_is_undirected:
+        sub_edge_index = to_undirected(sub_edge_index)
+
     sub_feat = features[subset]
     sub_labels = labels[subset]
     node_dict = {int(orig): i for i, orig in enumerate(subset.tolist())}
+
     return sub_edge_index, sub_feat, sub_labels, node_dict
 
 

@@ -7,6 +7,8 @@ from subgraph_selector.utils.choose_node import ChooseNodeSelector
 from models.explainer import SubgraphExplainer
 from models.basic_GCN import GCN2Regressor, GCN3Regressor, GCN2Classifier, GCN3Classifier
 from subgraph_selector.utils.feat_extract import FeatureExtractorXLSX  
+import pickle
+
 
 def parse_args():
     """
@@ -101,9 +103,45 @@ if __name__ == "__main__":
             cf_beta=args.cf_beta,
         )
 
-        # Explain each node
-        for node_idx in node_indices:
-            print(f"\nExplaining node {node_idx} with feature {feature_indices[i]} removed...")
-            explainer.explain_node(node_idx, modified_graphs[i], save=True)
 
-    print("Node explanations completed and saved.")
+    # Explain each node
+    cf_success_nodes = []
+    cf_fail_nodes = []
+
+    for node_idx in node_indices:
+        print(f"\nExplaining node {node_idx} with feature {feature_indices[i]} removed...")
+        result = explainer.explain_node(node_idx, modified_graphs[i], save=True)
+
+        # 只有CF要計算
+        if args.explainer_type == "CFExplainer":
+            if result is not None:
+                cf_success_nodes.append(node_idx)
+            else:
+                cf_fail_nodes.append(node_idx)
+
+    if args.explainer_type == "CFExplainer":
+        # Print summary
+        print("\n========== CF Explanation Summary ==========")
+        print(f"Total nodes selected: {len(node_indices)}")
+        print(f"Nodes with counterfactual explanation: {len(cf_success_nodes)}")
+        print(f"Nodes without counterfactual explanation: {len(cf_fail_nodes)}")
+        if cf_fail_nodes:
+            print(f"Nodes without explanation: {cf_fail_nodes}")
+        print("============================================\n")
+
+
+        # Save to pickle
+        cf_summary = {
+            "success_nodes": cf_success_nodes,
+            "fail_nodes": cf_fail_nodes
+        }
+        save_dir = os.path.join("saved", args.run_mode, args.explainer_type, args.dataset, args.choose_nodes, f"{feature_trials[i]}_{explainer.model_class.__name__}")
+        os.makedirs(save_dir, exist_ok=True)
+        
+        save_path = os.path.join(save_dir, "cf_summary.pkl")
+        with open(save_path, "wb") as f:
+            pickle.dump(cf_summary, f)
+
+        print(f"Saved CF explanation summary to {save_path}")
+
+        print("Node explanations completed and saved.")

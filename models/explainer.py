@@ -120,18 +120,15 @@ class SubgraphExplainer:
 
         if self.explainer_type == "CFExplainer":
             cf_info = self._run_cf_explainer(node_idx)
-            if cf_info is not None:
-                if save:
-                    self._save_explanation(node_idx=node_idx, explanation=cf_info, explainer_type=self.explainer_type)
-            else:
-                print("No Counterfactual explanation is generated")
+            if save:
+                self._save_explanation(node_idx=node_idx, explanation=cf_info, explainer_type=self.explainer_type)
+            return cf_info
         
         else: # 其餘 PyG 支援的 Explainer
             explanation = self.explainer(data.x, data.edge_index, index=node_idx)
             y_value = data.y[node_idx].item()  # 取得節點的回歸目標數值
             if save:
                 self._save_explanation(node_idx=node_idx, explanation=explanation, explainer_type=self.explainer.algorithm.__class__.__name__, y_value=y_value)
-
             return explanation.node_mask, explanation.edge_mask
 
 
@@ -159,37 +156,18 @@ class SubgraphExplainer:
         sub_edge_weight = torch.ones(sub_edge_index.size(1), device=sub_feat.device)
         y_pred_orig = self.model(sub_feat, sub_edge_index, sub_edge_weight)
         y_pred_orig = torch.argmax(y_pred_orig, dim=1) 
-        print("original model prediction:", y_pred_orig[new_idx].item())
 
-        explainer = CFExplainer(
-            model=self.model, sub_adj=sub_adj, sub_feat=sub_feat,
-            n_hid=self.model_config_dict.get("hidden_channels", 64), #使用GCN2, 如果使用GCN3則改成hidden_channels1, hidden_channels2 也需要一併修改cf_explainer
-            dropout=0.0,
-            sub_labels=sub_labels, y_pred_orig=y_pred_orig[new_idx],
-            num_classes=self.model_config_dict.get("out_channels", len(torch.unique(labels))),
-            beta=self.cf_beta, device=self.device)
+        self.cf_explainer = CFExplainer(model=self.model, sub_adj=sub_adj, sub_feat=sub_feat, 
+                                sub_labels=sub_labels, y_pred_orig=y_pred_orig[new_idx], 
+                                beta=0.5, device="cuda")
 
-        cf_example = explainer.explain(
-            node_idx=node_idx,
-            cf_optimizer="SGD",
-            new_idx=new_idx,
-            lr=self.lr,
-            n_momentum=0.0,
-            num_epochs=self.epoch
-        )
-        print("cf_example:", cf_example)
+        cf_explanation = self.cf_explainer.explain(cf_optimizer="SGD", node_idx=node_idx, 
+                                  new_idx=new_idx, lr=self.lr, 
+                                  n_momentum=0.0, num_epochs=self.epoch, node_dict=node_dict)
+        
+        print("cf_explanation:", cf_explanation)
 
-        if cf_example:
-            # Counterfactual Explanation
-            removed_edges_global = explainer.get_removed_edges_from_original_index(node_dict)
-
-            cf_info = {
-                "node_idx": node_idx,              # 原圖中的節點編號
-                "cf_explanation": removed_edges_global      # [2, num_edges] 的 edge_index 格式
-            }
-            return cf_info
-        else:
-            return None
+        return cf_explanation
 
 
     def _save_explanation(self, node_idx, explanation, explainer_type):
@@ -203,11 +181,16 @@ class SubgraphExplainer:
 
         # Define file path for saving explanations
         file_path = os.path.join(save_exp_dir, f"node_{node_idx}.npz")
+        fig_path = os.path.join(save_exp_dir, f"node_{node_idx}.png")
 
         if explainer_type == "CFExplainer":
             # Save counterfactual explanation
-            np.savez_compressed(file_path, **explanation)
-
+            if explanation is not None:
+                np.savez_compressed(file_path, **explanation)
+                print(f"Saved {explainer_type} explanation for node {node_idx} at {file_path}")
+            else:
+                print("No Counterfactual explanation is generated")
+            self.cf_explainer.plot_loss(fig_path)
         
         else:
             # Prepare explanation data
@@ -226,6 +209,5 @@ class SubgraphExplainer:
 
             # Save to compressed .npz file
             np.savez_compressed(file_path, **explanation_data, node_mask=node_mask, edge_mask=edge_mask)
-
-        print(f"Saved {explainer_type} explanation for node {node_idx} at {file_path}")
+            print(f"Saved {explainer_type} explanation for node {node_idx} at {file_path}")
 
