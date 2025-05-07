@@ -100,41 +100,50 @@ class DistanceChecker:
             (f"top{k}_avg_dist", f"Top-{k} Avg")
         ]
 
-        unchanged_vals = []
-        changed_vals = []
-        xtick_labels = []
+        data_to_plot = []
+        labels = []
+        colors = []
 
         for metric_key, metric_label in metrics:
             col = f"{strategy}_{metric_key}"
             if col not in df1.columns or col not in df2.columns:
                 raise ValueError(f"Missing column '{col}' in DataFrame for strategy '{strategy}'")
-            unchanged_vals.append(df1[col].mean())
-            changed_vals.append(df2[col].mean())
-            xtick_labels.append(metric_label)
 
-        x = np.arange(len(metrics))
-        width = 0.35
+            unchanged_data = df1[col].dropna().values
+            changed_data = df2[col].dropna().values
 
-        unchanged_count = len(df1)
-        changed_count = len(df2)
-        fig, ax = plt.subplots(figsize=(6, 4))
-        ax.bar(x - width/2, unchanged_vals, width, label=f"Unchanged (n={unchanged_count})", color="#1f77b4")
-        ax.bar(x + width/2, changed_vals, width, label=f"Changed (n={changed_count})", color="#ff7f0e")
+            data_to_plot.append(unchanged_data)
+            labels.append(f"{metric_label}\nUnchanged")
+            colors.append("#1f77b4")  # 藍色
 
-        ax.set_title(f"{strategy.replace('_', ' ').title()} Node Selection – Changed vs Unchanged Predictions", fontsize=12)
-        ax.set_xticks(x)
-        ax.set_xticklabels(xtick_labels)
-        ax.set_ylabel("Average Distance")
-        ax.legend()
+            data_to_plot.append(changed_data)
+            labels.append(f"{metric_label}\nChanged")
+            colors.append("#ff7f0e")  # 橘色
 
+        fig, ax = plt.subplots(figsize=(8, 6))
+        box = ax.boxplot(data_to_plot, labels=labels, patch_artist=True)
+
+        # 設定 box 顏色
+        for patch, color in zip(box['boxes'], colors):
+            patch.set_facecolor(color)
+            patch.set_edgecolor("none")
+
+        # 設定 median 顏色
+        for median in box['medians']:
+            median.set_color("#444444")
+            # median.set_linewidth(2)
+
+        ax.set_title(f"{strategy.replace('_', ' ').title()} Node Selection – Distance Distribution", fontsize=12)
+        ax.set_ylabel("Distance")
+        # ax.grid(True, linestyle="--", alpha=0.5)
+        # plt.xticks(rotation=45)
         plt.tight_layout()
-        save_path = os.path.join(save_dir, f"distance_summary_{self.model_name}_{strategy}.png")
+        plt.legend([box["boxes"][0], box["boxes"][1]], ["Unchanged", "Changed"], loc="upper right")
+
+        save_path = os.path.join(save_dir, f"distance_boxplot_{self.model_name}_{strategy}.png")
         plt.savefig(save_path)
         plt.close()
-        print(f"Saved bar chart to: {save_path}")
-
-
-
+        print(f"Saved boxplot to: {save_path}")
 
 
 # python tools/check_result.py --dataset Actor --run_mode remove_from_GNNExplainer --strategy random --model_name 1_GCN2Classifier --distance_csv_dir stage2_y_edge_0.3/GNNExplainer
