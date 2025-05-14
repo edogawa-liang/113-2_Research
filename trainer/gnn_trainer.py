@@ -76,7 +76,14 @@ class GNNClassifierTrainer:
         return float(loss)
 
     def save_model(self):
-        training_params = {"model_name": self.model_name, "epochs": self.epochs, "lr": self.lr, "weight_decay": self.weight_decay}
+        training_params = {
+            "model_name": self.model_name,
+            "in_channels": self.num_features,
+            "out_channels": self.num_classes,
+            "epochs": self.epochs,
+            "lr": self.lr,
+            "weight_decay": self.weight_decay
+        }
         save_model_and_config(self.model, self.save_model_path, self.save_config_path, training_params)
 
 

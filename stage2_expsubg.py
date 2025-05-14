@@ -39,6 +39,9 @@ def parse_args():
     # cf_explainer
     parser.add_argument("--cf_beta", type=float, default=0.5, help="Tradeoff for dist loss")
 
+    # only structure
+    parser.add_argument("--only_structure", action="store_true", help="Use only structural information (all features set to 1)")
+
     return parser.parse_args()
 
 
@@ -51,6 +54,13 @@ if __name__ == "__main__":
     loader = GraphDatasetLoader(args.normalize)
     data, num_features, _ = loader.load_dataset(args.dataset)
     data = data.to(device)
+
+    # 若使用 only_structure 模式，將所有特徵設為 1 維常數
+    if args.only_structure:
+        print("Using only structure: all node features set to 1.")
+        data.x = torch.ones((data.num_nodes, 1), device=device)
+        num_features = 1  # 更新特徵數量，避免 downstream 模型出錯
+
 
     if args.use_raw_data:
         print("Using raw data without removing any feature.")

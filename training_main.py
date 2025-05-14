@@ -33,6 +33,9 @@ def parse_args():
     parser.add_argument("--feature_selection_method", type=str, default="svd", choices=["pca", "svd", "tree", "mutual_info"], help="Feature selection method")
     parser.add_argument("--top_n", type=int, default=6, help="Number of top features to select")
 
+    # only structure
+    parser.add_argument("--only_structure", action="store_true", help="Use only structural information (all features set to 1)")
+
     return parser.parse_args()
 
 
@@ -49,6 +52,12 @@ if __name__ == "__main__":
     loader = GraphDatasetLoader(args.normalize)
     data, num_features, _ = loader.load_dataset(args.dataset)
     data = data.to(device)
+
+    # 如果只用結構，則把所有節點特徵設為 1
+    if args.only_structure:
+        print("Using only structure: all node features set to 1.")
+        data.x = torch.ones((data.num_nodes, 1), device=device)
+        num_features = 1  # 重設特徵維度
 
     if args.use_original_label is False:
         print(f"Performing feature selection using {args.feature_selection_method.upper()}...")

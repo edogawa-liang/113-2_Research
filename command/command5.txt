@@ -1,0 +1,110 @@
+# 1. train GNN only look at structure
+------------------------------------------------------------
+python training_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode original_structure --note structure_only --use_original_label true --only_structure
+python training_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode original_structure --note structure_only --use_original_label true --only_structure
+python training_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode original_structure --note structure_only --use_original_label true --only_structure
+
+# 2. train MLP with no feature
+------------------------------------------------------------
+python training_main.py --dataset Cora --model MLP --epochs 1000 --lr 0.01 --run_mode mlp_structure --note mlp_structure_only --use_original_label true --only_structure
+python training_main.py --dataset CiteSeer --model MLP --epochs 1000 --lr 0.01 --run_mode mlp_structure --note mlp_structure_only --use_original_label true --only_structure
+python training_main.py --dataset Amazon --model MLP --epochs 1000 --lr 0.01 --run_mode mlp_structure --note mlp_structure_only --use_original_label true --only_structure
+
+
+- DummyExplainer
+# 3. generate explanable subgraph for no feature graph, DummyExplainer, random
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type DummyExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type DummyExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset Amazon  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type DummyExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+
+# 4. generate explanable subgraph for no feature graph, DummyExplainer, top_pagerank
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type DummyExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type DummyExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset Amazon  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type DummyExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+
+# 5. generate explanable subgraph for no feature graph, DummyExplainer, high_betweenness
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes high_betweenness --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type DummyExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes high_betweenness--node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type DummyExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset Amazon  --choose_nodes high_betweenness --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type DummyExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+
+# 6. generate explanable subgraph for no feature graph, DummyExplainer, stratified_by_degree
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type DummyExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type DummyExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset Amazon  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type DummyExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+
+
+- GNNExplainer
+# 7. generate explanable subgraph for no feature graph, GNNExplainer, random
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type GNNExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type GNNExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset Amazon  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type GNNExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+
+# 8. generate explanable subgraph for no feature graph, GNNExplainer, top_pagerank
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type GNNExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type GNNExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset Amazon  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type GNNExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+
+# 9. generate explanable subgraph for no feature graph, GNNExplainer, high_betweenness
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes high_betweenness --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type GNNExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes high_betweenness--node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type GNNExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset Amazon  --choose_nodes high_betweenness --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type GNNExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+
+# 10. generate explanable subgraph for no feature graph, GNNExplainer, stratified_by_degree
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type GNNExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type GNNExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset Amazon  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type GNNExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+
+- CFExplainer
+# 7. generate explanable subgraph for no feature graph, CFExplainer, random
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type CFExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type CFExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset Amazon  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type CFExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+
+# 8. generate explanable subgraph for no feature graph, CFExplainer, top_pagerank
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type CFExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type CFExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset Amazon  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type CFExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+
+# 9. generate explanable subgraph for no feature graph, CFExplainer, high_betweenness
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes high_betweenness --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type CFExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes high_betweenness--node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type CFExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset Amazon  --choose_nodes high_betweenness --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type CFExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+
+# 10. generate explanable subgraph for no feature graph, CFExplainer, stratified_by_degree
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type CFExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type CFExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+python stage2_expsubg.py --dataset Amazon  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3_structure --explainer_type CFExplainer --stage1_path saved/original_structure --use_raw_data --only_structure
+
+
+# 11. node share for all explainers
+python tools/stage2_node_share.py --stage_dir stage2_y_edge_0.3_structure --explainer DummyExplainer --dataset Cora
+python tools/stage2_node_share.py --stage_dir stage2_y_edge_0.3_structure --explainer DummyExplainer --dataset CiteSeer
+python tools/stage2_node_share.py --stage_dir stage2_y_edge_0.3_structure --explainer DummyExplainer --dataset Amazon
+
+python tools/stage2_node_share.py --stage_dir stage2_y_edge_0.3_structure --explainer GNNExplainer --dataset Cora
+python tools/stage2_node_share.py --stage_dir stage2_y_edge_0.3_structure --explainer GNNExplainer --dataset CiteSeer
+python tools/stage2_node_share.py --stage_dir stage2_y_edge_0.3_structure --explainer GNNExplainer --dataset Amazon
+
+python tools/stage2_node_share.py --stage_dir stage2_y_edge_0.3_structure --explainer CFExplainer --dataset Cora
+python tools/stage2_node_share.py --stage_dir stage2_y_edge_0.3_structure --explainer CFExplainer --dataset CiteSeer
+python tools/stage2_node_share.py --stage_dir stage2_y_edge_0.3_structure --explainer CFExplainer --dataset Amazon
+
+
+
+- Train GNN model from remove random edge (only structure)
+- Train GNN model from remove random walk (only structure)
+- Train GNN model from remove DummyExplainer edge (only structure)
+- Train GNN model from remove GNNExplainer edge (only structure)
+- Train GNN model from remove CFExplainer edge (only structure)
