@@ -46,6 +46,9 @@ def parse_args():
     parser.add_argument("--run_mode", type=str, default="try", help="Run mode") # 如果跑的是移除test的子圖，run_mode 前加入"test"
     parser.add_argument("--filename", type=str, default="result", help="File name for saving results")
     parser.add_argument("--note", type=str, default="", help="Note for the experiment")
+
+    parser.add_argument("--only_structure", action="store_true", help="Use only structural information (all features set to 1)")
+
     return parser.parse_args()
 
 if __name__ == "__main__":
@@ -60,6 +63,11 @@ if __name__ == "__main__":
     loader = GraphDatasetLoader(args.normalize)
     data, num_features, num_classes = loader.load_dataset(args.dataset)
     data = data.to(device)
+    if args.only_structure:
+        print("Using only structure: all node features set to 1.")
+        data.x = torch.ones((data.num_nodes, 1), device=device)
+        num_features = 1  # 更新特徵維度，否則模型初始化會錯
+
 
     # Select subgraph
     if args.selector_type == "random":

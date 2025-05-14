@@ -129,7 +129,7 @@ class SubgraphExplainer:
             explanation = self.explainer(data.x, data.edge_index, index=node_idx)
             y_value = data.y[node_idx].item()  # 取得節點的回歸目標數值
             if save:
-                self._save_explanation(node_idx=node_idx, explanation=explanation, explainer_type=self.explainer.algorithm.__class__.__name__, y_value=y_value)
+                self._save_explanation(node_idx=node_idx, explanation=explanation, explainer_type=self.explainer.algorithm.__class__.__name__)#, y_value=y_value)
             return explanation.node_mask, explanation.edge_mask
 
 
