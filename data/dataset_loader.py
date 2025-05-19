@@ -32,6 +32,17 @@ class GraphDatasetLoader:
             "Airports": lambda: Airports(root='/tmp/Airports', name='USA', transform=self.transform),
             "Actor": lambda: Actor(root='/tmp/Actor', transform=self.transform),
         }
+        self.feature_type_map = {
+            "Cora": "categorical",
+            "CiteSeer": "categorical",
+            "PubMed": "categorical",
+            "FacebookPagePage": "continuous",
+            "GitHub": "continuous",
+            "KarateClub": "continuous",
+            "Amazon": "continuous",
+            "Airports": "continuous",
+            "Actor": "continuous"
+        }
     
     def load_dataset(self, name: str):
         """
@@ -43,9 +54,11 @@ class GraphDatasetLoader:
         if name not in self.datasets:
             raise ValueError(f"Unknown dataset: {name}. Available datasets: {list(self.datasets.keys())}")
         
+        # check 特徵的型態
+        feature_type = self.feature_type_map.get(name, "unknown")  # fallback to "unknown" if not found
         dataset = self.datasets[name]()  # Load dataset
         print(f"Dataset: {dataset}:")
-        print(f"Number of graphs: {len(dataset)}")
+        # print(f"Number of graphs: {len(dataset)}")
         print(f"Number of features: {dataset.num_features}")
         print(f"Number of classes: {dataset.num_classes}")
         
@@ -67,7 +80,7 @@ class GraphDatasetLoader:
         # print(f"Is undirected: {data.is_undirected()}")
         # print(f"Node Feature: {data.x}")
         
-        return data, dataset.num_features, dataset.num_classes
+        return data, dataset.num_features, dataset.num_classes, feature_type
 
 if __name__ == "__main__":
     loader = GraphDatasetLoader()

@@ -1,6 +1,7 @@
 import argparse
 import torch
 import os
+import pickle
 from utils.device import DEVICE
 from data.dataset_loader import GraphDatasetLoader
 from data.data_modifier import GraphModifier
@@ -8,7 +9,7 @@ from subgraph_selector.utils.choose_node import ChooseNodeSelector
 from models.explainer import SubgraphExplainer
 from models.basic_GCN import GCN2Regressor, GCN3Regressor, GCN2Classifier, GCN3Classifier
 from subgraph_selector.utils.feat_extract import FeatureExtractorXLSX  
-import pickle
+from data.feature2node import FeatureNodeConverter
 
 
 def parse_args():
@@ -42,6 +43,9 @@ def parse_args():
     # only structure
     parser.add_argument("--only_structure", action="store_true", help="Use only structural information (all features set to 1)")
 
+    # feature to node
+    parser.add_argument("--feature_to_node", action="store_true", help="Convert features into nodes and edges.")
+
     return parser.parse_args()
 
 
@@ -52,7 +56,7 @@ if __name__ == "__main__":
 
     # Load dataset
     loader = GraphDatasetLoader(args.normalize)
-    data, num_features, _ = loader.load_dataset(args.dataset)
+    data, num_features, _, feature_type = loader.load_dataset(args.dataset)
     data = data.to(device)
 
     # 若使用 only_structure 模式，將所有特徵設為 1 維常數
@@ -60,6 +64,13 @@ if __name__ == "__main__":
         print("Using only structure: all node features set to 1.")
         data.x = torch.ones((data.num_nodes, 1), device=device)
         num_features = 1  # 更新特徵數量，避免 downstream 模型出錯
+
+    # 如果要把特徵轉換成節點，則使用 FeatureNodeConverter
+    if args.feature_to_node:
+        print("Converting node features into feature-nodes...")
+        converter = FeatureNodeConverter(feature_type=feature_type)
+        data = converter.convert(data)
+        num_features = data.x.size(1)  # 更新特徵維度（此時為 1）
 
 
     if args.use_raw_data:

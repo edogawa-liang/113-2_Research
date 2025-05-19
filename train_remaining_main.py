@@ -13,6 +13,9 @@ from models.basic_GCN import GCN2Classifier, GCN3Classifier
 from trainer.gnn_trainer import GNNClassifierTrainer
 from utils.save_result import ExperimentLogger
 
+from data.feature2node import FeatureNodeConverter
+
+
 # 核心子圖包含整個節點
 # 移除部分邊後的節點分類結果
 
@@ -47,7 +50,11 @@ def parse_args():
     parser.add_argument("--filename", type=str, default="result", help="File name for saving results")
     parser.add_argument("--note", type=str, default="", help="Note for the experiment")
 
+    # only structure
     parser.add_argument("--only_structure", action="store_true", help="Use only structural information (all features set to 1)")
+
+    # feature to node
+    parser.add_argument("--feature_to_node", action="store_true", help="Convert features into nodes and edges.")
 
     return parser.parse_args()
 
@@ -61,12 +68,21 @@ if __name__ == "__main__":
 
     # Load dataset
     loader = GraphDatasetLoader(args.normalize)
-    data, num_features, num_classes = loader.load_dataset(args.dataset)
+    data, num_features, num_classes, feature_type = loader.load_dataset(args.dataset)
     data = data.to(device)
+
+    # 如果只用結構，則把所有節點特徵設為 1
     if args.only_structure:
         print("Using only structure: all node features set to 1.")
         data.x = torch.ones((data.num_nodes, 1), device=device)
         num_features = 1  # 更新特徵維度，否則模型初始化會錯
+
+    # 如果要把特徵轉換成節點，則使用 FeatureNodeConverter
+    if args.feature_to_node:
+        print("Converting node features into feature-nodes...")
+        converter = FeatureNodeConverter(feature_type=feature_type)
+        data = converter.convert(data)
+        num_features = data.x.size(1)  # 更新特徵維度（此時為 1）
 
 
     # Select subgraph

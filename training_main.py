@@ -9,6 +9,7 @@ from trainer.gnn_trainer import GNNClassifierTrainer, GNNRegressorTrainer
 from utils.save_result import ExperimentLogger
 from models.basic_mlp import MLPClassifier, MLPRegressor
 from trainer.mlp_trainer import MLPClassifierTrainer, MLPRegressorTrainer
+from data.feature2node import FeatureNodeConverter
 
 
 
@@ -36,6 +37,9 @@ def parse_args():
     # only structure
     parser.add_argument("--only_structure", action="store_true", help="Use only structural information (all features set to 1)")
 
+    # feature to node
+    parser.add_argument("--feature_to_node", action="store_true", help="Convert features into nodes and edges.")
+
     return parser.parse_args()
 
 
@@ -50,7 +54,7 @@ if __name__ == "__main__":
 
     # Load dataset
     loader = GraphDatasetLoader(args.normalize)
-    data, num_features, _ = loader.load_dataset(args.dataset)
+    data, num_features, _, feature_type = loader.load_dataset(args.dataset)
     data = data.to(device)
 
     # 如果只用結構，則把所有節點特徵設為 1
@@ -58,6 +62,14 @@ if __name__ == "__main__":
         print("Using only structure: all node features set to 1.")
         data.x = torch.ones((data.num_nodes, 1), device=device)
         num_features = 1  # 重設特徵維度
+
+    # 如果要把特徵轉換成節點，則使用 FeatureNodeConverter
+    if args.feature_to_node:
+        print("Converting node features into feature-nodes...")
+        converter = FeatureNodeConverter(feature_type=feature_type)
+        data = converter.convert(data)
+        num_features = data.x.size(1)  # 更新特徵維度（此時為 1）
+
 
     if args.use_original_label is False:
         print(f"Performing feature selection using {args.feature_selection_method.upper()}...")

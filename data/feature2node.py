@@ -5,11 +5,11 @@ import torch
 from torch_geometric.data import Data
 
 class FeatureNodeConverter:
-    def __init__(self, is_categorical: bool):
+    def __init__(self, feature_type):
         """
         :param is_categorical: True 表示特徵是類別型（0/1），False 表示連續型（浮點）
         """
-        self.is_categorical = is_categorical
+        self.feature_type = feature_type
 
     def convert(self, data: Data) -> Data:
         num_nodes = data.num_nodes
@@ -23,12 +23,13 @@ class FeatureNodeConverter:
             for feat_id in range(num_features):
                 feat_value = data.x[node_id, feat_id].item()
 
-                if self.is_categorical:
+                if self.feature_type == "categorical":
                     if feat_value == 1:  # 只連有值的特徵
                         edge_index.append([node_id, feature_node_offset + feat_id])
                         edge_index.append([feature_node_offset + feat_id, node_id])
                         edge_weight.extend([1.0, 1.0])
-                else:
+
+                elif self.feature_type == "continuous":
                     # 所有節點都連全部 feature node，邊權是原始特徵值
                     edge_index.append([node_id, feature_node_offset + feat_id])
                     edge_index.append([feature_node_offset + feat_id, node_id])
@@ -55,6 +56,8 @@ class FeatureNodeConverter:
 
         # 建立新圖
         new_data = Data(x=x, edge_index=edge_index, edge_weight=edge_weight, y=data.y)
+        # print(f"Original graph: {data}")
+        print(f"Converted graph: {new_data}")
 
         # 複製 mask 屬性
         for attr in ["train_mask", "val_mask", "test_mask"]:
