@@ -61,9 +61,13 @@ class FeatureNodeConverter:
         # print(f"Original graph: {data}")
         print(f"Converted graph: {new_data}")
 
-        # 複製 mask 屬性
+        # 複製並擴展 mask 屬性
         for attr in ["train_mask", "val_mask", "test_mask"]:
             if hasattr(data, attr):
-                setattr(new_data, attr, getattr(data, attr))
+                old_mask = getattr(data, attr)
+                if old_mask is not None and old_mask.shape[0] == num_nodes:
+                    pad = torch.zeros(num_features, dtype=torch.bool, device=old_mask.device)
+                    new_mask = torch.cat([old_mask, pad], dim=0)
+                    setattr(data, attr, new_mask)
 
         return new_data
