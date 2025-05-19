@@ -1,8 +1,9 @@
 import torch
 import os
 import argparse
-from data.dataset_loader import GraphDatasetLoader
+from utils.device import DEVICE
 
+from data.dataset_loader import GraphDatasetLoader
 from subgraph_selector.random_selector import RandomEdgeSelector
 from subgraph_selector.explainer_selector import ExplainerEdgeSelector
 from subgraph_selector.random_walk_selector import RandomWalkEdgeSelector
@@ -63,24 +64,23 @@ if __name__ == "__main__":
 
     os.environ['TORCH'] = torch.__version__
     print(f"Using torch version: {torch.__version__}")
-    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
+    print(f"Using device: {DEVICE}")
 
     # Load dataset
     loader = GraphDatasetLoader(args.normalize)
     data, num_features, num_classes, feature_type = loader.load_dataset(args.dataset)
-    data = data.to(device)
+    data = data.to(DEVICE)
 
     # 如果只用結構，則把所有節點特徵設為 1
     if args.only_structure:
         print("Using only structure: all node features set to 1.")
-        data.x = torch.ones((data.num_nodes, 1), device=device)
+        data.x = torch.ones((data.num_nodes, 1), device=DEVICE)
         num_features = 1  # 更新特徵維度，否則模型初始化會錯
 
     # 如果要把特徵轉換成節點，則使用 FeatureNodeConverter
     if args.feature_to_node:
         print("Converting node features into feature-nodes...")
-        converter = FeatureNodeConverter(feature_type=feature_type)
+        converter = FeatureNodeConverter(feature_type=feature_type, device=DEVICE)
         data = converter.convert(data)
         num_features = data.x.size(1)  # 更新特徵維度（此時為 1）
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     # Select subgraph
     if args.selector_type == "random":
         print("Using Random Selector")
-        selector = RandomEdgeSelector(data, fraction=args.fraction, seed=args.seed, device=device)
+        selector = RandomEdgeSelector(data, fraction=args.fraction, seed=args.seed, device=DEVICE)
         selected_edges = selector.select_edges()
     
     elif args.selector_type == "explainer": # 處理PyG支援的可解釋方法
@@ -118,7 +118,7 @@ if __name__ == "__main__":
         num_node = remaining_graph_constructor.get_node_count()
         num_edge = remaining_graph_constructor.get_edge_count()
     else:
-        remaining_graph_constructor = RemainingGraphConstructor(data, selected_edges, device=device)
+        remaining_graph_constructor = RemainingGraphConstructor(data, selected_edges, device=DEVICE)
         remaining_graph = remaining_graph_constructor.get_remaining_graph()
 
     # Train GNN on the remaining graph
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     trainer = GNNClassifierTrainer(dataset_name=args.dataset, data=remaining_graph, 
                                    num_features=num_features, num_classes=num_classes, 
                                    model_class=GCN2Classifier if args.model == "GCN2" else GCN3Classifier,
-                                   trial_number=trial_number, device=device,
+                                   trial_number=trial_number, device=DEVICE,
                                    epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
                                    run_mode=args.run_mode)
 

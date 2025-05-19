@@ -51,24 +51,23 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    device = DEVICE
-    print(f"Using device: {device}")
+    print(f"Using DEVICE: {DEVICE}")
 
     # Load dataset
     loader = GraphDatasetLoader(args.normalize)
     data, num_features, _, feature_type = loader.load_dataset(args.dataset)
-    data = data.to(device)
+    data = data.to(DEVICE)
 
     # 若使用 only_structure 模式，將所有特徵設為 1 維常數
     if args.only_structure:
         print("Using only structure: all node features set to 1.")
-        data.x = torch.ones((data.num_nodes, 1), device=device)
+        data.x = torch.ones((data.num_nodes, 1), device=DEVICE)
         num_features = 1  # 更新特徵數量，避免 downstream 模型出錯
 
     # 如果要把特徵轉換成節點，則使用 FeatureNodeConverter
     if args.feature_to_node:
         print("Converting node features into feature-nodes...")
-        converter = FeatureNodeConverter(feature_type=feature_type)
+        converter = FeatureNodeConverter(feature_type=feature_type, device=DEVICE)
         data = converter.convert(data)
         num_features = data.x.size(1)  # 更新特徵維度（此時為 1）
 

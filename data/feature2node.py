@@ -4,12 +4,15 @@
 import torch
 from torch_geometric.data import Data
 
+
 class FeatureNodeConverter:
-    def __init__(self, feature_type):
+    def __init__(self, feature_type, device):
         """
         :param is_categorical: True 表示特徵是類別型（0/1），False 表示連續型（浮點）
         """
         self.feature_type = feature_type
+        self.device = device
+        print("dataset has", self.feature_type, "features")
 
     def convert(self, data: Data) -> Data:
         num_nodes = data.num_nodes
@@ -22,7 +25,6 @@ class FeatureNodeConverter:
         for node_id in range(num_nodes):
             for feat_id in range(num_features):
                 feat_value = data.x[node_id, feat_id].item()
-
                 if self.feature_type == "categorical":
                     if feat_value == 1:  # 只連有值的特徵
                         edge_index.append([node_id, feature_node_offset + feat_id])
@@ -40,19 +42,19 @@ class FeatureNodeConverter:
 
         # 加上原始的 edge（補上 edge_weight = 1.0）
         if not hasattr(data, 'edge_weight') or data.edge_weight is None:
-            original_edge_weight = torch.ones(data.edge_index.size(1))
+            original_edge_weight = torch.ones(data.edge_index.size(1), device=self.device)
         else:
             original_edge_weight = data.edge_weight
 
         # 合併 edge_index 與 edge_weight
-        new_edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous()
-        new_edge_weight = torch.tensor(edge_weight, dtype=torch.float)
+        new_edge_index = torch.tensor(edge_index, dtype=torch.long, device=self.device).t().contiguous()
+        new_edge_weight = torch.tensor(edge_weight, dtype=torch.float, device=self.device)
 
         edge_index = torch.cat([data.edge_index, new_edge_index], dim=1)
         edge_weight = torch.cat([original_edge_weight, new_edge_weight], dim=0)
 
         # 節點特徵都設為 1（包含原始 + 特徵節點）
-        x = torch.ones((num_nodes + num_features, 1))
+        x = torch.ones((num_nodes + num_features, 1), device=self.device)
 
         # 建立新圖
         new_data = Data(x=x, edge_index=edge_index, edge_weight=edge_weight, y=data.y)

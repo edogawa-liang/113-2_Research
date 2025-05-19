@@ -10,6 +10,8 @@ from utils.save_result import ExperimentLogger
 from models.basic_mlp import MLPClassifier, MLPRegressor
 from trainer.mlp_trainer import MLPClassifierTrainer, MLPRegressorTrainer
 from data.feature2node import FeatureNodeConverter
+from utils.device import DEVICE
+
 
 
 
@@ -49,24 +51,23 @@ if __name__ == "__main__":
 
     os.environ['TORCH'] = torch.__version__
     print(f"Using torch version: {torch.__version__}")
-    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
+    print(f"Using device: {DEVICE}")
 
     # Load dataset
     loader = GraphDatasetLoader(args.normalize)
     data, num_features, _, feature_type = loader.load_dataset(args.dataset)
-    data = data.to(device)
+    data = data.to(DEVICE)
 
     # 如果只用結構，則把所有節點特徵設為 1
     if args.only_structure:
         print("Using only structure: all node features set to 1.")
-        data.x = torch.ones((data.num_nodes, 1), device=device)
+        data.x = torch.ones((data.num_nodes, 1), device=DEVICE)
         num_features = 1  # 重設特徵維度
 
     # 如果要把特徵轉換成節點，則使用 FeatureNodeConverter
     if args.feature_to_node:
         print("Converting node features into feature-nodes...")
-        converter = FeatureNodeConverter(feature_type=feature_type)
+        converter = FeatureNodeConverter(feature_type=feature_type, device=DEVICE)
         data = converter.convert(data)
         num_features = data.x.size(1)  # 更新特徵維度（此時為 1）
 
@@ -122,14 +123,14 @@ if __name__ == "__main__":
                 if args.model == "MLP":
                     trainer = MLPRegressorTrainer(dataset_name=args.dataset, data=graph,
                                                 model_class= MLPRegressor, 
-                                                trial_number=trial_number, device=device,
+                                                trial_number=trial_number, device=DEVICE,
                                                 epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
                                                 run_mode=args.run_mode)
                 else: # GNN
                     trainer = GNNRegressorTrainer(dataset_name=args.dataset, data=graph, 
                                                 num_features=num_features, 
                                                 model_class=GCN2Regressor if args.model == "GCN2" else GCN3Regressor,
-                                                trial_number=trial_number, device=device,
+                                                trial_number=trial_number, device=DEVICE,
                                                 epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
                                                 run_mode=args.run_mode)
                 result = trainer.run()
@@ -145,14 +146,14 @@ if __name__ == "__main__":
                     trainer = MLPClassifierTrainer(dataset_name=args.dataset, data=graph,
                                            num_features=num_features, num_classes=num_classes,
                                            model_class= MLPClassifier, 
-                                           trial_number=trial_number, device=device,
+                                           trial_number=trial_number, device=DEVICE,
                                            epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
                                            run_mode=args.run_mode, threshold=args.threshold)
                 else: # GNN
                     trainer = GNNClassifierTrainer(dataset_name=args.dataset, data=graph, 
                                                 num_features=num_features, num_classes=num_classes,  
                                                 model_class=GCN2Classifier if args.model == "GCN2" else GCN3Classifier,
-                                                trial_number=trial_number, device=device,
+                                                trial_number=trial_number, device=DEVICE,
                                                 epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay, 
                                                 run_mode=args.run_mode, threshold=args.threshold)
                 result = trainer.run()
