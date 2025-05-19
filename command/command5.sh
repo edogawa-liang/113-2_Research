@@ -14,7 +14,7 @@ python training_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --r
 # ------------------------------------------------------------
 python training_main.py --dataset Cora --model MLP --epochs 1000 --lr 0.01 --run_mode mlp_structure --note mlp_structure_only --use_original_label true --only_structure
 python training_main.py --dataset CiteSeer --model MLP --epochs 1000 --lr 0.01 --run_mode mlp_structure --note mlp_structure_only --use_original_label true --only_structure
-python training_main.py --dataset Amazon --model MLP --epochs 1000 --lr 0.01 --run_mode mlp_structure --note mlp_structure_only --use_original_label true --only_structure
+python training_main.py 4--dataset Amazon --model MLP --epochs 1000 --lr 0.01 --run_mode mlp_structure --note mlp_structure_only --use_original_label true --only_structure
 
 
 # - DummyExplainer
@@ -432,3 +432,5 @@ python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer_structure --note true_y_CFExplainer_stratified_by_degree_structure --selector_type explainer --base_dir saved/stage2_y_edge_0.3_structure --explainer_name CFExplainer --node_choose stratified_by_degree --only_structure
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer_structure --note true_y_CFExplainer_stratified_by_degree_structure --selector_type explainer --base_dir saved/stage2_y_edge_0.3_structure --explainer_name CFExplainer --node_choose stratified_by_degree --only_structure
 python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer_structure --note true_y_CFExplainer_stratified_by_degree_structure --selector_type explainer --base_dir saved/stage2_y_edge_0.3_structure --explainer_name CFExplainer --node_choose stratified_by_degree --only_structure
+
+wait
