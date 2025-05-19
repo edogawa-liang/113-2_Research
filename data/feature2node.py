@@ -68,6 +68,6 @@ class FeatureNodeConverter:
                 if old_mask is not None and old_mask.shape[0] == num_nodes:
                     pad = torch.zeros(num_features, dtype=torch.bool, device=old_mask.device)
                     new_mask = torch.cat([old_mask, pad], dim=0)
-                    setattr(data, attr, new_mask)
+                    setattr(new_data, attr, new_mask)
 
         return new_data

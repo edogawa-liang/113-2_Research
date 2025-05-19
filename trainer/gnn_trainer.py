@@ -69,8 +69,14 @@ class GNNClassifierTrainer:
         self.model.train()
         self.optimizer.zero_grad()
         out = self.model(self.data.x, self.data.edge_index)
+
+        # 根據 y 的長度判斷：是否有加 feature-nodes
+        if self.data.train_mask.shape[0] != self.data.y.shape[0]:
+            mask = self.data.train_mask[:self.data.y.shape[0]]
+        else:
+            mask = self.data.train_mask
         # self.data.y = self.data.y.to(torch.long) # 這一步讓y都變成0了
-        loss = F.cross_entropy(out[self.data.train_mask], self.data.y[self.data.train_mask])
+        loss = F.cross_entropy(out[mask], self.data.y[mask])
         loss.backward()
         self.optimizer.step()
         return float(loss)
