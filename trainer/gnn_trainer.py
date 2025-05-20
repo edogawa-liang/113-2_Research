@@ -70,13 +70,17 @@ class GNNClassifierTrainer:
         self.optimizer.zero_grad()
         out = self.model(self.data.x, self.data.edge_index)
 
+        # 計算 loss 時，只要算原本就存在的node。feature node 只是幫助訊息傳遞
         # 根據 y 的長度判斷：是否有加 feature-nodes
-        if self.data.train_mask.shape[0] != self.data.y.shape[0]:
-            mask = self.data.train_mask[:self.data.y.shape[0]]
+        num_orig_nodes = self.data.y.shape[0]
+        if self.data.train_mask.shape[0] != num_orig_nodes:
+            train_loss_mask = self.data.train_mask[:num_orig_nodes] #用來計算loss的train_mask
+            out = out[:num_orig_nodes]  # 只取原本的 node 的輸出
         else:
-            mask = self.data.train_mask
+            train_loss_mask = self.data.train_mask
+
         # self.data.y = self.data.y.to(torch.long) # 這一步讓y都變成0了
-        loss = F.cross_entropy(out[mask], self.data.y[mask])
+        loss = F.cross_entropy(out[train_loss_mask], self.data.y[train_loss_mask])
         loss.backward()
         self.optimizer.step()
         return float(loss)
@@ -207,11 +211,23 @@ class GNNRegressorTrainer:
         self.model.train()
         self.optimizer.zero_grad()
         out = self.model(self.data.x, self.data.edge_index).squeeze()  # 確保輸出為 1D
-        loss = F.mse_loss(out[self.data.train_mask], self.data.y[self.data.train_mask])  # MSE Loss
+
+        # 計算 loss 時，只要算原本就存在的node。feature node 只是幫助訊息傳遞
+        # 根據 y 的長度判斷：是否有加 feature-nodes
+        num_orig_nodes = self.data.y.shape[0]
+        if self.data.train_mask.shape[0] != num_orig_nodes:
+            train_loss_mask = self.data.train_mask[:num_orig_nodes] #用來計算loss的train_mask
+            out = out[:num_orig_nodes]  # 只取原本的 node 的輸出
+        else:
+            train_loss_mask = self.data.train_mask
+        # self.data.y = self.data.y.to(torch.long) # 這一步讓y都變成0了
+
+        loss = F.mse_loss(out[train_loss_mask], self.data.y[train_loss_mask])  # MSE Loss
         loss.backward()
         self.optimizer.step()
         return float(loss)
 
+    
     def save_model(self):
         """Saves the trained model along with its hyperparameters."""
         torch.save(self.model.state_dict(), self.save_model_path)

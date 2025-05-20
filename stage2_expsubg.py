@@ -57,6 +57,7 @@ if __name__ == "__main__":
     loader = GraphDatasetLoader(args.normalize)
     data, num_features, _, feature_type = loader.load_dataset(args.dataset)
     data = data.to(DEVICE)
+    ori_data = data.clone()  # 儲存原始資料，給feature2node時choose_nodes用
 
     # 若使用 only_structure 模式，將所有特徵設為 1 維常數
     if args.only_structure:
@@ -95,8 +96,9 @@ if __name__ == "__main__":
     model_mapping = {"GCN2Regressor": GCN2Regressor, "GCN3Regressor": GCN3Regressor, "GCN2Classifier": GCN2Classifier, "GCN3Classifier": GCN3Classifier}
 
     # Select nodes to explain
-    node_selector = ChooseNodeSelector(data, node_ratio=args.node_ratio, edge_ratio=args.edge_ratio, strategy=args.choose_nodes, manual_nodes=args.manual_nodes, mask_type=args.mask_type)
-    node_indices = node_selector.select_nodes()
+    # 如果有使用到特徵節點，注意在 Choose Node 時要用原始的 data (ori_data)
+    node_selector = ChooseNodeSelector(ori_data, node_ratio=args.node_ratio, edge_ratio=args.edge_ratio, strategy=args.choose_nodes, manual_nodes=args.manual_nodes, mask_type=args.mask_type)
+    node_indices = node_selector.select_nodes() # 因為特徵節點接在普通節點後，可以直接把ori data 的 node_indices 當成新 data 要解釋的indices
     print(f"Selected {len(node_indices)} nodes using strategy: {args.choose_nodes}")
 
     # feature_trials,  feature_indices, modified_graphs 數量一樣多

@@ -21,19 +21,25 @@ class ClassificationEvaluator:
         """
         model.eval()
         out = model(data.x, data.edge_index)
+
+        num_nodes = data.y.shape[0]  # 原始節點數
+        out = out[:num_nodes]        # 僅取原始節點的輸出 (feature to node 時要注意)
+
         prob = F.softmax(out, dim=-1)  # get class probabilities
         pred = prob.argmax(dim=-1)  # get predicted class
         
+        val_mask = data.val_mask[:num_nodes]
+        test_mask = data.test_mask[:num_nodes]
 
         # Compute accuracy
-        acc_val = (pred[data.val_mask] == data.y[data.val_mask]).sum().item() / data.val_mask.sum().item()
-        acc_test = (pred[data.test_mask] == data.y[data.test_mask]).sum().item() / data.test_mask.sum().item()
+        acc_val = (pred[val_mask] == data.y[val_mask]).sum().item() / val_mask.sum().item()
+        acc_test = (pred[test_mask] == data.y[test_mask]).sum().item() / test_mask.sum().item()
 
         # Extract true & predicted values
-        y_true_val = data.y[data.val_mask].cpu().numpy()
-        y_pred_val = prob[data.val_mask].cpu().numpy()
-        y_true_test = data.y[data.test_mask].cpu().numpy()
-        y_pred_test = prob[data.test_mask].cpu().numpy()
+        y_true_val = data.y[val_mask].cpu().numpy()
+        y_pred_val = prob[val_mask].cpu().numpy()
+        y_true_test = data.y[test_mask].cpu().numpy()
+        y_pred_test = prob[test_mask].cpu().numpy()
 
         # only use the positive class's probability for binary classification!!!
         num_classes = out.shape[1]
@@ -99,13 +105,18 @@ class RegressionEvaluator:
         """
         model.eval()
         out = model(data.x, data.edge_index)  # output continuous value
+        
+        num_nodes = data.y.shape[0]  # 原始節點數
+        out = out[:num_nodes]        # 僅取原始節點的輸出 (feature to node 時要注意)
+
+        val_mask = data.val_mask[:num_nodes]
+        test_mask = data.test_mask[:num_nodes]
 
         # Extract true & predicted values
-        y_true_val = data.y[data.val_mask].cpu().numpy()
-        y_pred_val = out[data.val_mask].cpu().numpy()
-
-        y_true_test = data.y[data.test_mask].cpu().numpy()
-        y_pred_test = out[data.test_mask].cpu().numpy()
+        y_true_val = data.y[val_mask].cpu().numpy()
+        y_pred_val = out[val_mask].cpu().numpy()
+        y_true_test = data.y[test_mask].cpu().numpy()
+        y_pred_test = out[test_mask].cpu().numpy()
 
         # MSE、MAE、R²
         val_mse = mean_squared_error(y_true_val, y_pred_val)
