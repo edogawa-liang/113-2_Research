@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     # Load dataset
     loader = GraphDatasetLoader(args.normalize)
-    data, num_features, _, feature_type = loader.load_dataset(args.dataset)
+    data, num_features, _, feature_type, _ = loader.load_dataset(args.dataset)
     data = data.to(DEVICE)
 
     # 如果只用結構，則把所有節點特徵設為 1

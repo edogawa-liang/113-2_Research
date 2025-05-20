@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     # Load dataset
     loader = GraphDatasetLoader(args.normalize)
-    data, num_features, _, feature_type = loader.load_dataset(args.dataset)
+    data, num_features, _, feature_type, _ = loader.load_dataset(args.dataset)
     data = data.to(DEVICE)
     ori_data = data.clone()  # 儲存原始資料，給feature2node時choose_nodes用
 

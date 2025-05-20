@@ -63,6 +63,7 @@ class GraphDatasetLoader:
         print(f"Number of classes: {dataset.num_classes}")
         
         data = dataset[0]  # Retrieve first graph data
+        num_ori_edges = data.num_edges
         print("Graph data:")
         print(data)
         print("Dataset loaded successfully.")
@@ -80,7 +81,7 @@ class GraphDatasetLoader:
         # print(f"Is undirected: {data.is_undirected()}")
         # print(f"Node Feature: {data.x}")
         
-        return data, dataset.num_features, dataset.num_classes, feature_type
+        return data, dataset.num_features, dataset.num_classes, feature_type, num_ori_edges
 
 if __name__ == "__main__":
     loader = GraphDatasetLoader()

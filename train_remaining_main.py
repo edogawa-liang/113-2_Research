@@ -15,6 +15,7 @@ from trainer.gnn_trainer import GNNClassifierTrainer
 from utils.save_result import ExperimentLogger
 
 from data.feature2node import FeatureNodeConverter
+from data.node2feature import FeatureNodeReverter
 
 
 # 核心子圖包含整個節點
@@ -57,6 +58,8 @@ def parse_args():
     # feature to node
     parser.add_argument("--feature_to_node", action="store_true", help="Convert features into nodes and edges.")
 
+    # select feature
+    parser.add_argument("--fraction_feat", type=float, default=0.1, help="Fraction of features to select for feature-to-node conversion")
     return parser.parse_args()
 
 if __name__ == "__main__":
@@ -68,8 +71,9 @@ if __name__ == "__main__":
 
     # Load dataset
     loader = GraphDatasetLoader(args.normalize)
-    data, num_features, num_classes, feature_type = loader.load_dataset(args.dataset)
+    data, num_features, num_classes, feature_type, num_ori_edges = loader.load_dataset(args.dataset)
     data = data.to(DEVICE)
+    ori_data = data.clone()
 
     # 如果只用結構，則把所有節點特徵設為 1
     if args.only_structure:
@@ -77,7 +81,8 @@ if __name__ == "__main__":
         data.x = torch.ones((data.num_nodes, 1), device=DEVICE)
         num_features = 1  # 更新特徵維度，否則模型初始化會錯
 
-    # 如果要把特徵轉換成節點，則使用 FeatureNodeConverter
+    # 如果要把特徵轉換成節點，則使用 FeatureNodeConverter 
+    # random 需要, explainer 不需要, random_walk 需要
     if args.feature_to_node:
         print("Converting node features into feature-nodes...")
         converter = FeatureNodeConverter(feature_type=feature_type, device=DEVICE)
@@ -94,17 +99,17 @@ if __name__ == "__main__":
     elif args.selector_type == "explainer": # 處理PyG支援的可解釋方法
         if args.explainer_name != "CFExplainer": # CF另外處理
             print("Using Explainer Selector")
-            selector = ExplainerEdgeSelector(args.base_dir, args.explainer_name, args.dataset, args.node_choose, args.fraction, device=device)
+            selector = ExplainerEdgeSelector(args.base_dir, args.explainer_name, args.dataset, args.node_choose, args.fraction, device=DEVICE, top_k_percent_feat=args.fraction_feat)
             selector.load_data()
             selector.plot_edge_distribution()
             num_node = selector.get_node_count()
             num_edge = selector.get_edge_count()
-            selected_edges = selector.select_edges()
+            selected_edges = selector.select_edges(num_ori_edges = num_ori_edges)
 
     elif args.selector_type == "random_walk":
         print("Using Random Walk Selector")
         selector = RandomWalkEdgeSelector(data, node_ratio=args.node_ratio, edge_ratio =args.edge_ratio , fraction=args.fraction, 
-                                          walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, device=device, mask_type=args.mask_type)
+                                          walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, device=DEVICE, mask_type=args.mask_type)
         node_start_ratio = selector.get_final_node_ratio()
         edge_neighbor_ratio = selector.get_neighbor_edge_ratio()
         selected_edges = selector.select_edges()
@@ -112,7 +117,7 @@ if __name__ == "__main__":
 
     # Remove subgraph from the original graph
     if args.explainer_name == "CFExplainer":
-        remaining_graph_constructor = CFSubgraphRemover(data, args.base_dir, args.explainer_name, args.dataset, args.node_choose, device=device)
+        remaining_graph_constructor = CFSubgraphRemover(data, args.base_dir, args.explainer_name, args.dataset, args.node_choose, device=DEVICE)
         remaining_graph_constructor.load_data()
         remaining_graph = remaining_graph_constructor.get_remaining_graph()
         num_node = remaining_graph_constructor.get_node_count()
@@ -120,6 +125,18 @@ if __name__ == "__main__":
     else:
         remaining_graph_constructor = RemainingGraphConstructor(data, selected_edges, device=DEVICE)
         remaining_graph = remaining_graph_constructor.get_remaining_graph()
+
+
+    # if use feature to node, revert the feature node to original node (add feature value into original graph)
+    if args.feature_to_node:
+        print("Reverting feature nodes to original nodes...")
+        revertor = FeatureNodeReverter(feature_type=feature_type, device=DEVICE)
+        remaining_graph, zero_feature_cols = revertor.revert(remaining_graph, ori_data)
+        num_features = remaining_graph.x.size(1)  # 更新特徵維度（此時為 1）
+        print(f"Original features: {ori_data.x.shape[1]}, Removed features (all-zero): {len(zero_feature_cols)}")
+    else:
+        zero_feature_cols = []  
+
 
     # Train GNN on the remaining graph
     print("\nTraining GNN on the remaining graph after removing subgraph...")
@@ -139,12 +156,12 @@ if __name__ == "__main__":
     # Save experiment results
     # 移除的邊數量都是 fraction
     if args.selector_type == "random":
-        logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, fraction=args.fraction)
+        logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, fraction=args.fraction, num_remove_feat=len(zero_feature_cols), remove_feat=zero_feature_cols)
     
     elif args.selector_type == "explainer":
-        logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, explaner=args.explainer_name, node_choose=args.node_choose, fraction=args.fraction, node_explain_ratio=num_node/data.x.shape[0], edge_explain_ratio=num_edge/data.edge_index.shape[1]), 
+        logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, explaner=args.explainer_name, node_choose=args.node_choose, fraction=args.fraction, node_explain_ratio=num_node/data.x.shape[0], edge_explain_ratio=num_edge/data.edge_index.shape[1], num_remove_feat=len(zero_feature_cols), remove_feat=zero_feature_cols)
     
     elif args.selector_type == "random_walk":
-        logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, fraction=args.fraction, node_start_ratio=node_start_ratio, edge_neighbor_ratio= edge_neighbor_ratio)
+        logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, fraction=args.fraction, node_start_ratio=node_start_ratio, edge_neighbor_ratio= edge_neighbor_ratio, num_remove_feat=len(zero_feature_cols), remove_feat=zero_feature_cols)
 
     print("Experiment finished and results saved.")
