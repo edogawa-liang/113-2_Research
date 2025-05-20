@@ -68,7 +68,11 @@ class GNNClassifierTrainer:
         """Trains the model for one epoch."""
         self.model.train()
         self.optimizer.zero_grad()
-        out = self.model(self.data.x, self.data.edge_index)
+
+        if hasattr(self.data, 'edge_weight') and self.data.edge_weight is not None:
+            out = self.model(self.data.x, self.data.edge_index, self.data.edge_weight)
+        else:
+            out = self.model(self.data.x, self.data.edge_index)
 
         # 計算 loss 時，只要算原本就存在的node。feature node 只是幫助訊息傳遞
         # 根據 y 的長度判斷：是否有加 feature-nodes
@@ -210,7 +214,11 @@ class GNNRegressorTrainer:
         """Trains the model for one epoch."""
         self.model.train()
         self.optimizer.zero_grad()
-        out = self.model(self.data.x, self.data.edge_index).squeeze()  # 確保輸出為 1D
+
+        if hasattr(self.data, 'edge_weight') and self.data.edge_weight is not None:
+            out = self.model(self.data.x, self.data.edge_index, self.data.edge_weight).squeeze()
+        else:
+            out = self.model(self.data.x, self.data.edge_index).squeeze() # 確保輸出為 1D
 
         # 計算 loss 時，只要算原本就存在的node。feature node 只是幫助訊息傳遞
         # 根據 y 的長度判斷：是否有加 feature-nodes
