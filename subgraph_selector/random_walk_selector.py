@@ -10,7 +10,7 @@ class RandomWalkEdgeSelector:
     """
 
     def __init__(self, data, node_ratio="auto", edge_ratio=0.5, fraction=0.1,  
-                 walk_length=10, num_walks=5, node_choose="top_pagerank", device="cpu", manual_nodes=None, mask_type="train"):
+                 walk_length=10, num_walks=5, node_choose="top_pagerank", device="cpu", manual_nodes=None, mask_type="train", top_k_percent_feat=0.1, ori_data=None):
         """
         :param data: PyG graph data
         :param node_ratio: "auto" for automatic calculation or a numeric value to manually set node selection ratio
@@ -32,6 +32,8 @@ class RandomWalkEdgeSelector:
         self.device = device
         self.manual_nodes = manual_nodes
         self.mask_type = mask_type
+        self.top_k_percent_feat = top_k_percent_feat
+        self.ori_data = ori_data
 
         self._get_start_nodes()
         self._calculate_neighbor_edges()
@@ -41,10 +43,11 @@ class RandomWalkEdgeSelector:
         """
         Uses `ChooseNodeSelector` to select the starting nodes based on the given strategy.
         """
-        node_selector = ChooseNodeSelector(self.data, node_ratio=self.node_ratio, edge_ratio=self.edge_ratio,
-                                           strategy=self.node_choose, manual_nodes=self.manual_nodes, mask_type=self.mask_type)
-        
-        selected_nodes = node_selector.select_nodes()
+        data_for_selection = self.ori_data if self.ori_data is not None else self.data
+        node_selector = ChooseNodeSelector(data_for_selection, node_ratio=self.node_ratio, edge_ratio=self.edge_ratio,
+                                        strategy=self.node_choose, manual_nodes=self.manual_nodes, mask_type=self.mask_type)
+
+        selected_nodes = node_selector.select_nodes() # 因為特徵節點接在普通節點後，可以直接把ori data 的 node_indices 當成新 data 要解釋的indices
         self.start_nodes = torch.tensor(selected_nodes, dtype=torch.long, device=self.device)
         self.final_node_ratio = len(selected_nodes) / self.data.x.shape[0]
 
@@ -109,25 +112,44 @@ class RandomWalkEdgeSelector:
                         edge = (src, dst)
                     visited_edge_count[edge] += 1
 
+
         # 根據出現次數排序，取前 self.fraction 比例
         all_edges = list(visited_edge_count.items())  # [(edge, freq), ...]
         all_edges.sort(key=lambda x: x[1], reverse=True)
-        # top_k = int(len(all_edges) * self.fraction)
-        top_k = int(self.data.edge_index.shape[1] * self.fraction)
-        print(top_k)
-        top_visited_edges = [edge for edge, freq in all_edges[:top_k]]
 
-        # 對照 original edge_index 的映射
-        train_edges = {
+        # 建立 (src, dst) → edge_index 映射
+        edge_map = {
             tuple(edge.tolist()): idx for idx, edge in enumerate(edge_index.t())
-        }  # (src, dst) → index
+        }
 
-        # 取得最常被走過的邊之索引
-        edge_indices_to_remove = [
-            train_edges[e] for e in top_visited_edges if e in train_edges
-        ]
+        num_total_edges = edge_index.shape[1]
+        num_ori_edges = self.ori_data.num_edges if self.ori_data is not None else num_total_edges
+        num_feat = num_total_edges - num_ori_edges
 
-        print(f"Selected {len(edge_indices_to_remove)} edges out of {edge_index.shape[1]} total edges (top {self.fraction*100}%).")
+        selected_ori = []
+        selected_feat = []
 
-        # 回傳要移除的邊索引
-        return torch.tensor(edge_indices_to_remove, dtype=torch.long, device=self.device).flatten()
+        for edge, _ in all_edges:
+            if edge in edge_map:
+                idx = edge_map[edge]
+                if idx < num_ori_edges:
+                    selected_ori.append(idx)
+                else:
+                    selected_feat.append(idx)
+
+        # 按比例選擇
+        num_selected_ori = int(num_ori_edges * self.fraction)
+        selected_ori = selected_ori[:num_selected_ori]
+
+        if num_feat > 0:
+            num_selected_feat = int(num_feat * self.top_k_percent_feat)
+            selected_feat = selected_feat[:num_selected_feat]
+            print(f"Selected {len(selected_feat)} feature edges (top {self.top_k_percent_feat*100}%)")
+        else:
+            selected_feat = []
+            print("No feature edges found.")
+
+        print(f"Selected {len(selected_ori)} original edges (top {self.fraction*100}%)")
+
+        selected_indices = selected_ori + selected_feat
+        return torch.tensor(selected_indices, dtype=torch.long, device=self.device)

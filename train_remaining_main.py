@@ -59,7 +59,7 @@ def parse_args():
     parser.add_argument("--feature_to_node", action="store_true", help="Convert features into nodes and edges.")
 
     # select feature
-    parser.add_argument("--fraction_feat", type=float, default=0.1, help="Fraction of features to select for feature-to-node conversion")
+    parser.add_argument("--fraction_feat", type=float, default=0, help="Fraction of features to select for feature-to-node conversion")
     return parser.parse_args()
 
 if __name__ == "__main__":
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     loader = GraphDatasetLoader(args.normalize)
     data, num_features, num_classes, feature_type, num_ori_edges = loader.load_dataset(args.dataset)
     data = data.to(DEVICE)
-    ori_data = data.clone()
+    ori_data = data.clone() # 備份原始資料
 
     # 如果只用結構，則把所有節點特徵設為 1
     if args.only_structure:
@@ -88,13 +88,16 @@ if __name__ == "__main__":
         converter = FeatureNodeConverter(feature_type=feature_type, device=DEVICE)
         data = converter.convert(data)
         num_features = data.x.size(1)  # 更新特徵維度（此時為 1）
+        ori_data = data.clone() # 備份原始資料
+    else:
+        ori_data = None
 
 
     # Select subgraph
     if args.selector_type == "random":
         print("Using Random Selector")
-        selector = RandomEdgeSelector(data, fraction=args.fraction, seed=args.seed, device=DEVICE)
-        selected_edges = selector.select_edges()
+        selector = RandomEdgeSelector(data, fraction=args.fraction, seed=args.seed, device=DEVICE, top_k_percent_feat=args.fraction_feat)
+        selected_edges = selector.select_edges(num_ori_edges=num_ori_edges)
     
     elif args.selector_type == "explainer": # 處理PyG支援的可解釋方法
         if args.explainer_name != "CFExplainer": # CF另外處理
@@ -104,12 +107,12 @@ if __name__ == "__main__":
             selector.plot_edge_distribution()
             num_node = selector.get_node_count()
             num_edge = selector.get_edge_count()
-            selected_edges = selector.select_edges(num_ori_edges = num_ori_edges)
+            selected_edges = selector.select_edges(num_ori_edges=num_ori_edges)
 
     elif args.selector_type == "random_walk":
         print("Using Random Walk Selector")
         selector = RandomWalkEdgeSelector(data, node_ratio=args.node_ratio, edge_ratio =args.edge_ratio , fraction=args.fraction, 
-                                          walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, device=DEVICE, mask_type=args.mask_type)
+                                          walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, device=DEVICE, mask_type=args.mask_type, top_k_percent_feat=args.fraction_feat, ori_data=ori_data)
         node_start_ratio = selector.get_final_node_ratio()
         edge_neighbor_ratio = selector.get_neighbor_edge_ratio()
         selected_edges = selector.select_edges()
@@ -156,12 +159,14 @@ if __name__ == "__main__":
     # Save experiment results
     # 移除的邊數量都是 fraction
     if args.selector_type == "random":
-        logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, fraction=args.fraction, num_remove_feat=len(zero_feature_cols), remove_feat=zero_feature_cols)
+        logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, fraction=args.fraction, fraction_feat=args.fraction_feat, remove_feat=zero_feature_cols)
     
     elif args.selector_type == "explainer":
-        logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, explaner=args.explainer_name, node_choose=args.node_choose, fraction=args.fraction, node_explain_ratio=num_node/data.x.shape[0], edge_explain_ratio=num_edge/data.edge_index.shape[1], num_remove_feat=len(zero_feature_cols), remove_feat=zero_feature_cols)
+        logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, explaner=args.explainer_name, node_choose=args.node_choose, fraction=args.fraction, 
+                              node_explain_ratio=num_node/data.x.shape[0], edge_explain_ratio=num_edge/data.edge_index.shape[1], fraction_feat=args.fraction_feat, remove_feat=zero_feature_cols)
     
     elif args.selector_type == "random_walk":
-        logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, fraction=args.fraction, node_start_ratio=node_start_ratio, edge_neighbor_ratio= edge_neighbor_ratio, num_remove_feat=len(zero_feature_cols), remove_feat=zero_feature_cols)
+        logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, 
+                              fraction=args.fraction, node_start_ratio=node_start_ratio, edge_neighbor_ratio= edge_neighbor_ratio, fraction_feat=args.fraction_feat, remove_feat=zero_feature_cols)
 
     print("Experiment finished and results saved.")
