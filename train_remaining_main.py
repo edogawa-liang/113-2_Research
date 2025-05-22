@@ -90,7 +90,7 @@ if __name__ == "__main__":
         num_features = data.x.size(1)  # 更新特徵維度（此時為 1）
         ori_data = data.clone() # 備份原始資料
     else:
-        ori_data = None
+        ori_data = None # random walk需要
 
 
     # Select subgraph
@@ -102,6 +102,7 @@ if __name__ == "__main__":
     elif args.selector_type == "explainer": # 處理PyG支援的可解釋方法
         if args.explainer_name != "CFExplainer": # CF另外處理
             print("Using Explainer Selector")
+            # 已生成好解釋子圖
             selector = ExplainerEdgeSelector(args.base_dir, args.explainer_name, args.dataset, args.node_choose, args.fraction, device=DEVICE, top_k_percent_feat=args.fraction_feat)
             selector.load_data()
             selector.plot_edge_distribution()

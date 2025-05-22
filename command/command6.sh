@@ -2,6 +2,7 @@
 set -e
 set -x 
 
+# feature2node
 # 將特徵變成節點，一起訓練 GNN 模型並生成解釋子圖
 
 # 1. 將特徵變成節點，訓練 Stage1 的 GNN 模型
