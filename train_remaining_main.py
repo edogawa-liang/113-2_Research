@@ -1,5 +1,6 @@
 import torch
 import os
+import numpy as np
 import argparse
 from utils.device import DEVICE
 
@@ -102,13 +103,28 @@ if __name__ == "__main__":
     elif args.selector_type == "explainer": # 處理PyG支援的可解釋方法
         if args.explainer_name != "CFExplainer": # CF另外處理
             print("Using Explainer Selector")
-            # 已生成好解釋子圖
-            selector = ExplainerEdgeSelector(args.base_dir, args.explainer_name, args.dataset, args.node_choose, args.fraction, device=DEVICE, top_k_percent_feat=args.fraction_feat)
+            
+            selector = ExplainerEdgeSelector(
+                base_dir=args.base_dir,
+                explainer_name=args.explainer_name,
+                dataset_name=args.dataset,
+                node_choose=args.node_choose,
+                top_k_percent=args.fraction,
+                device=DEVICE,
+                top_k_percent_feat=args.fraction_feat,
+                use_feature_to_node=args.feature_to_node
+            )            
             selector.load_data()
             selector.plot_edge_distribution()
             num_node = selector.get_node_count()
             num_edge = selector.get_edge_count()
             selected_edges = selector.select_edges(num_ori_edges=num_ori_edges)
+
+            # 如果需要使用解釋子圖自身的特徵重要度
+            if not args.feature_to_node and args.fraction_feat > 0:
+                selected_feat = selector.select_node_features()
+            else:
+                selected_feat = None
 
     elif args.selector_type == "random_walk":
         print("Using Random Walk Selector")
@@ -117,7 +133,6 @@ if __name__ == "__main__":
         node_start_ratio = selector.get_final_node_ratio()
         edge_neighbor_ratio = selector.get_neighbor_edge_ratio()
         selected_edges = selector.select_edges()
-
 
     # Remove subgraph from the original graph
     if args.explainer_name == "CFExplainer":
