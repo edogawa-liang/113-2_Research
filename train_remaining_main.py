@@ -1,6 +1,5 @@
 import torch
 import os
-import numpy as np
 import argparse
 from utils.device import DEVICE
 
@@ -98,6 +97,7 @@ if __name__ == "__main__":
     if args.selector_type == "random":
         print("Using Random Selector")
         selector = RandomEdgeSelector(data, fraction=args.fraction, seed=args.seed, device=DEVICE, top_k_percent_feat=args.fraction_feat)
+        # 直接隨機抽特徵 或 將特徵轉為節點隨機抽再還原，結果會是一樣的，只要做一個
         selected_edges = selector.select_edges(num_ori_edges=num_ori_edges)
     
     elif args.selector_type == "explainer": # 處理PyG支援的可解釋方法
@@ -112,7 +112,7 @@ if __name__ == "__main__":
                 top_k_percent=args.fraction,
                 device=DEVICE,
                 top_k_percent_feat=args.fraction_feat,
-                use_feature_to_node=args.feature_to_node
+                use_feature_to_node=args.feature_to_node # 若要使用特徵，分成直接使用(node_mask)還是將特徵轉為結構使用(edge_mask)
             )            
             selector.load_data()
             selector.plot_edge_distribution()
@@ -122,7 +122,7 @@ if __name__ == "__main__":
 
             # 如果需要使用解釋子圖自身的特徵重要度
             if not args.feature_to_node and args.fraction_feat > 0:
-                selected_feat = selector.select_node_features()
+                selected_feat = selector.select_node_features() # 還沒寫移除特徵的核心子圖
             else:
                 selected_feat = None
 
@@ -146,8 +146,16 @@ if __name__ == "__main__":
         remaining_graph = remaining_graph_constructor.get_remaining_graph()
 
 
+    # 如果有挑到要移除的特徵
+    if selected_feat is not None:
+        print(f"Removing {len(selected_feat)} features from the graph...")
+        # remaining_graph.x[:, selected_feat] = 0 
+        remaining_graph.x = remaining_graph.x[:, selected_feat] # 直接移除特徵
+        num_features = remaining_graph.x.size(1)
+        zero_feature_cols = selected_feat.tolist()
+        
     # if use feature to node, revert the feature node to original node (add feature value into original graph)
-    if args.feature_to_node:
+    elif args.feature_to_node:
         print("Reverting feature nodes to original nodes...")
         revertor = FeatureNodeReverter(feature_type=feature_type, device=DEVICE)
         remaining_graph, zero_feature_cols = revertor.revert(remaining_graph, ori_data)

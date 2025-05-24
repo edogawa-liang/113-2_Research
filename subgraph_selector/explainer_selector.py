@@ -33,12 +33,7 @@ class ExplainerEdgeSelector:
         self.use_feature_to_node = use_feature_to_node
         self.node_count = 0
 
-    def load_data(self, use_feature_to_node):
-        self.load_edge_mask_data()
-        if not use_feature_to_node:
-            self.load_node_mask_data()
-
-    def load_edge_mask_data(self):
+    def load_data(self):
         """
         根據每個 model 的 node_record.csv 中某欄位的 one-hot 選擇節點，
         並從 share_nodes/ 中載入 edge_mask 後加總。
@@ -77,9 +72,11 @@ class ExplainerEdgeSelector:
                 if edge_mask is not None:
                     self.edge_masks.append(edge_mask)
 
+                # 有使用 feature 挑選子圖，且沒有 feature to node 時
                 if not self.use_feature_to_node and self.top_k_percent_feat != 0:
                     node_mask = data.get("node_mask", None)
                     if node_mask is not None:
+                        print("use node_mask for choosing subgraph")
                         self.node_masks.append(node_mask)
 
         if self.edge_masks:
@@ -110,7 +107,7 @@ class ExplainerEdgeSelector:
         num_total = len(self.edge_aggregated)
         num_feat = num_total - num_ori_edges
 
-        if num_feat == 0: # 只有原 data node 之間的邊
+        if num_feat == 0 and not self.use_feature_to_node: # 只有原 data node 之間的邊
             print(" No feature edges found. Selecting top-k% from original edges only.")
             k = int(num_total * self.top_k_percent)
             top_k_edges = np.argsort(self.edge_aggregated)[-k:]  # 取前 K% 的邊
