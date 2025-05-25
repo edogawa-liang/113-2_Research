@@ -4,7 +4,7 @@ import argparse
 from utils.device import DEVICE
 
 from data.dataset_loader import GraphDatasetLoader
-from subgraph_selector.random_selector import RandomEdgeSelector
+from subgraph_selector.random_selector import RandomEdgeSelector, RandomFeatureSelector
 from subgraph_selector.explainer_selector import ExplainerEdgeSelector
 from subgraph_selector.random_walk_selector import RandomWalkEdgeSelector
 from subgraph_selector.remaining_graph import RemainingGraphConstructor
@@ -16,6 +16,9 @@ from utils.save_result import ExperimentLogger
 
 from data.feature2node import FeatureNodeConverter
 from data.node2feature import FeatureNodeReverter
+
+from utils.feature_utils import remove_all_zero_features, remove_top_common_features
+
 
 
 # 核心子圖包含整個節點
@@ -60,10 +63,12 @@ def parse_args():
 
     # select feature
     parser.add_argument("--fraction_feat", type=float, default=0, help="Fraction of features to select for feature-to-node conversion")
+    parser.add_argument("--same_feat", type=lambda x: x.lower() == "true", default=True, help="If true, all nodes select the same features; otherwise, each node selects independently.")
     return parser.parse_args()
 
 if __name__ == "__main__":
     args = parse_args()
+    selected_feat = None
 
     os.environ['TORCH'] = torch.__version__
     print(f"Using torch version: {torch.__version__}")
@@ -74,6 +79,7 @@ if __name__ == "__main__":
     data, num_features, num_classes, feature_type, num_ori_edges = loader.load_dataset(args.dataset)
     data = data.to(DEVICE)
     ori_data = data.clone() # 備份原始資料
+    selected_feat_mask = None
 
     # 如果只用結構，則把所有節點特徵設為 1
     if args.only_structure:
@@ -96,9 +102,31 @@ if __name__ == "__main__":
     # Select subgraph
     if args.selector_type == "random":
         print("Using Random Selector")
-        selector = RandomEdgeSelector(data, fraction=args.fraction, seed=args.seed, device=DEVICE, top_k_percent_feat=args.fraction_feat)
-        # 直接隨機抽特徵 或 將特徵轉為節點隨機抽再還原，結果會是一樣的，只要做一個
-        selected_edges = selector.select_edges(num_ori_edges=num_ori_edges)
+        selector = RandomEdgeSelector(
+            data=data,
+            num_ori_edges=num_ori_edges,  # 必須傳入以正確區分 node-node 和 node-feature 邊
+            fraction=args.fraction,
+            seed=args.seed,
+            device=DEVICE,
+            top_k_percent_feat=args.fraction_feat,
+            feature_to_node=args.feature_to_node
+        )
+        selected_edges = selector.select_edges()
+
+        # 特徵的選擇器（如果有指定 fraction_feat）
+        # 可指定要不要選擇相同的特徵
+        if args.fraction_feat > 0 and not args.feature_to_node:
+            print("Using Random Feature Selector")
+            feat_selector = RandomFeatureSelector(
+                num_nodes=data.num_nodes,
+                num_features=num_features,
+                top_k_percent_feat=args.fraction_feat,
+                same_feat=args.same_feat,
+                seed=args.seed,
+                device=DEVICE
+            )
+            selected_feat = feat_selector.select_node_features()  # shape: [num_nodes, num_features]
+
     
     elif args.selector_type == "explainer": # 處理PyG支援的可解釋方法
         if args.explainer_name != "CFExplainer": # CF另外處理
@@ -118,13 +146,13 @@ if __name__ == "__main__":
             selector.plot_edge_distribution()
             num_node = selector.get_node_count()
             num_edge = selector.get_edge_count()
-            selected_edges = selector.select_edges(num_ori_edges=num_ori_edges)
+            selected_edges, selected_feat_ids = selector.select_edges(num_ori_edges=num_ori_edges, num_ori_nodes=num_node,
+                                                                      num_features=num_features, return_feat_ids=True)
 
             # 如果需要使用解釋子圖自身的特徵重要度
             if not args.feature_to_node and args.fraction_feat > 0:
                 selected_feat = selector.select_node_features() # 還沒寫移除特徵的核心子圖
-            else:
-                selected_feat = None
+
 
     elif args.selector_type == "random_walk":
         print("Using Random Walk Selector")
@@ -132,7 +160,7 @@ if __name__ == "__main__":
                                           walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, device=DEVICE, mask_type=args.mask_type, top_k_percent_feat=args.fraction_feat, ori_data=ori_data)
         node_start_ratio = selector.get_final_node_ratio()
         edge_neighbor_ratio = selector.get_neighbor_edge_ratio()
-        selected_edges = selector.select_edges()
+        selected_edges, selected_feat_ids = selector.select_edges(return_feat_ids=True, num_features=num_features)
 
     # Remove subgraph from the original graph
     if args.explainer_name == "CFExplainer":
@@ -142,27 +170,29 @@ if __name__ == "__main__":
         num_node = remaining_graph_constructor.get_node_count()
         num_edge = remaining_graph_constructor.get_edge_count()
     else:
-        remaining_graph_constructor = RemainingGraphConstructor(data, selected_edges, device=DEVICE)
+        remaining_graph_constructor = RemainingGraphConstructor(data, selected_edges, selected_feat_mask=selected_feat, device=DEVICE)
         remaining_graph = remaining_graph_constructor.get_remaining_graph()
 
 
-    # 如果有挑到要移除的特徵
-    if selected_feat is not None:
-        print(f"Removing {len(selected_feat)} features from the graph...")
-        # remaining_graph.x[:, selected_feat] = 0 
-        remaining_graph.x = remaining_graph.x[:, selected_feat] # 直接移除特徵
-        num_features = remaining_graph.x.size(1)
-        zero_feature_cols = selected_feat.tolist()
-        
     # if use feature to node, revert the feature node to original node (add feature value into original graph)
-    elif args.feature_to_node:
+    if args.feature_to_node:
         print("Reverting feature nodes to original nodes...")
         revertor = FeatureNodeReverter(feature_type=feature_type, device=DEVICE)
-        remaining_graph, zero_feature_cols = revertor.revert(remaining_graph, ori_data)
-        num_features = remaining_graph.x.size(1)  # 更新特徵維度（此時為 1）
-        print(f"Original features: {ori_data.x.shape[1]}, Removed features (all-zero): {len(zero_feature_cols)}")
-    else:
-        zero_feature_cols = []  
+        remaining_graph = revertor.revert(remaining_graph, ori_data)
+        num_features = remaining_graph.x.size(1)
+
+        # 如果想要移除相同的特徵（同樣遮蔽所有節點）
+        if args.same_feat and selected_feat_ids and args.fraction_feat > 0:
+            remaining_graph.x, removed_feat_ids = remove_top_common_features(
+                x=remaining_graph.x,
+                selected_feat_ids=selected_feat_ids,
+                fraction_feat=args.fraction_feat
+            )
+
+    # 移除特徵全為0的欄位
+    remaining_graph.x, zero_feature_cols = remove_all_zero_features(remaining_graph.x)
+    print(f"Original features: {ori_data.x.shape[1]}, Removed features (all-zero): {len(zero_feature_cols)}")
+
 
 
     # Train GNN on the remaining graph

@@ -69,7 +69,7 @@ class RandomWalkEdgeSelector:
         return self.neighbor_edge_ratio
        
 
-    def select_edges(self):
+    def select_edges(self, return_feat_ids=False, num_features=None):
         """
         1. Perform random walks using PyG's `random_walk()`.
         2. Count how many times each edge is visited.
@@ -144,12 +144,27 @@ class RandomWalkEdgeSelector:
         if num_feat > 0:
             num_selected_feat = int(num_feat * self.top_k_percent_feat)
             selected_feat = selected_feat[:num_selected_feat]
-            print(f"Selected {len(selected_feat)} feature edges (top {self.top_k_percent_feat*100}%)")
+            print(f"Selected {len(selected_feat)} feature edges (top {self.top_k_percent_feat * 100}%)")
         else:
             selected_feat = []
             print("No feature edges found.")
 
-        print(f"Selected {len(selected_ori)} original edges (top {self.fraction*100}%)")
+        print(f"Selected {len(selected_ori)} original edges (top {self.fraction * 100}%)")
 
         selected_indices = selected_ori + selected_feat
-        return torch.tensor(selected_indices, dtype=torch.long, device=self.device)
+        selected_tensor = torch.tensor(selected_indices, dtype=torch.long, device=self.device)
+
+        if return_feat_ids:
+            if num_features is None:
+                raise ValueError("num_features must be provided when return_feat_ids=True.")
+
+            selected_feat_ids = []
+            for idx in selected_feat:
+                rel_idx = idx - num_ori_edges
+                pair_id = rel_idx // 2
+                feat_id = pair_id % num_features
+                selected_feat_ids.append(feat_id)
+
+            return selected_tensor, selected_feat_ids
+
+        return selected_tensor, []

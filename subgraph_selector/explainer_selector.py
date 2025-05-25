@@ -86,7 +86,8 @@ class ExplainerEdgeSelector:
             print(f"Number of edges picked in the subgraph: {np.count_nonzero(self.edge_aggregated)}")
         
         if self.node_masks:
-            node_masks = np.stack(node_masks)
+            # node_masks = np.stack(node_masks)
+            node_masks = np.stack(node_masks).astype(np.float64)
             # self.feature_scores = node_masks.sum(axis=1).mean(axis=0)
             self.feature_scores = node_masks.sum(axis=1).sum(axis=0) # 把不同節點生成的解釋子圖，每個解釋子圖中的node的特徵全部加起來
             print(f"Loaded node-wise feature importance, shape: {self.feature_scores.shape}")
@@ -95,45 +96,89 @@ class ExplainerEdgeSelector:
 
 
 
-    def select_edges(self, num_ori_edges):
+    def select_edges(self, num_ori_edges, num_ori_nodes, num_features=None, return_feat_ids=False):
         """
-        Selects the top-k% most important edges and returns them as a PyTorch Tensor.
+        Selects important edges and optionally returns the feature IDs associated with selected feature edges.
 
-        :return: Tensor of selected edge indices.
+        :param num_ori_edges: Number of original node-node edges
+        :param num_ori_nodes: Number of original (non-feature) nodes
+        :param num_features: Required if return_feat_ids is True
+        :param return_feat_ids: If True, returns list of feature IDs for selected feature edges
+        :return:
+            - selected_edge_indices (Tensor)
+            - selected_feat_ids (List[int]) if return_feat_ids=True, else None
         """
         if self.edge_aggregated is None:
             raise ValueError("No edge importance data available. Run load_data() first.")
-        
+
         num_total = len(self.edge_aggregated)
         num_feat = num_total - num_ori_edges
 
-        if num_feat == 0 and not self.use_feature_to_node: # 只有原 data node 之間的邊
-            print(" No feature edges found. Selecting top-k% from original edges only.")
+        if num_feat == 0 and not self.use_feature_to_node:
+            print("No feature edges found. Selecting top-k% from original edges only.")
             k = int(num_total * self.top_k_percent)
-            top_k_edges = np.argsort(self.edge_aggregated)[-k:]  # 取前 K% 的邊
-            return torch.tensor(top_k_edges, dtype=torch.long, device=self.device)
-        
-        else: # 有特徵邊
-            print(f"Number of original edges: {num_ori_edges}, Number of feature edges: {num_feat}")
-            k_orig = int(num_ori_edges * self.top_k_percent)
-            k_feat = int(num_feat * self.top_k_percent_feat)
+            top_k_edges = np.argsort(self.edge_aggregated)[-k:]
+            return torch.tensor(top_k_edges, dtype=torch.long, device=self.device), []
 
-            top_orig = np.argsort(self.edge_aggregated[:num_ori_edges])[-k_orig:]
-            top_feat = np.argsort(self.edge_aggregated[num_ori_edges:])[-k_feat:] + num_ori_edges  # 特徵邊 index 要加 offset
+        # 有 feature edges 的情況
+        print(f"Number of original edges: {num_ori_edges}, Number of feature edges: {num_feat}")
+        k_orig = int(num_ori_edges * self.top_k_percent)
+        k_feat = int(num_feat * self.top_k_percent_feat * num_ori_nodes)
 
-            selected_idx = np.concatenate([top_orig, top_feat])
-            return torch.tensor(selected_idx, dtype=torch.long, device=self.device)
+        top_orig = np.argsort(self.edge_aggregated[:num_ori_edges])[-k_orig:]
+        top_feat = np.argsort(self.edge_aggregated[num_ori_edges:])[-k_feat:] + num_ori_edges
+
+        selected_idx = np.concatenate([top_orig, top_feat])
+        selected_idx_tensor = torch.tensor(selected_idx, dtype=torch.long, device=self.device)
+
+        if return_feat_ids:
+            if num_features is None:
+                raise ValueError("num_features must be provided when return_feat_ids=True.")
+
+            selected_feat_ids = []
+            for i in top_feat:
+                rel_idx = i - num_ori_edges        # 移除 offset
+                pair_idx = rel_idx // 2            # 每 (node, feat) 雙向邊占兩格
+                feat_id = pair_idx % num_features  # 抽出對應的 feature id
+                selected_feat_ids.append(feat_id)
+
+            return selected_idx_tensor, selected_feat_ids
+
+        return selected_idx_tensor, []
+
         
     # 當需要使用解釋子圖本身的node_mask找特徵時
-    def select_node_features(self):
+    def select_node_features(self, num_ori_nodes, same_feat=True):
         if self.feature_scores is None:
             raise ValueError("No feature importance available. Run load_data() first with appropriate flags.")
 
-        k = int(len(self.feature_scores) * self.top_k_percent_feat)
-        selected_feat = np.argsort(self.feature_scores)[-k:]
-        print(f"Selected top {k} important features.")
-        return torch.tensor(selected_feat, dtype=torch.long, device=self.device)
+        num_features = len(self.feature_scores)
+        k = int(num_features * self.top_k_percent_feat)
+
+        if same_feat:
+            # 所有節點移除相同特徵
+            selected_feat = np.argsort(self.feature_scores)[-k:]
+            print(f"[same_feat=True] Selected top {k} important features for all {num_ori_nodes} nodes.")
             
+            mask = torch.zeros((num_ori_nodes, num_features), dtype=torch.float32, device=self.device)
+            mask[:, selected_feat] = 1.0
+            return mask
+
+        else:
+            if not self.node_masks:
+                raise ValueError("No per-node node_mask available for per-node feature selection.")
+
+            print(f"[same_feat=False] Selecting top {k} features per node based on individual node_masks.")
+            mask = torch.zeros((num_ori_nodes, num_features), dtype=torch.float32, device=self.device)
+
+            for i, node_mask in enumerate(self.node_masks):
+                if len(node_mask) != num_features:
+                    raise ValueError(f"Node mask length mismatch at index {i}: {len(node_mask)} vs {num_features}")
+                topk = np.argsort(node_mask)[-k:]
+                mask[i, topk] = 1.0
+
+            return mask
+
 
     def plot_edge_distribution(self):
         """
