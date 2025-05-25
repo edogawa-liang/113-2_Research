@@ -72,7 +72,7 @@ class ExplainerEdgeSelector:
                 if edge_mask is not None:
                     self.edge_masks.append(edge_mask)
 
-                # 有使用 feature 挑選子圖，且沒有 feature to node 時
+                # 有使用 feature 挑選子圖，且沒有 feature to node 時 (要直接用node_mask)
                 if not self.use_feature_to_node and self.top_k_percent_feat != 0:
                     node_mask = data.get("node_mask", None)
                     if node_mask is not None:
@@ -96,13 +96,13 @@ class ExplainerEdgeSelector:
 
 
 
-    def select_edges(self, num_ori_edges, num_ori_nodes, num_features=None, return_feat_ids=False):
+    def select_edges(self, num_ori_edges, num_ori_nodes, ori_num_features=None, return_feat_ids=False):
         """
         Selects important edges and optionally returns the feature IDs associated with selected feature edges.
 
         :param num_ori_edges: Number of original node-node edges
         :param num_ori_nodes: Number of original (non-feature) nodes
-        :param num_features: Required if return_feat_ids is True
+        :param ori_num_features: Required if return_feat_ids is True
         :param return_feat_ids: If True, returns list of feature IDs for selected feature edges
         :return:
             - selected_edge_indices (Tensor)
@@ -111,40 +111,45 @@ class ExplainerEdgeSelector:
         if self.edge_aggregated is None:
             raise ValueError("No edge importance data available. Run load_data() first.")
 
-        num_total = len(self.edge_aggregated)
+        num_total = len(self.edge_aggregated) # 可能是原始邊 也可能是包含特徵的邊
         num_feat = num_total - num_ori_edges
 
-        if num_feat == 0 and not self.use_feature_to_node:
+        # 沒有特徵邊
+        if num_feat == 0 and not self.use_feature_to_node: # 雙重驗證
             print("No feature edges found. Selecting top-k% from original edges only.")
             k = int(num_total * self.top_k_percent)
             top_k_edges = np.argsort(self.edge_aggregated)[-k:]
-            return torch.tensor(top_k_edges, dtype=torch.long, device=self.device), []
+            return torch.tensor(top_k_edges, dtype=torch.long, device=self.device), [] # 只有被挑中的原始節點邊
 
-        # 有 feature edges 的情況
-        print(f"Number of original edges: {num_ori_edges}, Number of feature edges: {num_feat}")
-        k_orig = int(num_ori_edges * self.top_k_percent)
-        k_feat = int(num_feat * self.top_k_percent_feat * num_ori_nodes)
+        # 有特徵邊
+        elif num_feat > 0:
+            print(f"Number of original edges: {num_ori_edges}, Number of feature edges: {num_feat}")
+            k_orig = int(num_ori_edges * self.top_k_percent) # 原始邊的 top-k%
+            # 特徵數量 × top_k_percent_feat × 節點數	
+            k_feat = int(ori_num_features * self.top_k_percent_feat * num_ori_nodes) 
 
-        top_orig = np.argsort(self.edge_aggregated[:num_ori_edges])[-k_orig:]
-        top_feat = np.argsort(self.edge_aggregated[num_ori_edges:])[-k_feat:] + num_ori_edges
+            top_orig = np.argsort(self.edge_aggregated[:num_ori_edges])[-k_orig:]
+            top_feat = np.argsort(self.edge_aggregated[num_ori_edges:])[-k_feat:] + num_ori_edges
 
-        selected_idx = np.concatenate([top_orig, top_feat])
-        selected_idx_tensor = torch.tensor(selected_idx, dtype=torch.long, device=self.device)
+            selected_idx = np.concatenate([top_orig, top_feat])
+            selected_idx_tensor = torch.tensor(selected_idx, dtype=torch.long, device=self.device)
 
-        if return_feat_ids:
-            if num_features is None:
-                raise ValueError("num_features must be provided when return_feat_ids=True.")
+            if return_feat_ids:
+                if ori_num_features is None:
+                    raise ValueError("num_features must be provided when return_feat_ids=True.")
 
-            selected_feat_ids = []
-            for i in top_feat:
-                rel_idx = i - num_ori_edges        # 移除 offset
-                pair_idx = rel_idx // 2            # 每 (node, feat) 雙向邊占兩格
-                feat_id = pair_idx % num_features  # 抽出對應的 feature id
-                selected_feat_ids.append(feat_id)
+                selected_feat_ids = []
+                for i in top_feat:
+                    rel_idx = i - num_ori_edges        # 移除 offset
+                    pair_idx = rel_idx // 2            # 每 (node, feat) 雙向邊占兩格
+                    feat_id = pair_idx % ori_num_features  # 抽出對應的 feature id
+                    selected_feat_ids.append(feat_id)
 
-            return selected_idx_tensor, selected_feat_ids
+                return selected_idx_tensor, selected_feat_ids
 
-        return selected_idx_tensor, []
+            return selected_idx_tensor, []
+        else:
+            raise ValueError("Edge selection failed: cannot determine how to separate original and feature edges.")
 
         
     # 當需要使用解釋子圖本身的node_mask找特徵時

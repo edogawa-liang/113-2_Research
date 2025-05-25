@@ -43,8 +43,7 @@ class RandomWalkEdgeSelector:
         """
         Uses `ChooseNodeSelector` to select the starting nodes based on the given strategy.
         """
-        data_for_selection = self.ori_data if self.ori_data is not None else self.data
-        node_selector = ChooseNodeSelector(data_for_selection, node_ratio=self.node_ratio, edge_ratio=self.edge_ratio,
+        node_selector = ChooseNodeSelector(self.ori_data, node_ratio=self.node_ratio, edge_ratio=self.edge_ratio,
                                         strategy=self.node_choose, manual_nodes=self.manual_nodes, mask_type=self.mask_type)
 
         selected_nodes = node_selector.select_nodes() # 因為特徵節點接在普通節點後，可以直接把ori data 的 node_indices 當成新 data 要解釋的indices
@@ -69,7 +68,7 @@ class RandomWalkEdgeSelector:
         return self.neighbor_edge_ratio
        
 
-    def select_edges(self, return_feat_ids=False, num_features=None):
+    def select_edges(self, return_feat_ids=False):
         """
         1. Perform random walks using PyG's `random_walk()`.
         2. Count how many times each edge is visited.
@@ -141,8 +140,11 @@ class RandomWalkEdgeSelector:
         num_selected_ori = int(num_ori_edges * self.fraction)
         selected_ori = selected_ori[:num_selected_ori]
 
+        ori_num_features = self.ori_data.x.size(1) if self.ori_data is not None else None
+
         if num_feat > 0:
-            num_selected_feat = int(num_feat * self.top_k_percent_feat)
+            # 特徵數量 × top_k_percent_feat × 節點數	
+            num_selected_feat = int(ori_num_features * self.top_k_percent_feat * self.ori_data.num_nodes) 
             selected_feat = selected_feat[:num_selected_feat]
             print(f"Selected {len(selected_feat)} feature edges (top {self.top_k_percent_feat * 100}%)")
         else:
@@ -155,14 +157,14 @@ class RandomWalkEdgeSelector:
         selected_tensor = torch.tensor(selected_indices, dtype=torch.long, device=self.device)
 
         if return_feat_ids:
-            if num_features is None:
+            if ori_num_features is None:
                 raise ValueError("num_features must be provided when return_feat_ids=True.")
 
             selected_feat_ids = []
             for idx in selected_feat:
                 rel_idx = idx - num_ori_edges
                 pair_id = rel_idx // 2
-                feat_id = pair_id % num_features
+                feat_id = pair_id % ori_num_features
                 selected_feat_ids.append(feat_id)
 
             return selected_tensor, selected_feat_ids

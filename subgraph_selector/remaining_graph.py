@@ -19,6 +19,7 @@ class RemainingGraphConstructor:
         self.selected_feat_mask = selected_feat_mask.to(device) if selected_feat_mask is not None else None
         self.device = device
 
+    # 在核心子圖內的邊和點會用1注記 所以要留下0的部分
     def get_remaining_graph(self):
         """
         Constructs the remaining graph after removing selected edges and masking features.
