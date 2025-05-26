@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+set -x 
+
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk_samefeat --note random_RandomWalk_samefeat --selector_type random_walk --walk_length 30  --fraction 0.2  --node_choose random --node_ratio auto --edge_ratio 0.3 --fraction_feat 0.1 --same_feat True --feature_to_node
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer_samefeat --note true_y_DummyExplainer_samefeat --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose random --fraction_feat 0.1 --same_feat True
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer_samefeat --note true_y_GNNExplainer_node_mask --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose random --fraction_feat 0.1 --same_feat True
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer_samefeat --note true_y_GNNExplainer_feat2node --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3_feature2node --explainer_name GNNExplainer --node_choose random --fraction_feat 0.1 --same_feat True --feature_to_node
+
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk_samefeat --note random_RandomWalk_samefeat --selector_type random_walk --walk_length 30  --fraction 0.2  --node_choose random --node_ratio auto --edge_ratio 0.3 --fraction_feat 0.1 --same_feat False --feature_to_node
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer_samefeat --note true_y_DummyExplainer_samefeat --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose random --fraction_feat 0.1 --same_feat False
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer_samefeat --note true_y_GNNExplainer_node_mask --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose random --fraction_feat 0.1 --same_feat False
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer_samefeat --note true_y_GNNExplainer_feat2node --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3_feature2node --explainer_name GNNExplainer --node_choose random --fraction_feat 0.1 --same_feat False --feature_to_node

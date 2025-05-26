@@ -93,9 +93,9 @@ set -x
 # fraction_feat=0.1
 
 # train remove random edge and random feature
-python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult_samefeat --note samefeat --selector_type random --fraction 0.2 --fraction_feat 0.1 --same_feat True
-python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult_samefeat --note samefeat --selector_type random --fraction 0.2 --fraction_feat 0.1 --same_feat True
-python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult_samefeat --note samefeat --selector_type random --fraction 0.2 --fraction_feat 0.1 --same_feat True
+# python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult_samefeat --note samefeat --selector_type random --fraction 0.2 --fraction_feat 0.1 --same_feat True
+# python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult_samefeat --note samefeat --selector_type random --fraction 0.2 --fraction_feat 0.1 --same_feat True
+# python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode baselineResult_samefeat --note samefeat --selector_type random --fraction 0.2 --fraction_feat 0.1 --same_feat True
 
 
 # train remove randomwalk

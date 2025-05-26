@@ -4,13 +4,14 @@ from collections import defaultdict
 
 from subgraph_selector.utils.choose_node import ChooseNodeSelector
 
+# 目前的random walk 沒有考慮 edge weight
 class RandomWalkEdgeSelector:
     """
     Selects the top fraction of most frequently visited edges (by random walk) for removal.
     """
 
     def __init__(self, data, node_ratio="auto", edge_ratio=0.5, fraction=0.1,  
-                 walk_length=10, num_walks=5, node_choose="top_pagerank", device="cpu", manual_nodes=None, mask_type="train", top_k_percent_feat=0.1, ori_data=None):
+                 walk_length=10, num_walks=5, node_choose="top_pagerank", feature_type="categorical", device="cpu", manual_nodes=None, mask_type="train", top_k_percent_feat=0.1, ori_data=None):
         """
         :param data: PyG graph data
         :param node_ratio: "auto" for automatic calculation or a numeric value to manually set node selection ratio
@@ -29,6 +30,7 @@ class RandomWalkEdgeSelector:
         self.walk_length = walk_length
         self.num_walks = num_walks
         self.node_choose = node_choose
+        self.feature_type = feature_type  # 用於選擇特徵邊
         self.device = device
         self.manual_nodes = manual_nodes
         self.mask_type = mask_type
@@ -144,6 +146,8 @@ class RandomWalkEdgeSelector:
 
         num_visited_ori_edges = len(selected_ori)
         print(f"走過的原始邊數量: {num_visited_ori_edges}")
+        num_visited_feat_edges = len(selected_feat)
+        print(f"走過的特徵邊數量: {num_visited_feat_edges}")
         
         # 按比例選擇
         num_selected_ori = int(num_ori_edges * self.fraction)
@@ -155,12 +159,14 @@ class RandomWalkEdgeSelector:
         ori_num_features = self.ori_data.x.size(1) if self.ori_data is not None else None
 
         if num_feat > 0:
+            if self.feature_type == "categorical":
+                num_selected_feat = int(num_feat * self.top_k_percent_feat)
+            elif self.feature_type == "continuous":
+                num_selected_feat = int(ori_num_features * self.top_k_percent_feat * self.ori_data.num_nodes)  # 特徵數量 × top_k_percent_feat × 節點數 (類別型的話會超過實際的特徵邊數..)
+
             # 特徵數量 × top_k_percent_feat × 節點數	
-            num_selected_feat = int(ori_num_features * self.top_k_percent_feat * self.ori_data.num_nodes) 
             selected_feat = selected_feat[:num_selected_feat]
 
-            num_visited_feat_edges = len(selected_feat)
-            print(f"走過的特徵邊數量: {num_visited_feat_edges}")
             print(f"應挑 {num_selected_feat} feature edges (top {self.top_k_percent_feat * 100}%)")
             print(f"實際走的特徵邊比例: {num_visited_feat_edges / num_feat * 100:.2f}%")
         else:

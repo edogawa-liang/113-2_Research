@@ -135,6 +135,7 @@ if __name__ == "__main__":
                 dataset_name=args.dataset,
                 node_choose=args.node_choose,
                 top_k_percent=args.fraction,
+                feature_type=feature_type,
                 device=DEVICE,
                 top_k_percent_feat=args.fraction_feat,
                 use_feature_to_node=args.feature_to_node # 若要使用特徵，分成直接使用(node_mask)還是將特徵轉為結構使用(edge_mask)
@@ -154,7 +155,8 @@ if __name__ == "__main__":
     elif args.selector_type == "random_walk":
         print("Using Random Walk Selector")
         selector = RandomWalkEdgeSelector(data, node_ratio=args.node_ratio, edge_ratio =args.edge_ratio , fraction=args.fraction, 
-                                          walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, device=DEVICE, mask_type=args.mask_type, top_k_percent_feat=args.fraction_feat, ori_data=ori_data)
+                                          walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, feature_type=feature_type, 
+                                          device=DEVICE, mask_type=args.mask_type, top_k_percent_feat=args.fraction_feat, ori_data=ori_data)
         node_start_ratio = selector.get_final_node_ratio()
         edge_neighbor_ratio = selector.get_neighbor_edge_ratio()
         selected_edges, selected_feat_ids, ori_edge_visit_ratio, feat_edge_visit_ratio = selector.select_edges(return_feat_ids=True)
