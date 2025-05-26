@@ -151,9 +151,25 @@ class RandomWalkEdgeSelector:
         
         # 按比例選擇
         num_selected_ori = int(num_ori_edges * self.fraction)
-        selected_ori = selected_ori[:num_selected_ori]
+        # selected_ori = selected_ori[:num_selected_ori]
         print(f"應挑 {num_selected_ori} original edges (fraction {self.fraction})")
         print(f"實際走的原始邊比例: {num_visited_ori_edges / num_ori_edges * 100:.2f}%")
+        
+        # 如果選擇的原始邊數量少於應挑的數量，則從剩餘的原始邊中補齊
+        if len(selected_ori) < num_selected_ori:
+            print(f" 探索到的原始邊只有 {len(selected_ori)}，少於應挑的 {num_selected_ori}，將從其他原始邊補齊。")
+            # 找出還沒被走過的原始邊 index
+            remaining_ori = list(set(range(num_ori_edges)) - set(selected_ori))
+            needed_ori = num_selected_ori - len(selected_ori)
+            if len(remaining_ori) >= needed_ori:
+                additional_ori = torch.tensor(remaining_ori, device=self.device)[torch.randperm(len(remaining_ori))[:needed_ori]].tolist()
+                selected_ori += additional_ori
+            else:
+                print(f"可補充的原始邊不足，只補上 {len(remaining_ori)} 條。")
+                selected_ori += remaining_ori
+        else:
+            selected_ori = selected_ori[:num_selected_ori]
+
 
               
         ori_num_features = self.ori_data.x.size(1) if self.ori_data is not None else None
@@ -164,11 +180,26 @@ class RandomWalkEdgeSelector:
             elif self.feature_type == "continuous":
                 num_selected_feat = int(ori_num_features * self.top_k_percent_feat * self.ori_data.num_nodes)  # 特徵數量 × top_k_percent_feat × 節點數 (類別型的話會超過實際的特徵邊數..)
 
-            # 特徵數量 × top_k_percent_feat × 節點數	
-            selected_feat = selected_feat[:num_selected_feat]
-
             print(f"應挑 {num_selected_feat} feature edges (top {self.top_k_percent_feat * 100}%)")
             print(f"實際走的特徵邊比例: {num_visited_feat_edges / num_feat * 100:.2f}%")
+
+            # 如果選擇的特徵邊數量少於應挑的數量，則從剩餘的特徵邊中補齊
+            if len(selected_feat) < num_selected_feat:
+                print(f"探索到的特徵邊只有 {len(selected_feat)}，少於應挑的 {num_selected_feat}，將從其他特徵邊補齊。")
+                remaining_feat = list(range(num_ori_edges, num_total_edges))
+                remaining_feat = list(set(remaining_feat) - set(selected_feat))
+                needed_feat = num_selected_feat - len(selected_feat)
+                if len(remaining_feat) >= needed_feat:
+                    additional_feat = torch.tensor(remaining_feat, device=self.device)[torch.randperm(len(remaining_feat))[:needed_feat]].tolist()
+                    selected_feat += additional_feat
+                else:
+                    print(f"可補充的特徵邊不足，只補上 {len(remaining_feat)} 條。")
+                    selected_feat += remaining_feat
+            else:
+                selected_feat = selected_feat[:num_selected_feat]
+
+            # selected_feat = selected_feat[:num_selected_feat]
+
         else:
             selected_feat = []
             print("No feature edges found.")
