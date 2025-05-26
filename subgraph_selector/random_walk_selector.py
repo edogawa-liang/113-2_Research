@@ -116,13 +116,18 @@ class RandomWalkEdgeSelector:
         all_edges = list(visited_edge_count.items())  # [(edge, freq), ...]
         all_edges.sort(key=lambda x: x[1], reverse=True)
 
+        total_all_edges = len(all_edges)
+        print(f"Total edges explored (all_edges): {total_all_edges}")
+
+
         # 建立 (src, dst) → edge_index 映射
         edge_map = {
             tuple(edge.tolist()): idx for idx, edge in enumerate(edge_index.t())
         }
 
         num_total_edges = edge_index.shape[1]
-        num_ori_edges = self.ori_data.num_edges if self.ori_data is not None else num_total_edges
+        num_ori_edges = self.ori_data.edge_index.shape[1] if self.ori_data is not None else num_total_edges
+        # print("Total edges in original data:", num_ori_edges)
         num_feat = num_total_edges - num_ori_edges
 
         selected_ori = []
@@ -136,25 +141,38 @@ class RandomWalkEdgeSelector:
                 else:
                     selected_feat.append(idx)
 
+
+        num_visited_ori_edges = len(selected_ori)
+        print(f"走過的原始邊數量: {num_visited_ori_edges}")
+        
         # 按比例選擇
         num_selected_ori = int(num_ori_edges * self.fraction)
         selected_ori = selected_ori[:num_selected_ori]
+        print(f"應挑 {num_selected_ori} original edges (fraction {self.fraction})")
+        print(f"實際走的原始邊比例: {num_visited_ori_edges / num_ori_edges * 100:.2f}%")
 
+              
         ori_num_features = self.ori_data.x.size(1) if self.ori_data is not None else None
 
         if num_feat > 0:
             # 特徵數量 × top_k_percent_feat × 節點數	
             num_selected_feat = int(ori_num_features * self.top_k_percent_feat * self.ori_data.num_nodes) 
             selected_feat = selected_feat[:num_selected_feat]
-            print(f"Selected {len(selected_feat)} feature edges (top {self.top_k_percent_feat * 100}%)")
+
+            num_visited_feat_edges = len(selected_feat)
+            print(f"走過的特徵邊數量: {num_visited_feat_edges}")
+            print(f"應挑 {num_selected_feat} feature edges (top {self.top_k_percent_feat * 100}%)")
+            print(f"實際走的特徵邊比例: {num_visited_feat_edges / num_feat * 100:.2f}%")
         else:
             selected_feat = []
             print("No feature edges found.")
 
-        print(f"Selected {len(selected_ori)} original edges (top {self.fraction * 100}%)")
-
         selected_indices = selected_ori + selected_feat
         selected_tensor = torch.tensor(selected_indices, dtype=torch.long, device=self.device)
+
+        ori_edge_visit_ratio = num_visited_ori_edges / num_ori_edges if num_ori_edges > 0 else 0
+        feat_edge_visit_ratio = num_visited_feat_edges / num_feat if num_feat > 0 else 0
+
 
         if return_feat_ids:
             if ori_num_features is None:
@@ -167,6 +185,6 @@ class RandomWalkEdgeSelector:
                 feat_id = pair_id % ori_num_features
                 selected_feat_ids.append(feat_id)
 
-            return selected_tensor, selected_feat_ids
+            return selected_tensor, selected_feat_ids, ori_edge_visit_ratio, feat_edge_visit_ratio
 
-        return selected_tensor, []
+        return selected_tensor, [], ori_edge_visit_ratio, feat_edge_visit_ratio

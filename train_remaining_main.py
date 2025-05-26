@@ -80,6 +80,7 @@ if __name__ == "__main__":
     data = data.to(DEVICE)
     ori_data = data.clone() # 備份原始資料
     selected_feat_mask = None
+    zero_feature_cols = None
 
     # 如果只用結構，則把所有節點特徵設為 1
     if args.only_structure:
@@ -156,7 +157,7 @@ if __name__ == "__main__":
                                           walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, device=DEVICE, mask_type=args.mask_type, top_k_percent_feat=args.fraction_feat, ori_data=ori_data)
         node_start_ratio = selector.get_final_node_ratio()
         edge_neighbor_ratio = selector.get_neighbor_edge_ratio()
-        selected_edges, selected_feat_ids = selector.select_edges(return_feat_ids=True)
+        selected_edges, selected_feat_ids, ori_edge_visit_ratio, feat_edge_visit_ratio = selector.select_edges(return_feat_ids=True)
 
     # Remove subgraph from the original graph
     if args.explainer_name == "CFExplainer":
@@ -177,23 +178,26 @@ if __name__ == "__main__":
         remaining_graph = revertor.revert(remaining_graph, ori_data)
         num_features = remaining_graph.x.size(1)
 
-        # 如果想要移除相同的特徵（同樣遮蔽所有節點）
+        # 如果設定了要遮蔽相同的特徵，且有 selected_feat_ids，就從 ori_data 上遮蔽
         if args.same_feat and selected_feat_ids and args.fraction_feat > 0: # 如果沒有使用feat2node, selected_feat_ids會是空的
             print("改成 remove same features")
             remaining_graph.x, removed_feat_ids = remove_top_common_features(
-                x=remaining_graph.x,
+                x=ori_data.x, # 放入的是原始的data
                 selected_feat_ids=selected_feat_ids,
                 fraction_feat=args.fraction_feat
             )
 
-    # 移除特徵全為0的欄位 
-    remaining_graph.x, zero_feature_cols = remove_all_zero_features(remaining_graph.x)
-    print(f"Original features: {ori_data.x.shape[1]}, Removed features (all-zero): {len(zero_feature_cols)}")
+    # 移除特徵全為0的欄位 (只在移除相同特徵時使用)
+    if args.same_feat:
+        remaining_graph.x, zero_feature_cols = remove_all_zero_features(remaining_graph.x)
+        print(f"Original features: {ori_data.x.shape[1]}, Removed features (all-zero): {len(zero_feature_cols)}")
+    
     num_features = remaining_graph.x.size(1)
 
 
     # Train GNN on the remaining graph
     print("\nTraining GNN on the remaining graph after removing subgraph...")
+    print("Final data imput to model:", remaining_graph)
 
     logger = ExperimentLogger(file_name=args.filename, note=args.note, copy_old=True, run_mode=args.run_mode)
     trial_number = logger.get_next_trial_number(args.dataset + "_remaining_graph")
@@ -218,6 +222,6 @@ if __name__ == "__main__":
     
     elif args.selector_type == "random_walk":
         logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, 
-                              fraction=args.fraction, node_start_ratio=node_start_ratio, edge_neighbor_ratio= edge_neighbor_ratio, fraction_feat=args.fraction_feat, remove_feat=zero_feature_cols)
+                              fraction=args.fraction, node_start_ratio=node_start_ratio, edge_neighbor_ratio= edge_neighbor_ratio, fraction_feat=args.fraction_feat, ori_edge_visit_ratio=ori_edge_visit_ratio, feat_edge_visit_ratio=feat_edge_visit_ratio, remove_feat=zero_feature_cols)
 
     print("Experiment finished and results saved.")

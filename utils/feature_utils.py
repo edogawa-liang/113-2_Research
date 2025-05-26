@@ -17,7 +17,7 @@ def remove_top_common_features(x: torch.Tensor, selected_feat_ids: List[int], fr
     counter = Counter(selected_feat_ids)
     most_common_feats = [feat_id for feat_id, _ in counter.most_common(k)]
 
-    print(f"Removing top {k} most commonly selected features: {most_common_feats}")
+    print(f"Removing top {k} most commonly selected features")#: {most_common_feats}")
     x_new = x.clone()
     x_new[:, most_common_feats] = 0.0
     return x_new, most_common_feats
@@ -29,7 +29,7 @@ def remove_all_zero_features(x: torch.Tensor) -> Tuple[torch.Tensor, List[int]]:
     """
     feature_sums = x.sum(dim=0)
     zero_feature_cols = (feature_sums == 0).nonzero(as_tuple=True)[0].tolist()
-    print(f"Removed {len(zero_feature_cols)} all-zero feature columns: {zero_feature_cols}")
+    print(f"Removed {len(zero_feature_cols)} all-zero feature columns")#: {zero_feature_cols}")
     x_new = x[:, feature_sums != 0]
     return x_new, zero_feature_cols
 

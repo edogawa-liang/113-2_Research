@@ -37,6 +37,11 @@ class RemainingGraphConstructor:
         remaining_graph = self.data.clone()
         remaining_graph.edge_index = remaining_edge_index
 
+        # 👉 新增：處理 edge_weight
+        if hasattr(self.data, 'edge_weight') and self.data.edge_weight is not None:
+            edge_weight = self.data.edge_weight.to(self.device)
+            remaining_graph.edge_weight = edge_weight[mask]
+
         # 3. Optionally remove (mask) node features
         if self.selected_feat_mask is not None:
             if self.selected_feat_mask.shape != self.data.x.shape:
@@ -46,6 +51,6 @@ class RemainingGraphConstructor:
             remaining_graph.x = self.data.x * (1 - self.selected_feat_mask)
             print("Applied inverted feature mask to remove selected features.")
 
-
         print(f"Remaining graph has {remaining_graph.num_nodes} nodes and {remaining_graph.edge_index.shape[1]} edges.")
         return remaining_graph
+

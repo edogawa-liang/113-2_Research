@@ -30,6 +30,7 @@ class ExplainerEdgeSelector:
         self.device = device
         self.node_choose = node_choose
         self.feature_scores = None
+        self.combined_node_mask = None 
         self.use_feature_to_node = use_feature_to_node
         self.node_count = 0
 
@@ -76,7 +77,7 @@ class ExplainerEdgeSelector:
                 if not self.use_feature_to_node and self.top_k_percent_feat != 0:
                     node_mask = data.get("node_mask", None)
                     if node_mask is not None:
-                        print("use node_mask for choosing subgraph")
+                        # print("use node_mask for choosing subgraph")
                         self.node_masks.append(node_mask)
 
         if self.edge_masks:
@@ -87,10 +88,12 @@ class ExplainerEdgeSelector:
         
         if self.node_masks:
             # node_masks = np.stack(node_masks)
-            node_masks = np.stack(node_masks).astype(np.float64)
-            # self.feature_scores = node_masks.sum(axis=1).mean(axis=0)
-            self.feature_scores = node_masks.sum(axis=1).sum(axis=0) # 把不同節點生成的解釋子圖，每個解釋子圖中的node的特徵全部加起來
-            print(f"Loaded node-wise feature importance, shape: {self.feature_scores.shape}")
+            print("use node_mask for choosing subgraph")
+            node_masks = np.stack(self.node_masks).astype(np.float64)
+            print(f"Stacked node_masks shape: {node_masks.shape}")
+            self.combined_node_mask = node_masks.sum(axis=0) # shape: (num_nodes, num_features,)
+            self.feature_scores = self.combined_node_mask.sum(axis=0)  # shape: (num_features,)
+            # print(f"Loaded node-wise feature importance, shape: {self.feature_scores.shape}")
         elif not self.use_feature_to_node and self.top_k_percent_feat != 0:
             print("Warning: No node_mask found in any .npz file.")
 
@@ -113,6 +116,7 @@ class ExplainerEdgeSelector:
 
         num_total = len(self.edge_aggregated) # 可能是原始邊 也可能是包含特徵的邊
         num_feat = num_total - num_ori_edges
+        print(f"Total edges: {num_total}, Original edges: {num_ori_edges}, Feature edges: {num_feat}")
 
         # 沒有特徵邊
         if num_feat == 0 and not self.use_feature_to_node: # 雙重驗證
@@ -158,6 +162,8 @@ class ExplainerEdgeSelector:
             raise ValueError("No feature importance available. Run load_data() first with appropriate flags.")
 
         num_features = len(self.feature_scores)
+        # print(f"Number of features: {num_features}")
+        # print("shape of node_mask:", len(self.node_masks))
         k = int(num_features * self.top_k_percent_feat)
 
         if same_feat:
@@ -170,17 +176,18 @@ class ExplainerEdgeSelector:
             return mask
 
         else:
-            if not self.node_masks:
+            if self.combined_node_mask is None:
                 raise ValueError("No per-node node_mask available for per-node feature selection.")
 
             print(f"[same_feat=False] Selecting top {k} features per node based on individual node_masks.")
             mask = torch.zeros((num_ori_nodes, num_features), dtype=torch.float32, device=self.device)
 
-            for i, node_mask in enumerate(self.node_masks):
+            for i, node_mask in enumerate(self.combined_node_mask):
                 if len(node_mask) != num_features:
                     raise ValueError(f"Node mask length mismatch at index {i}: {len(node_mask)} vs {num_features}")
                 topk = np.argsort(node_mask)[-k:]
-                mask[i, topk] = 1.0
+                mask[i, topk] = 1.0 # 重要的特徵mask給1
+
 
             return mask
 
