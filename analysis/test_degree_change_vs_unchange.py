@@ -160,7 +160,7 @@ if __name__ == "__main__":
     parser.add_argument("--feature_to_node", action="store_true")
     parser.add_argument("--same_feat", action="store_true")
     parser.add_argument("--feature_type", type=str, default="categorical")
-    parser.add_argument("--strategy", type=str, default="top_pagerank", choices=["top_pagerank", "random", "top_degree", "top_k_hop_subgraph"])
+    parser.add_argument("--strategy", type=str, default="top_pagerank", choices=["top_pagerank", "random", "top_degree", "top_k_hop_subgraph", "stratified_by_degree"])
 
     args = parser.parse_args()
 
