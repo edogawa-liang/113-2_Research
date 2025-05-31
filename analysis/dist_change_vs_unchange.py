@@ -13,57 +13,57 @@ from data.dataset_loader import GraphDatasetLoader
 from models.basic_GCN import GCN2Classifier
 import argparse
 from utils.device import DEVICE
+from subgraph_selector.remaining_graph import RemainingGraphConstructor
+from subgraph_selector.explainer_selector import ExplainerEdgeSelector
 
 
-# python analysis/dist_change_vs_unchange.py --dataset Actor --remain_run_mode remove_from_GNNExplainer --original_run_mode original --remain_model 1_GCN2Classifier --original_model 1_GCN2Classifier --strategy random
 
 class DistanceChecker:
-    def __init__(self, model_path, config_path, original_model_path, original_config_path,
-                 dataset, distance_csv, remain_model, run_mode):
-        self.data, self.num_features, self.num_classes = self.load_data(dataset)
-        self.model = self.load_model(model_path, config_path)
-        self.original_model = self.load_model(original_model_path, original_config_path)
+    def __init__(self, dataset, distance_csv, remain_model, original_model, remain_run_mode, original_run_mode, orig_data, remain_data):
+        
         self.csv_path = distance_csv
         self.dataset = dataset
         self.remain_model = remain_model
-        self.run_mode = run_mode
+        self.original_model_name = original_model
+        self.remain_run_mode = remain_run_mode
+        self.original_run_mode = original_run_mode
+        self.orig_data = orig_data
+        self.remain_data = remain_data
+        self.model = self.load_model(self.remain_run_mode, self.remain_model)
+        self.original_model = self.load_model(self.original_run_mode, self.original_model_name)
 
 
-    def load_model(self, model_path, config_path):
+
+    def load_model(self, run_mode, model_name):
+        config_path = os.path.join("saved", run_mode, "model", self.dataset, f"{model_name}_config.pth")
+        model_path = os.path.join("saved", run_mode, "model", self.dataset, f"{model_name}.pth")
         config = torch.load(config_path)
+
         import inspect
         allowed_params = inspect.signature(GCN2Classifier.__init__).parameters
         allowed_keys = set(allowed_params.keys()) - {"self"}
 
-        model_config = {}
-        for key in allowed_keys:
-            if key == 'in_channels':
-                model_config[key] = config.get(key, self.num_features)
-            elif key == 'out_channels':
-                model_config[key] = config.get(key, self.num_classes)
-            else:
-                model_config[key] = config.get(key, 64)
+        model_config = {
+            key: config.get(key, self.orig_data.x.size(1) if key == "in_channels" else int(self.orig_data.y.max()) + 1 if key == "out_channels" else 64)
+            for key in allowed_keys
+        }
 
         model = GCN2Classifier(**model_config).to(DEVICE)
         model.load_state_dict(torch.load(model_path, map_location=DEVICE))
         model.eval()
         return model
 
-    def load_data(self, dataset):
-        loader = GraphDatasetLoader()
-        data, num_features, num_classes, _, _ = loader.load_dataset(dataset)
-        return data.to(DEVICE), num_features, num_classes
 
     # 改! unchange 跟 change 不是跟 y 比, 是 original 跟 remain 比
     def get_unchanged_nodes(self):
         with torch.no_grad():
-            orig_out = self.original_model(self.data.x, self.data.edge_index)
-            remain_out = self.model(self.data.x, self.data.edge_index)
+            orig_out = self.original_model(self.orig_data.x, self.orig_data.edge_index)
+            remain_out = self.model(self.remain_data.x, self.remain_data.edge_index)
 
             orig_preds = orig_out.argmax(dim=1)
             remain_preds = remain_out.argmax(dim=1)
 
-        test_idx = self.data.test_mask.nonzero(as_tuple=True)[0]
+        test_idx = self.orig_data.test_mask.nonzero(as_tuple=True)[0]
         unchanged_idx = test_idx[(orig_preds[test_idx] == remain_preds[test_idx])]
         changed_idx = test_idx[(orig_preds[test_idx] != remain_preds[test_idx])]
         print(f"Unchanged nodes: {len(unchanged_idx)}, Changed nodes: {len(changed_idx)}")
@@ -220,6 +220,8 @@ class DistanceChecker:
         print(f"Saved histogram to: {save_path}")
 
 
+# python analysis/dist_change_vs_unchange.py --dataset Cora --remain_run_mode remove_from_GNNExplainer --original_run_mode original --remain_model 1_GCN2Classifier --original_model 1_GCN2Classifier --strategy random  --explainer_name GNNExplainer --fraction 0.1 --fraction_feat 0.0
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, default="Cora")
@@ -228,22 +230,61 @@ if __name__ == "__main__":
     parser.add_argument("--strategy", type=str, default="random")
     parser.add_argument("--remain_model", type=str, default="1_GCN2Classifier")
     parser.add_argument("--original_model", type=str, default="original_GCN2Classifier")
+
+    # for remain data
+    parser.add_argument("--base_dir", type=str, default="saved/stage2_y_edge_0.3")
+    parser.add_argument("--explainer_name", type=str, required=True)
+    # parser.add_argument("--node_choose", type=str, default="top_pagerank")
+    parser.add_argument("--fraction", type=float, default=0.1)
+    parser.add_argument("--fraction_feat", type=float, default=0.0)
+    parser.add_argument("--feature_to_node", action="store_true")
+    parser.add_argument("--same_feat", action="store_true")
+    parser.add_argument("--feature_type", type=str, default="categorical")
+
     args = parser.parse_args()
 
-    def model_path_fn(run_mode, model_name):
-        return os.path.join('saved', run_mode, "model", args.dataset, f"{model_name}.pth")
+    loader = GraphDatasetLoader()
+    orig_data, num_features, num_classes, _, _ = loader.load_dataset(args.dataset)
+    
+    # remain data
+    selector = ExplainerEdgeSelector(
+    base_dir=args.base_dir,
+    explainer_name=args.explainer_name,
+    dataset_name=args.dataset,
+    node_choose=args.strategy,
+    top_k_percent=args.fraction,
+    feature_type=args.feature_type,
+    device=DEVICE,
+    top_k_percent_feat=args.fraction_feat,
+    use_feature_to_node=args.feature_to_node
+    )
+    selector.load_data()
+    selected_edges, selected_feat_ids = selector.select_edges(
+        num_ori_edges=orig_data.num_edges,
+        num_ori_nodes=orig_data.num_nodes,
+        ori_num_features=orig_data.x.size(1),
+        return_feat_ids=True
+    )
+    selected_feat = None
+    if not args.feature_to_node and args.fraction_feat > 0:
+        selected_feat = selector.select_node_features(
+            num_ori_nodes=orig_data.num_nodes,
+            same_feat=args.same_feat
+        )
 
-    def config_path_fn(run_mode, model_name):
-        return os.path.join('saved', run_mode, "model", args.dataset, f"{model_name}_config.pth")
+    remaining_graph_constructor = RemainingGraphConstructor(orig_data, selected_edges, selected_feat_mask=selected_feat, device=DEVICE)
+    remain_data = remaining_graph_constructor.get_remaining_graph()
+
+
 
     checker = DistanceChecker(
-        model_path=model_path_fn(args.remain_run_mode, args.remain_model),
-        config_path=config_path_fn(args.remain_run_mode, args.remain_model),
-        original_model_path=model_path_fn(args.original_run_mode, args.original_model),
-        original_config_path=config_path_fn(args.original_run_mode, args.original_model),
         dataset=args.dataset,
         distance_csv=os.path.join("saved", "analysis", "dist_from_test_to_selected", f"{args.dataset}.csv"),
         remain_model=args.remain_model,
-        run_mode=args.remain_run_mode,
+        original_model=args.original_model,
+        remain_run_mode=args.remain_run_mode,
+        original_run_mode=args.original_run_mode,
+        orig_data=orig_data,
+        remain_data=remain_data
     )
     checker.summarize_distances(target_strategy=args.strategy)
