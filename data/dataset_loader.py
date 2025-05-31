@@ -39,7 +39,7 @@ class GraphDatasetLoader:
             "FacebookPagePage": "continuous",
             "GitHub": "continuous",
             "KarateClub": "continuous",
-            "Amazon": "continuous",
+            "Amazon": "categorical",
             "Airports": "continuous",
             "Actor": "continuous"
         }
