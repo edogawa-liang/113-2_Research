@@ -2,8 +2,8 @@ import argparse
 import torch
 import os
 from data.dataset_loader import GraphDatasetLoader
-# from data.data_modifier import GraphModifier
-# from subgraph_selector.utils.feat_sel import FeatureSelector
+from data.data_modifier import GraphModifier
+from subgraph_selector.utils.feat_sel import FeatureSelector
 from models.basic_GCN import GCN2Classifier, GCN3Classifier, GCN2Regressor, GCN3Regressor
 from trainer.gnn_trainer import GNNClassifierTrainer, GNNRegressorTrainer
 from utils.save_result import ExperimentLogger
@@ -18,7 +18,7 @@ from utils.device import DEVICE
 def parse_args():
     parser = argparse.ArgumentParser(description="Train a GNN model with specified parameters.")
     parser.add_argument("--dataset", type=str, required=True, help="Dataset name")
-    parser.add_argument("--normalize", action="store_true", help="Whether to normalize the dataset.")
+    parser.add_argument("--normalize", type=lambda x: x.lower() == "true", default=False, help="Whether to normalize the dataset")
     parser.add_argument("--model", type=str, default="GCN2", choices=["GCN2", "GCN3", "MLP"], help="Model type")
     parser.add_argument("--epochs", type=int, default=2, help="Number of training epochs")
     parser.add_argument("--lr", type=float, default=0.01, help="Learning rate")
@@ -39,14 +39,9 @@ def parse_args():
     # only structure
     parser.add_argument("--only_structure", action="store_true", help="Use only structural information (all features set to 1)")
 
-    # tip for represent structure
-    parser.add_argument("--tip", type=str, default="rand", choices=["rand", "deg", "pr", "bet"], help="Tip for representing structure: 'rand' (random), 'deg' (degree), 'pr' (PageRank), 'bet' (betweenness)")
-
     # feature to node
     parser.add_argument("--feature_to_node", action="store_true", help="Convert features into nodes and edges.")
 
-    # Only use feature-node (no node-node edges)
-    parser.add_argument("--only_feature_node", action="store_true", help="Use only feature-node edges, no node-node edges.")
     return parser.parse_args()
 
 
@@ -76,46 +71,41 @@ if __name__ == "__main__":
         data = converter.convert(data)
         num_features = data.x.size(1)  # 更新特徵維度（此時為 1）
 
-    # 將 Structure 改成新的算法 (random (32 dim)+ [PageRank, Betweenness, Degree])
+
+    if args.use_original_label is False:
+        print(f"Performing feature selection using {args.feature_selection_method.upper()}...")
+
+        # 初始化 FeatureSelector
+        selector = FeatureSelector(
+            method=args.feature_selection_method,
+            top_n=args.top_n,
+            top_n_features_per_pc=2
+        )
+
+        # 若方法需要 labels，則提供 labels
+        if args.feature_selection_method in ["tree", "mutual_info"]:
+            if data.y is None:
+                raise ValueError(f"{args.feature_selection_method} feature selection requires labels (y).")
+            selector.fit(data.x.cpu().numpy(), labels=data.y.cpu().numpy())
+        else:
+            selector.fit(data.x.cpu().numpy())
+
+        imp_features = selector.get_top_features()
+        print(f"Selected important features: {imp_features}")
+
+        # Modify graph using selected features
+        modifier = GraphModifier(data)
+        modified_graphs = modifier.modify_graph(imp_features)  # List of graphs
+        print(f"Graph modified into {len(modified_graphs)} graphs.")
+
+        # One feature is removed from the original dataset to label
+        num_features = num_features - 1
 
 
-
-    
-    # # 以下沒有用到了
-    # if args.use_original_label is False:
-    #     print(f"Performing feature selection using {args.feature_selection_method.upper()}...")
-
-    #     # 初始化 FeatureSelector
-    #     selector = FeatureSelector(
-    #         method=args.feature_selection_method,
-    #         top_n=args.top_n,
-    #         top_n_features_per_pc=2
-    #     )
-
-    #     # 若方法需要 labels，則提供 labels
-    #     if args.feature_selection_method in ["tree", "mutual_info"]:
-    #         if data.y is None:
-    #             raise ValueError(f"{args.feature_selection_method} feature selection requires labels (y).")
-    #         selector.fit(data.x.cpu().numpy(), labels=data.y.cpu().numpy())
-    #     else:
-    #         selector.fit(data.x.cpu().numpy())
-
-    #     imp_features = selector.get_top_features()
-    #     print(f"Selected important features: {imp_features}")
-
-    #     # Modify graph using selected features
-    #     modifier = GraphModifier(data)
-    #     modified_graphs = modifier.modify_graph(imp_features)  # List of graphs
-    #     print(f"Graph modified into {len(modified_graphs)} graphs.")
-
-    #     # One feature is removed from the original dataset to label
-    #     num_features = num_features - 1
-
-
-    # else:
-    modified_graphs = [data]  
-    print("Using original dataset without feature selection.")
-    modified_graphs[0].task_type = "classification"
+    else:
+        modified_graphs = [data]  
+        print("Using original dataset without feature selection.")
+        modified_graphs[0].task_type = "classification"
 
 
     # Initialize logger

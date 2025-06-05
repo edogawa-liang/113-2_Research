@@ -1,0 +1,497 @@
+# 5/9 個咪
+# 1. 挑選節點degree小到大平均挑, DummyExplainer
+done
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3 --explainer_type DummyExplainer --stage1_path saved/original --use_raw_data
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3 --explainer_type DummyExplainer --stage1_path saved/original --use_raw_data
+python stage2_expsubg.py --dataset Actor  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3 --explainer_type DummyExplainer --stage1_path saved/original --use_raw_data
+python stage2_expsubg.py --dataset Amazon  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3 --explainer_type DummyExplainer --stage1_path saved/original --use_raw_data
+
+
+# 2. 挑選節點degree小到大平均挑, GNNExplainer
+done
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3 --explainer_type GNNExplainer --stage1_path saved/original --use_raw_data
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3 --explainer_type GNNExplainer --stage1_path saved/original --use_raw_data
+python stage2_expsubg.py --dataset Actor  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3 --explainer_type GNNExplainer --stage1_path saved/original --use_raw_data
+python stage2_expsubg.py --dataset Amazon  --choose_nodes stratitfied_by_degree --node_ratio auto --edge_ratio 0.3 --run_mode stage2_y_edge_0.3 --explainer_type GNNExplainer --stage1_path saved/original --use_raw_data
+
+
+- save the space for DummyExplainer explainable subgraph
+done
+------------------------------------------------------------
+python utils/stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer DummyExplainer --dataset Cora
+python utils/stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer DummyExplainer --dataset CiteSeer
+python utils/stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer DummyExplainer --dataset Actor
+python utils/stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer DummyExplainer --dataset Amazon
+
+- save the space for GNNExplainer explainable subgraph
+done
+------------------------------------------------------------
+python utils/stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer GNNExplainer --dataset Cora
+python utils/stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer GNNExplainer --dataset CiteSeer
+python utils/stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer GNNExplainer --dataset Actor
+python utils/stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer GNNExplainer --dataset Amazon
+
+
+- Random Walk
+# 3. Remove Edge by Random Walk (choose nodes by stratified_by_degree), fraction 0.1
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note stratified_by_degree_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose stratified_by_degree --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note stratified_by_degree_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose stratified_by_degree --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note stratified_by_degree_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose stratified_by_degree --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note stratified_by_degree_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose stratified_by_degree --node_ratio auto --edge_ratio 0.3
+
+
+# 4. Remove Edge by Random Walk (choose nodes by stratified_by_degree), fraction 0.2
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note stratified_by_degree_RandomWalk --selector_type random_walk --fraction 0.2  --node_choose stratified_by_degree --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note stratified_by_degree_RandomWalk --selector_type random_walk --fraction 0.2  --node_choose stratified_by_degree --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note stratified_by_degree_RandomWalk --selector_type random_walk --fraction 0.2  --node_choose stratified_by_degree --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note stratified_by_degree_RandomWalk --selector_type random_walk --fraction 0.2  --node_choose stratified_by_degree --node_ratio auto --edge_ratio 0.3
+
+# 5. Remove Edge by Random Walk (choose nodes by stratified_by_degree), fraction 0.3
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note stratified_by_degree_RandomWalk --selector_type random_walk --fraction 0.3  --node_choose stratified_by_degree --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note stratified_by_degree_RandomWalk --selector_type random_walk --fraction 0.3  --node_choose stratified_by_degree --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note stratified_by_degree_RandomWalk --selector_type random_walk --fraction 0.3  --node_choose stratified_by_degree --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note stratified_by_degree_RandomWalk --selector_type random_walk --fraction 0.3  --node_choose stratified_by_degree --node_ratio auto --edge_ratio 0.3
+
+# 6. Remove Edge by Random Walk (choose nodes by stratified_by_degree), fraction 0.4
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note stratified_by_degree_RandomWalk --selector_type random_walk --fraction 0.4  --node_choose stratified_by_degree --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note stratified_by_degree_RandomWalk --selector_type random_walk --fraction 0.4  --node_choose stratified_by_degree --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note stratified_by_degree_RandomWalk --selector_type random_walk --fraction 0.4  --node_choose stratified_by_degree --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note stratified_by_degree_RandomWalk --selector_type random_walk --fraction 0.4  --node_choose stratified_by_degree --node_ratio auto --edge_ratio 0.3
+
+# 7. Remove Edge by Random Walk (choose nodes by stratified_by_degree), fraction 0.5
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note stratified_by_degree_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose stratified_by_degree --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note stratified_by_degree_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose stratified_by_degree --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note stratified_by_degree_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose stratified_by_degree --node_ratio auto --edge_ratio 0.3
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_RandomWalk --note stratified_by_degree_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose stratified_by_degree --node_ratio auto --edge_ratio 0.3
+
+
+
+- DummyExplainer
+# 8. Train GNN model (node classification) after y DummyExplainer from stratified_by_degree nodes selection, fraction 0.1 (base on #1)
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_stratified_by_degree --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_stratified_by_degree --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_stratified_by_degree --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_stratified_by_degree --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose stratified_by_degree
+
+# 9. Train GNN model (node classification) after y DummyExplainer from stratified_by_degree nodes selection, fraction 0.2 (base on #1)
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_stratified_by_degree --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_stratified_by_degree --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_stratified_by_degree --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_stratified_by_degree --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose stratified_by_degree
+
+# 10. Train GNN model (node classification) after y DummyExplainer from stratified_by_degree nodes selection, fraction 0.3 (base on #1)
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_stratified_by_degree --selector_type explainer --fraction 0.3 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_stratified_by_degree --selector_type explainer --fraction 0.3 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_stratified_by_degree --selector_type explainer --fraction 0.3 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_stratified_by_degree --selector_type explainer --fraction 0.3 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose stratified_by_degree
+
+# 11. Train GNN model (node classification) after y DummyExplainer from stratified_by_degree nodes selection, fraction 0.4 (base on #1)
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_stratified_by_degree --selector_type explainer --fraction 0.4 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_stratified_by_degree --selector_type explainer --fraction 0.4 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_stratified_by_degree --selector_type explainer --fraction 0.4 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_stratified_by_degree --selector_type explainer --fraction 0.4 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose stratified_by_degree
+
+# 12. Train GNN model (node classification) after y DummyExplainer from stratified_by_degree nodes selection, fraction 0.5 (base on #1)
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_stratified_by_degree --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_stratified_by_degree --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_stratified_by_degree --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_DummyExplainer --note true_y_DummyExplainer_stratified_by_degree --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose stratified_by_degree
+
+
+- GNNExplainer
+# 13. Train GNN model (node classification) after y GNNExplainer from stratified_by_degree nodes selection, fraction 0.1 (base on #2)
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_stratified_by_degree --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_stratified_by_degree --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_stratified_by_degree --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_stratified_by_degree --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose stratified_by_degree
+
+# 14. Train GNN model (node classification) after y GNNExplainer from stratified_by_degree nodes selection, fraction 0.2 (base on #2)
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_stratified_by_degree --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_stratified_by_degree --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_stratified_by_degree --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_stratified_by_degree --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose stratified_by_degree
+
+# 15. Train GNN model (node classification) after y GNNExplainer from stratified_by_degree nodes selection, fraction 0.3 (base on #2)
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_stratified_by_degree --selector_type explainer --fraction 0.3 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_stratified_by_degree --selector_type explainer --fraction 0.3 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_stratified_by_degree --selector_type explainer --fraction 0.3 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_stratified_by_degree --selector_type explainer --fraction 0.3 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose stratified_by_degree
+
+# 16. Train GNN model (node classification) after y GNNExplainer from stratified_by_degree nodes selection, fraction 0.4 (base on #2)
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_stratified_by_degree --selector_type explainer --fraction 0.4 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_stratified_by_degree --selector_type explainer --fraction 0.4 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_stratified_by_degree --selector_type explainer --fraction 0.4 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_stratified_by_degree --selector_type explainer --fraction 0.4 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose stratified_by_degree
+
+# 17. Train GNN model (node classification) after y GNNExplainer from stratified_by_degree nodes selection, fraction 0.5 (base on #2)
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_stratified_by_degree --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_stratified_by_degree --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_stratified_by_degree --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_GNNExplainer --note true_y_GNNExplainer_stratified_by_degree --selector_type explainer --fraction 0.5 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose stratified_by_degree
+
+
+# 18. MLP
+done
+------------------------------------------------------------
+python training_main.py --dataset Cora --model MLP --epochs 1000 --lr 0.01 --run_mode mlp --note mlp --use_original_label true
+python training_main.py --dataset CiteSeer --model MLP --epochs 1000 --lr 0.01 --run_mode mlp --note mlp --use_original_label true
+python training_main.py --dataset Actor --model MLP --epochs 1000 --lr 0.01 --run_mode mlp --note mlp --use_original_label true
+python training_main.py --dataset Amazon --model MLP --epochs 1000 --lr 0.01 --run_mode mlp --note mlp --use_original_label true
+
+
+# 19. calculate the distance between test node and choose node
+done
+------------------------------------------------------------
+python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset Cora --k 3
+python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset CiteSeer --k 3
+python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset Actor --k 3
+python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset Amazon --k 3
+
+
+# 20. Check the distance between test node and selected node (只跑表現最好的model)
+------------------------------------------------------------
+python tools/check_result.py --dataset Actor --run_mode remove_from_GNNExplainer --distance_csv_dir stage2_y_edge_0.3/GNNExplainer
+最後
+
+
+# 21. generate explainable subgraph from test node (DummyExplainer)
+done
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes all --mask_type test --run_mode test_stage2_y_edge_0.3 --explainer_type DummyExplainer --stage1_path saved/original --use_raw_data
+python stage2_expsubg.py --dataset CiteSeer --choose_nodes all --mask_type test --run_mode test_stage2_y_edge_0.3 --explainer_type DummyExplainer --stage1_path saved/original --use_raw_data
+python stage2_expsubg.py --dataset Actor --choose_nodes all --mask_type test --run_mode test_stage2_y_edge_0.3 --explainer_type DummyExplainer --stage1_path saved/original --use_raw_data
+python stage2_expsubg.py --dataset Amazon  --choose_nodes all --mask_type test --run_mode test_stage2_y_edge_0.3 --explainer_type DummyExplainer --stage1_path saved/original --use_raw_data
+
+
+# 22. generate explainable subgraph from test node (GNNExplainer)
+done
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes all --mask_type test --run_mode test_stage2_y_edge_0.3 --explainer_type GNNExplainer --stage1_path saved/original --use_raw_data
+python stage2_expsubg.py --dataset CiteSeer --choose_nodes all --mask_type test --run_mode test_stage2_y_edge_0.3 --explainer_type GNNExplainer --stage1_path saved/original --use_raw_data
+python stage2_expsubg.py --dataset Actor --choose_nodes all --mask_type test --run_mode test_stage2_y_edge_0.3 --explainer_type GNNExplainer --stage1_path saved/original --use_raw_data
+python stage2_expsubg.py --dataset Amazon  --choose_nodes all --mask_type test --run_mode test_stage2_y_edge_0.3 --explainer_type GNNExplainer --stage1_path saved/original --use_raw_data
+
+
+- random Walk
+# 23. Remove Edge by Random Walk (choose all test node), fraction 0.1
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_RandomWalk --note test_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose all --mask_type test
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_RandomWalk --note test_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose all --mask_type test
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_RandomWalk --note test_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose all --mask_type test
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_RandomWalk --note test_RandomWalk --selector_type random_walk --fraction 0.1  --node_choose all --mask_type test
+
+
+# 24. Remove Edge by Random Walk (choose all test node), fraction 0.2
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_RandomWalk --note test_RandomWalk --selector_type random_walk --fraction 0.2  --node_choose all --mask_type test
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_RandomWalk --note test_RandomWalk --selector_type random_walk --fraction 0.2  --node_choose all --mask_type test
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_RandomWalk --note test_RandomWalk --selector_type random_walk --fraction 0.2  --node_choose all --mask_type test
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_RandomWalk --note test_RandomWalk --selector_type random_walk --fraction 0.2  --node_choose all --mask_type test
+
+
+# 25. Remove Edge by Random Walk (choose all test node), fraction 0.3
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_RandomWalk --note test_RandomWalk --selector_type random_walk --fraction 0.3  --node_choose all --mask_type test
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_RandomWalk --note test_RandomWalk --selector_type random_walk --fraction 0.3  --node_choose all --mask_type test
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_RandomWalk --note test_RandomWalk --selector_type random_walk --fraction 0.3  --node_choose all --mask_type test
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_RandomWalk --note test_RandomWalk --selector_type random_walk --fraction 0.3  --node_choose all --mask_type test
+
+
+# 26. Remove Edge by Random Walk (choose all test node), fraction 0.4
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_RandomWalk --note test_RandomWalk --selector_type random_walk --fraction 0.4  --node_choose all --mask_type test
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_RandomWalk --note test_RandomWalk --selector_type random_walk --fraction 0.4  --node_choose all --mask_type test
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_RandomWalk --note test_RandomWalk --selector_type random_walk --fraction 0.4  --node_choose all --mask_type test
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_RandomWalk --note test_RandomWalk --selector_type random_walk --fraction 0.4  --node_choose all --mask_type test
+
+
+# 27. Remove Edge by Random Walk (choose all test node), fraction 0.5
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_RandomWalk --note test_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose all --mask_type test
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_RandomWalk --note test_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose all --mask_type test
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_RandomWalk --note test_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose all --mask_type test
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_RandomWalk --note test_RandomWalk --selector_type random_walk --fraction 0.5  --node_choose all --mask_type test
+
+
+- save the space for DummyExplainer explainable subgraph
+done
+------------------------------------------------------------
+python tools/stage2_node_share.py --stage_dir test_stage2_y_edge_0.3 --explainer DummyExplainer --dataset Cora
+python tools/stage2_node_share.py --stage_dir test_stage2_y_edge_0.3 --explainer DummyExplainer --dataset CiteSeer
+python tools/stage2_node_share.py --stage_dir test_stage2_y_edge_0.3 --explainer DummyExplainer --dataset Actor
+python tools/stage2_node_share.py --stage_dir test_stage2_y_edge_0.3 --explainer DummyExplainer --dataset Amazon
+
+- save the space for GNNExplainer explainable subgraph
+done
+------------------------------------------------------------
+python tools/stage2_node_share.py --stage_dir test_stage2_y_edge_0.3 --explainer GNNExplainer --dataset Cora
+python tools/stage2_node_share.py --stage_dir test_stage2_y_edge_0.3 --explainer GNNExplainer --dataset CiteSeer
+python tools/stage2_node_share.py --stage_dir test_stage2_y_edge_0.3 --explainer GNNExplainer --dataset Actor
+python tools/stage2_node_share.py --stage_dir test_stage2_y_edge_0.3 --explainer GNNExplainer --dataset Amazon
+
+
+- DummyExplainer
+# 28. Train GNN model (node classification) after y DummyExplainer from all test nodes, fraction 0.1 (base on #21)
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_DummyExplainer --note test_true_y_DummyExplainer_all --selector_type explainer --fraction 0.1 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose all
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_DummyExplainer --note test_true_y_DummyExplainer_all --selector_type explainer --fraction 0.1 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose all
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_DummyExplainer --note test_true_y_DummyExplainer_all --selector_type explainer --fraction 0.1 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose all
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_DummyExplainer --note test_true_y_DummyExplainer_all --selector_type explainer --fraction 0.1 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose all
+
+
+# 29. Train GNN model (node classification) after y DummyExplainer from all test nodes, fraction 0.2 (base on #21)
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_DummyExplainer --note test_true_y_DummyExplainer_all --selector_type explainer --fraction 0.2 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose all
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_DummyExplainer --note test_true_y_DummyExplainer_all --selector_type explainer --fraction 0.2 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose all
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_DummyExplainer --note test_true_y_DummyExplainer_all --selector_type explainer --fraction 0.2 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose all
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_DummyExplainer --note test_true_y_DummyExplainer_all --selector_type explainer --fraction 0.2 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose all
+
+
+# 30. Train GNN model (node classification) after y DummyExplainer from all test nodes, fraction 0.3 (base on #21)
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_DummyExplainer --note test_true_y_DummyExplainer_all --selector_type explainer --fraction 0.3 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose all
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_DummyExplainer --note test_true_y_DummyExplainer_all --selector_type explainer --fraction 0.3 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose all
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_DummyExplainer --note test_true_y_DummyExplainer_all --selector_type explainer --fraction 0.3 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose all
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_DummyExplainer --note test_true_y_DummyExplainer_all --selector_type explainer --fraction 0.3 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose all
+
+
+# 31. Train GNN model (node classification) after y DummyExplainer from all test nodes, fraction 0.4 (base on #21)
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_DummyExplainer --note test_true_y_DummyExplainer_all --selector_type explainer --fraction 0.4 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose all
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_DummyExplainer --note test_true_y_DummyExplainer_all --selector_type explainer --fraction 0.4 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose all
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_DummyExplainer --note test_true_y_DummyExplainer_all --selector_type explainer --fraction 0.4 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose all
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_DummyExplainer --note test_true_y_DummyExplainer_all --selector_type explainer --fraction 0.4 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose all
+
+
+# 32. Train GNN model (node classification) after y DummyExplainer from all test nodes, fraction 0.5 (base on #21)
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_DummyExplainer --note test_true_y_DummyExplainer_all --selector_type explainer --fraction 0.5 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose all
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_DummyExplainer --note test_true_y_DummyExplainer_all --selector_type explainer --fraction 0.5 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose all
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_DummyExplainer --note test_true_y_DummyExplainer_all --selector_type explainer --fraction 0.5 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose all
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_DummyExplainer --note test_true_y_DummyExplainer_all --selector_type explainer --fraction 0.5 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name DummyExplainer --node_choose all
+
+
+
+- GNNExplainer
+
+# 33. Train GNN model (node classification) after y GNNExplainer from all test nodes, fraction 0.1 (base on #22)
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.1 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.1 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.1 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.1 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
+
+
+# 34. Train GNN model (node classification) after y GNNExplainer from all test nodes, fraction 0.2 (base on #22)
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.2 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.2 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.2 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.2 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
+
+
+# 35. Train GNN model (node classification) after y GNNExplainer from all test nodes, fraction 0.3 (base on #22)
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.3 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.3 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.3 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.3 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
+
+
+# 36. Train GNN model (node classification) after y GNNExplainer from all test nodes, fraction 0.4 (base on #22)
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.4 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.4 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.4 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.4 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
+
+
+# 37. Train GNN model (node classification) after y GNNExplainer from all test nodes, fraction 0.5 (base on #22)
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.5 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.5 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.5 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_GNNExplainer --note test_true_y_GNNExplainer_all --selector_type explainer --fraction 0.5 --base_dir saved/test_stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose all
+
+
+# 43. check the distance between test and selected nodes
+done
+------------------------------------------------------------
+python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset Cora --k 3
+python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset CiteSeer --k 3
+python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset Actor --k 3
+python tools/distance_from_test_to_selected.py --base_dir stage2_y_edge_0.3 --dataset Amazon --k 3
+
+
+- CF-Explainer 
+
+# 38. generate explainable subgraph from random node (CF-Explainer)
+done
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
+python stage2_expsubg.py --dataset Actor  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
+python stage2_expsubg.py --dataset Amazon  --choose_nodes random --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
+
+
+# 39. generate explainable subgraph from top_pagerank node (CF-Explainer)
+done
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
+python stage2_expsubg.py --dataset Actor  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
+python stage2_expsubg.py --dataset Amazon  --choose_nodes top_pagerank --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
+
+
+# 40. generate explainable subgraph from high_betweenness node (CF-Explainer)
+done
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes high_betweenness --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes high_betweenness --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
+python stage2_expsubg.py --dataset Actor  --choose_nodes high_betweenness --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
+python stage2_expsubg.py --dataset Amazon  --choose_nodes high_betweenness --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
+
+
+# 41. generate explainable subgraph from stratified_by_degree node (CF-Explainer)
+done
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
+python stage2_expsubg.py --dataset Actor  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
+python stage2_expsubg.py --dataset Amazon  --choose_nodes stratified_by_degree --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type train --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
+
+
+# 42. generate explainable subgraph from all test node (CF-Explainer)
+done
+(我的run_mode忘記+test_，但節點不會跟其他方法的衝突)
+------------------------------------------------------------
+python stage2_expsubg.py --dataset Cora  --choose_nodes all --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type test --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
+python stage2_expsubg.py --dataset CiteSeer  --choose_nodes all --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type test --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
+python stage2_expsubg.py --dataset Actor  --choose_nodes all --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type test --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
+python stage2_expsubg.py --dataset Amazon  --choose_nodes all --node_ratio auto --edge_ratio 0.3 --lr 0.08 --mask_type test --explainer_type CFExplainer --epoch 500 --run_mode stage2_y_edge_0.3 --stage1_path saved/original --use_raw_data --cf_beta 0.1
+
+
+# node share
+done
+------------------------------------------------------------
+python tools/stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer CFExplainer --dataset Cora
+python tools/stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer CFExplainer --dataset CiteSeer
+python tools/stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer CFExplainer --dataset Actor
+python tools/stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer CFExplainer --dataset Amazon
+
+
+# 44.  Train GNN model (node classification) after y CF-Explainer from random nodes selection
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_random --selector_type explainer --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose random
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_random --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose random
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_random --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose random
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_random --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose random
+
+# 45.  Train GNN model (node classification) after y CF-Explainer from PageRank nodes selection
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_top_pagerank --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose top_pagerank
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_top_pagerank --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose top_pagerank
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_top_pagerank --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose top_pagerank
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_top_pagerank --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose top_pagerank
+
+# 46.  Train GNN model (node classification) after y CF-Explainer from high_betweenness nodes selection
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_high_betweenness --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose high_betweenness
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_high_betweenness --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose high_betweenness
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_high_betweenness --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose high_betweenness
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_high_betweenness --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose high_betweenness
+
+# 47.  Train GNN model (node classification) after y CF-Explainer from stratified_by_degree nodes selection
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_stratified_by_degree --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_stratified_by_degree --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_stratified_by_degree --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose stratified_by_degree
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode remove_from_CFExplainer --note true_y_CFExplainer_stratified_by_degree --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose stratified_by_degree
+
+# node share
+done
+------------------------------------------------------------
+python tools/stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer CFExplainer --dataset Cora
+python tools/stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer CFExplainer --dataset CiteSeer
+python tools/stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer CFExplainer --dataset Actor
+python tools/stage2_node_share.py --stage_dir stage2_y_edge_0.3 --explainer CFExplainer --dataset Amazon
+
+# 48.  Train GNN model (node classification) after y CF-Explainer from test node
+done
+------------------------------------------------------------
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_CFExplainer --note true_y_CFExplainer_test_all --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose all
+python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_CFExplainer --note true_y_CFExplainer_test_all --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose all
+python train_remaining_main.py --dataset Actor --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_CFExplainer --note true_y_CFExplainer_test_all --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose all
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode test_remove_from_CFExplainer --note true_y_CFExplainer_test_all --selector_type explainer  --base_dir saved/stage2_y_edge_0.3 --explainer_name CFExplainer --node_choose all
+
+
+# 49. 檢查 Remove 50% edge 的最佳模型，比較是否改變預測與挑選節點距離的關聯
+done
+------------------------------------------------------------
+python tools/check_result.py --dataset Cora --run_mode remove_from_GNNExplainer --strategy random --model_name 13_GCN2Classifier --distance_csv_dir stage2_y_edge_0.3/GNNExplainer
+python tools/check_result.py --dataset CiteSeer --run_mode remove_from_DummyExplainer --strategy random --model_name 13_GCN2Classifier --distance_csv_dir stage2_y_edge_0.3/GNNExplainer
+python tools/check_result.py --dataset Amazon --run_mode remove_from_GNNExplainer --strategy random --model_name 13_GCN2Classifier --distance_csv_dir stage2_y_edge_0.3/GNNExplainer
+(Actor 不檢查)
+
+
+# 檢查 CF-Explainer Summary
+我用node_share 時刪掉了...
+python tools/check_cf_summary.py 
+
+# 計算成功生成 CF-Explanation 的節點數量
+python tools/check_cf_summary2.py --stage2_dir stage2_y_edge_0.3 --dataset Cora --node_ratio auto --edge_ratio 0.3 --mask_type train
+python tools/check_cf_summary2.py --stage2_dir stage2_y_edge_0.3 --dataset CiteSeer --node_ratio auto --edge_ratio 0.3 --mask_type train
+python tools/check_cf_summary2.py --stage2_dir stage2_y_edge_0.3 --dataset Actor --node_ratio auto --edge_ratio 0.3 --mask_type train
+python tools/check_cf_summary2.py --stage2_dir stage2_y_edge_0.3 --dataset Amazon --node_ratio auto --edge_ratio 0.3 --mask_type train
+
