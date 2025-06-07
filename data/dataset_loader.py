@@ -16,7 +16,7 @@ class GraphDatasetLoader:
         transforms = []
         if normalize:
             transforms.append(T.NormalizeFeatures())  # 只有 normalize=True 才添加
-        transforms.append(T.RandomNodeSplit(num_val=0.1, num_test=0.1))
+        # transforms.append(T.RandomNodeSplit(num_val=0.1, num_test=0.1))
 
         self.transform = T.Compose(transforms)
                 
@@ -27,22 +27,21 @@ class GraphDatasetLoader:
             "Cora": lambda: Planetoid(root='/tmp/Cora', name='Cora', transform=self.transform),
             "CiteSeer": lambda: Planetoid(root='/tmp/CiteSeer', name='CiteSeer', transform=self.transform),
             "PubMed": lambda: Planetoid(root='/tmp/PubMed', name='PubMed', transform=self.transform),
-            "KarateClub": lambda: KarateClub(transform=self.transform),
             "Amazon": lambda: Amazon(root='/tmp/Amazon', name='Computers', transform=self.transform),
             "Airports": lambda: Airports(root='/tmp/Airports', name='USA', transform=self.transform),
             "Actor": lambda: Actor(root='/tmp/Actor', transform=self.transform),
         }
         self.feature_type_map = {
-            "Cora": "categorical",
-            "CiteSeer": "categorical",
-            "PubMed": "categorical",
-            "FacebookPagePage": "continuous",
-            "GitHub": "continuous",
-            "KarateClub": "continuous",
-            "Amazon": "categorical",
-            "Airports": "continuous",
-            "Actor": "continuous"
+            "Cora": "categorical",      # One-hot encoding of paper keywords (binary vector, each dimension = 1 keyword present)
+            "CiteSeer": "categorical",  # One-hot encoding of paper keywords (binary vector, each dimension = 1 keyword present)
+            "PubMed": "continuous",     # TF-IDF feature vector of paper words (float values per dimension)
+            "FacebookPagePage": "continuous",  # Page feature embeddings (continuous floats, typically from page activity / metadata)
+            "GitHub": "continuous",     # Node embeddings of GitHub users/repos (continuous floats, e.g. learned or handcrafted embeddings)
+            "Amazon": "categorical",    # Bag-of-words vector of product reviews/descriptions (binary vector, 0/1 per word)
+            "Airports": "categorical",  # One-hot encoding of node type (one-hot vector per node type, e.g. hub / regional / small / intl airport type)
+            "Actor": "categorical"      # Multi-hot encoding of keywords from movies the actor participated in (binary vector, 0/1 per keyword)
         }
+
     
     def load_dataset(self, name: str):
         """
