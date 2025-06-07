@@ -61,17 +61,26 @@ class FeatureNodeConverter:
         node_node_mask = torch.tensor(node_node_mask, dtype=torch.bool, device=self.device)
         node_feat_mask = torch.tensor(node_feat_mask, dtype=torch.bool, device=self.device)
 
-        # 節點特徵設為 1（原始 + feature node）
+        # 節點特徵設為 1（原始 + feature node）(暫時)
         x = torch.ones((num_nodes + num_features, 1), device=self.device)
 
+        # 標記原始節點及特徵節點
+        is_feature_node = torch.zeros(num_nodes + num_features, dtype=torch.bool, device=self.device)
+        is_feature_node[num_nodes:] = True
+        is_original_node = torch.ones(num_nodes + num_features, dtype=torch.bool, device=self.device)
+        is_original_node[num_nodes:] = False
+        
         new_data = Data(
             x=x,
             edge_index=edge_index,
             edge_weight=edge_weight,
             y=data.y,
             node_node_mask=node_node_mask,
-            node_feat_mask=node_feat_mask
+            node_feat_mask=node_feat_mask,
+            is_feature_node=is_feature_node,
+            is_original_node=is_original_node
         )
+
 
         # 延伸 mask
         for attr in ["train_mask", "val_mask", "test_mask"]:

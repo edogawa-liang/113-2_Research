@@ -10,6 +10,7 @@ from utils.save_result import ExperimentLogger
 from models.basic_mlp import MLPClassifier, MLPRegressor
 from trainer.mlp_trainer import MLPClassifierTrainer, MLPRegressorTrainer
 from data.feature2node import FeatureNodeConverter
+from data.structure import StructureFeatureBuilder, extract_edges
 from utils.device import DEVICE
 
 
@@ -47,6 +48,9 @@ def parse_args():
 
     # Only use feature-node (no node-node edges)
     parser.add_argument("--only_feature_node", action="store_true", help="Use only feature-node edges, no node-node edges.")
+    
+    # Structure Mode
+    parser.add_argument("--structure_mode", type=str, default="random+imp", choices=["one", "random+imp"], help="Mode for structure features: 'one' or 'random+imp'")
     return parser.parse_args()
 
 
@@ -63,58 +67,41 @@ if __name__ == "__main__":
     data, num_features, _, feature_type, _ = loader.load_dataset(args.dataset)
     data = data.to(DEVICE)
 
-    # 如果只用結構，則把所有節點特徵設為 1
-    if args.only_structure:
-        print("Using only structure: all node features set to 1.")
-        data.x = torch.ones((data.num_nodes, 1), device=DEVICE)
-        num_features = 1  # 重設特徵維度
-
-    # 如果要把特徵轉換成節點，則使用 FeatureNodeConverter
+    # 1. Feature to node conversion
     if args.feature_to_node:
         print("Converting node features into feature-nodes...")
         converter = FeatureNodeConverter(feature_type=feature_type, device=DEVICE)
+        # FeatureNodeConverter 提供feature連到node後的所有邊，並多了 node_node_mask, node_feat_mask (後續要記得處理!)
         data = converter.convert(data)
-        num_features = data.x.size(1)  # 更新特徵維度（此時為 1）
 
-    # 將 Structure 改成新的算法 (random (32 dim)+ [PageRank, Betweenness, Degree])
+    # 2. Structure feature building
+    if args.feature_to_node or args.only_structure:
+        print("Using StructureFeatureBuilder...")
+        # 將 Structure 改成新的算法 (random (32 dim)+ [PageRank, Betweenness, Degree, Closeness])
+        builder = StructureFeatureBuilder(
+            data=data, device=DEVICE, dataset_name=args.dataset,
+            feature_to_node=args.feature_to_node,
+            only_feature_node=args.only_feature_node,
+            only_structure=args.only_structure,
+            mode=args.structure_mode,
+            normalize_type="row_l1"
+        )
+        structure_x = builder.build()
+        num_features = structure_x.shape[1]
+        data.x = structure_x
 
+    # 3. Use original node features
+    else:
+        print("Using original graph and node features.")
+        num_features = data.x.shape[1]
 
-
-    
-    # # 以下沒有用到了
-    # if args.use_original_label is False:
-    #     print(f"Performing feature selection using {args.feature_selection_method.upper()}...")
-
-    #     # 初始化 FeatureSelector
-    #     selector = FeatureSelector(
-    #         method=args.feature_selection_method,
-    #         top_n=args.top_n,
-    #         top_n_features_per_pc=2
-    #     )
-
-    #     # 若方法需要 labels，則提供 labels
-    #     if args.feature_selection_method in ["tree", "mutual_info"]:
-    #         if data.y is None:
-    #             raise ValueError(f"{args.feature_selection_method} feature selection requires labels (y).")
-    #         selector.fit(data.x.cpu().numpy(), labels=data.y.cpu().numpy())
-    #     else:
-    #         selector.fit(data.x.cpu().numpy())
-
-    #     imp_features = selector.get_top_features()
-    #     print(f"Selected important features: {imp_features}")
-
-    #     # Modify graph using selected features
-    #     modifier = GraphModifier(data)
-    #     modified_graphs = modifier.modify_graph(imp_features)  # List of graphs
-    #     print(f"Graph modified into {len(modified_graphs)} graphs.")
-
-    #     # One feature is removed from the original dataset to label
-    #     num_features = num_features - 1
+    # 統一更新 edge_index, edge_weight (不論原 graph 或 feature to node 都可以用 extract_edges)
+    edge_index, edge_weight = extract_edges(data, args.feature_to_node, args.only_feature_node)
+    data.edge_index = edge_index
+    data.edge_weight = edge_weight
 
 
-    # else:
     modified_graphs = [data]  
-    print("Using original dataset without feature selection.")
     modified_graphs[0].task_type = "classification"
 
 
@@ -124,8 +111,7 @@ if __name__ == "__main__":
     # Loop over all modified graphs
     for i, graph in enumerate(modified_graphs):
         print(f"\nTraining on Graph {i+1}/{len(modified_graphs)} - Task: {graph.task_type}")
-        label_source = "Original Label" if args.use_original_label else f"Feature {imp_features[i]}"
-
+        label_source = "Original Label"
         try:
             if graph.task_type == "regression":
                 print(f"Training Regression Model - Trial {trial_number}")
@@ -170,10 +156,4 @@ if __name__ == "__main__":
                 logger.log_experiment(args.dataset + "_classification", result, label_source, feat_sel_method=args.feature_selection_method)
 
         except ValueError as e:
-            # 只跳過這個特定錯誤
-            if "Only one class present in y_true" in str(e):
-                print(f"[Skip] Graph {i+1}, Feature {imp_features[i]} skipped due to ROC AUC error: {e}")
-                continue
-            else:
-                # 其他錯誤照常丟出
-                raise
+            raise
