@@ -31,9 +31,6 @@ def parse_args():
     parser.add_argument("--note", type=str, default="", help="Note for the experiment")
     parser.add_argument("--copy_old", type=lambda x: x.lower() == "true", default=True, help="Whether to backup old experiment data (true/false).")
     
-    # Feature selection parameters
-    parser.add_argument("--use_original_label", type=lambda x: x.lower() == "true", default=True, help="Use original labels (true/false)")
-
     # only structure
     parser.add_argument("--only_structure", action="store_true", help="Use only structural information (all features set to 1)")
 

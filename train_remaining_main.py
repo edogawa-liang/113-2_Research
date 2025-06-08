@@ -19,7 +19,10 @@ from data.node2feature import FeatureNodeReverter
 
 from utils.feature_utils import remove_all_zero_features, remove_top_common_features
 
-
+# # 加入 可以設定要使用多少節點的解釋子圖 還有要怎麼挑
+# parser.add_argument("--node_ratio", type=str, default="auto", help="'auto' for automatic calculation or a numeric value to manually set node selection ratio")
+# parser.add_argument("--edge_ratio", type=float, default=0.5, help="Ensures sufficient edges in the subgraph, required only if node_ratio is 'auto'")
+# parser.add_argument("--choose_nodes", type=str, default='random', choices=["random", "high_degree", "top_pagerank", "manual", "high_betweenness", "stratified_by_degree", "all"], help="Node selection strategy")
 
 # 核心子圖包含整個節點
 # 移除部分邊後的節點分類結果
