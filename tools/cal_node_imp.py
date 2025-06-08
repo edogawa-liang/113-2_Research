@@ -12,6 +12,7 @@ from torch_geometric.data import Data
 import argparse
 from data.dataset_loader import GraphDatasetLoader
 from data.feature2node import FeatureNodeConverter
+import igraph as ig # 計算betweenness時用到
 
 
 # def min_max_norm(arr):
@@ -83,10 +84,27 @@ class NodeImportanceCalculator:
         print("Complete degree calculation.")
         pr = nx.pagerank(G, alpha=0.85, weight="weight")  # Weighted PageRank
         print("Complete PageRank calculation.")
-        bet = nx.betweenness_centrality(G, weight="weight")  # Weighted Betweenness
+
+        # Convert to igraph for faster betweenness, closeness calculation
+        print("Converting to igraph...")
+        g_ig = ig.Graph()
+        g_ig.add_vertices(max(G.nodes) + 1)
+        edges = list(G.edges(data="weight"))
+        g_ig.add_edges([(u, v) for u, v, w in edges])
+        g_ig.es["weight"] = [w for u, v, w in edges]
+        print("Complete igraph conversion.")
+
+        # Betweenness with cutoff
+        print("Calculating Betweenness with cutoff=4 ...")
+        bet_list = g_ig.betweenness(weights="weight", cutoff=4)
         print("Complete Betweenness calculation.")
-        clo = nx.closeness_centrality(G, distance="weight")  # Weighted Closeness
+        bet = {node_id: score for node_id, score in enumerate(bet_list)}
+
+        # Closeness with weights
+        clo_list = g_ig.closeness(weights="weight") 
+        clo = {node_id: score for node_id, score in enumerate(clo_list)}
         print("Complete Closeness calculation.")
+
 
         # Force node list to be ordered: 0 to N-1
         self.nodes = list(range(self.data.num_nodes))
