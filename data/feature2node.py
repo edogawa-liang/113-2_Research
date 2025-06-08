@@ -17,7 +17,7 @@ class FeatureNodeConverter:
     def convert(self, data: Data) -> Data:
         num_nodes = data.num_nodes
         num_features = data.x.size(1)
-        feature_node_offset = num_nodes
+        feature_node_offset = num_nodes # 特徵節點的排序是原節點後
 
         edge_index = []
         edge_weight = []
@@ -43,15 +43,15 @@ class FeatureNodeConverter:
                 feat_value = data.x[node_id, feat_id].item()
                 if self.feature_type == "categorical":
                     if feat_value == 1: # 有值的才有邊連過去
-                        edge_index.append([node_id, feature_node_offset + feat_id])
-                        edge_index.append([feature_node_offset + feat_id, node_id])
+                        edge_index.append([node_id, feature_node_offset + feat_id]) # 原節點-> 特徵節點
+                        edge_index.append([feature_node_offset + feat_id, node_id])  # 特徵節點-> 原節點
                         edge_weight.extend([1.0, 1.0])
                         node_node_mask.extend([0, 0])
                         node_feat_mask.extend([1, 1])
 
                 elif self.feature_type == "continuous": # 每個 feature 會連到每個 node
-                    edge_index.append([node_id, feature_node_offset + feat_id])
-                    edge_index.append([feature_node_offset + feat_id, node_id])
+                    edge_index.append([node_id, feature_node_offset + feat_id]) # 原節點-> 特徵節點
+                    edge_index.append([feature_node_offset + feat_id, node_id]) # 特徵節點-> 原節點
                     edge_weight.extend([feat_value, feat_value])
                     node_node_mask.extend([0, 0])
                     node_feat_mask.extend([1, 1])
@@ -83,7 +83,7 @@ class FeatureNodeConverter:
 
 
         # 延伸 mask
-        for attr in ["train_mask", "val_mask", "test_mask"]:
+        for attr in ["train_mask", "val_mask", "test_mask", "unknown_mask"]:
             if hasattr(data, attr):
                 old_mask = getattr(data, attr)
                 if old_mask is not None and old_mask.shape[0] == num_nodes:

@@ -36,6 +36,10 @@
 
 ## How to run
 ### Main Code
+0. Set train/val/test
+	```bash 
+	python prepare_split.py
+	```
 1. Stage 1 : Train basic GNN model 
 	```bash 
 	python training_main.py

@@ -2,15 +2,14 @@ import argparse
 import torch
 import os
 from data.dataset_loader import GraphDatasetLoader
-# from data.data_modifier import GraphModifier
-# from subgraph_selector.utils.feat_sel import FeatureSelector
-from models.basic_GCN import GCN2Classifier, GCN3Classifier, GCN2Regressor, GCN3Regressor
-from trainer.gnn_trainer import GNNClassifierTrainer, GNNRegressorTrainer
+from models.basic_GCN import GCN2Classifier, GCN3Classifier
+from trainer.gnn_trainer import GNNClassifierTrainer
 from utils.save_result import ExperimentLogger
-from models.basic_mlp import MLPClassifier, MLPRegressor
-from trainer.mlp_trainer import MLPClassifierTrainer, MLPRegressorTrainer
+from models.basic_mlp import MLPClassifier
+from trainer.mlp_trainer import MLPClassifierTrainer
 from data.feature2node import FeatureNodeConverter
 from data.structure import StructureFeatureBuilder, extract_edges
+from data.prepare_split import load_split_csv
 from utils.device import DEVICE
 
 
@@ -34,14 +33,9 @@ def parse_args():
     
     # Feature selection parameters
     parser.add_argument("--use_original_label", type=lambda x: x.lower() == "true", default=True, help="Use original labels (true/false)")
-    parser.add_argument("--feature_selection_method", type=str, default="svd", choices=["pca", "svd", "tree", "mutual_info"], help="Feature selection method")
-    parser.add_argument("--top_n", type=int, default=6, help="Number of top features to select")
 
     # only structure
     parser.add_argument("--only_structure", action="store_true", help="Use only structural information (all features set to 1)")
-
-    # tip for represent structure
-    parser.add_argument("--tip", type=str, default="rand", choices=["rand", "deg", "pr", "bet"], help="Tip for representing structure: 'rand' (random), 'deg' (degree), 'pr' (PageRank), 'bet' (betweenness)")
 
     # feature to node
     parser.add_argument("--feature_to_node", action="store_true", help="Convert features into nodes and edges.")
@@ -74,10 +68,10 @@ if __name__ == "__main__":
         # FeatureNodeConverter 提供feature連到node後的所有邊，並多了 node_node_mask, node_feat_mask (後續要記得處理!)
         data = converter.convert(data)
 
-    # 2. Structure feature building
+    # 2. Structure feature building (node features)
     if args.feature_to_node or args.only_structure:
         print("Using StructureFeatureBuilder...")
-        # 將 Structure 改成新的算法 (random (32 dim)+ [PageRank, Betweenness, Degree, Closeness])
+        # 將 Feature 改成新的算法 (random (32 dim)+ [PageRank, Betweenness, Degree, Closeness])
         builder = StructureFeatureBuilder(
             data=data, device=DEVICE, dataset_name=args.dataset,
             feature_to_node=args.feature_to_node,
@@ -101,59 +95,64 @@ if __name__ == "__main__":
     data.edge_weight = edge_weight
 
 
-    modified_graphs = [data]  
-    modified_graphs[0].task_type = "classification"
+    # Repeat 10 time selecting different splits
+    for repeat_id in range(10):
+        print(f"\n===== [Repeat {repeat_id}] =====")
+
+        # Load the split mask
+        train_mask, val_mask, test_mask, unknown_mask = load_split_csv(args.dataset, repeat_id, DEVICE) # 這裏的mask是原dataset的長度
+        num_orig_nodes = train_mask.shape[0]
+        num_total_nodes = data.x.shape[0]
+        
+        # add padding to feature node
+        if args.feature_to_node and num_total_nodes > num_orig_nodes:
+            pad_len = num_total_nodes - num_orig_nodes
+            print(f"Padding masks with {pad_len} additional nodes for feature nodes...")
+
+            def pad_mask(mask):
+                return torch.cat([mask, torch.zeros(pad_len, dtype=torch.bool, device=mask.device)], dim=0)
+
+            train_mask = pad_mask(train_mask)
+            val_mask = pad_mask(val_mask)
+            test_mask = pad_mask(test_mask)
+            unknown_mask = pad_mask(unknown_mask) 
 
 
-    # Initialize logger
-    logger = ExperimentLogger(file_name=args.result_filename, note=args.note, copy_old=args.copy_old, run_mode=args.run_mode)
+        data.train_mask = train_mask
+        data.val_mask = val_mask
+        data.test_mask = test_mask
+        data.unknown_mask = unknown_mask
 
-    # Loop over all modified graphs
-    for i, graph in enumerate(modified_graphs):
-        print(f"\nTraining on Graph {i+1}/{len(modified_graphs)} - Task: {graph.task_type}")
+        # data for training!
+        graph = data
+
+        # Initialize logger
+        logger = ExperimentLogger(file_name=args.result_filename, note=args.note, copy_old=args.copy_old, run_mode=args.run_mode)
+
+        # Loop over all modified graphs
+        print(f"\nTraining on Graph - Split {repeat_id}")
         label_source = "Original Label"
         try:
-            if graph.task_type == "regression":
-                print(f"Training Regression Model - Trial {trial_number}")
-                trial_number = logger.get_next_trial_number(args.dataset + "_regression")
-                if args.model == "MLP":
-                    trainer = MLPRegressorTrainer(dataset_name=args.dataset, data=graph,
-                                                model_class= MLPRegressor, 
-                                                trial_number=trial_number, device=DEVICE,
-                                                epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
-                                                run_mode=args.run_mode)
-                else: # GNN
-                    trainer = GNNRegressorTrainer(dataset_name=args.dataset, data=graph, 
-                                                num_features=num_features, 
-                                                model_class=GCN2Regressor if args.model == "GCN2" else GCN3Regressor,
-                                                trial_number=trial_number, device=DEVICE,
-                                                epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
-                                                run_mode=args.run_mode)
-                result = trainer.run()
-                logger.log_experiment(args.dataset + "_regression", result, label_source, feat_sel_method=args.feature_selection_method)
-
+            trial_number = logger.get_next_trial_number(args.dataset + "_classification")
+            num_classes = len(torch.unique(graph.y))
+            print(f"Training Classification Model - Trial {trial_number}")
             
-            elif graph.task_type == "classification": 
-                trial_number = logger.get_next_trial_number(args.dataset + "_classification")
-                num_classes = len(torch.unique(graph.y))
-                print(f"Training Classification Model - Trial {trial_number}")
-                
-                if args.model == "MLP":
-                    trainer = MLPClassifierTrainer(dataset_name=args.dataset, data=graph,
-                                           num_features=num_features, num_classes=num_classes,
-                                           model_class= MLPClassifier, 
-                                           trial_number=trial_number, device=DEVICE,
-                                           epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
-                                           run_mode=args.run_mode, threshold=args.threshold)
-                else: # GNN
-                    trainer = GNNClassifierTrainer(dataset_name=args.dataset, data=graph, 
-                                                num_features=num_features, num_classes=num_classes,  
-                                                model_class=GCN2Classifier if args.model == "GCN2" else GCN3Classifier,
-                                                trial_number=trial_number, device=DEVICE,
-                                                epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay, 
-                                                run_mode=args.run_mode, threshold=args.threshold)
-                result = trainer.run()
-                logger.log_experiment(args.dataset + "_classification", result, label_source, feat_sel_method=args.feature_selection_method)
+            if args.model == "MLP":
+                trainer = MLPClassifierTrainer(dataset_name=args.dataset, data=graph,
+                                    num_features=num_features, num_classes=num_classes,
+                                    model_class= MLPClassifier, 
+                                    trial_number=trial_number, device=DEVICE,
+                                    epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
+                                    run_mode=args.run_mode, threshold=args.threshold)
+            else: # GNN
+                trainer = GNNClassifierTrainer(dataset_name=args.dataset, data=graph, 
+                                            num_features=num_features, num_classes=num_classes,  
+                                            model_class=GCN2Classifier if args.model == "GCN2" else GCN3Classifier,
+                                            trial_number=trial_number, device=DEVICE,
+                                            epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay, 
+                                            run_mode=args.run_mode, threshold=args.threshold)
+            result = trainer.run()
+            logger.log_experiment(args.dataset + "_classification", result, label_source, repeat_id=repeat_id)
 
         except ValueError as e:
             raise

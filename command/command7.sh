@@ -19,6 +19,12 @@ set -x
 # python tools/cal_node_imp.py --dataset Amazon --feature_to_node --only_feature_node
 
 
+# 切分資料集
+python data/prepare_split.py --dataset Cora --num_repeat 10 --train_ratio 0.2 --val_ratio 0.05 --test_ratio 0.1
+python data/prepare_split.py --dataset CiteSeer --num_repeat 10 --train_ratio 0.2 --val_ratio 0.05 --test_ratio 0.1
+python data/prepare_split.py --dataset Amazon --num_repeat 10 --train_ratio 0.2 --val_ratio 0.05 --test_ratio 0.1
+
+
 # Stage 1: 訓練原模型
 
 # 每個節點都生成解釋子圖
