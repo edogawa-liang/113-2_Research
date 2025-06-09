@@ -74,13 +74,6 @@ class NodeImportanceCalculator:
             else np.ones(edge_index_np.shape[1], dtype=float)
         )
 
-        # 處理 edge_weights: 加 abs + normalize 到 0~1
-        print(f"Original edge weight range: min={edge_weights.min()}, max={edge_weights.max()}")
-        edge_weights = np.abs(edge_weights)
-        vmin, vmax = edge_weights.min(), edge_weights.max()
-        edge_weights = (edge_weights - vmin) / (vmax - vmin + 1e-6)
-        print(f"Processed edge weight range (after abs+normalize): min={edge_weights.min()}, max={edge_weights.max()}")
-
         g_ig = ig.Graph()
         g_ig.add_vertices(self.data.num_nodes)
         edges = list(zip(edge_index_np[0], edge_index_np[1]))

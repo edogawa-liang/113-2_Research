@@ -2,6 +2,7 @@
 # if variable is continuous: add feature's node, feature value to edge weight
 
 import torch
+import numpy as np
 from torch_geometric.data import Data
 
 
@@ -56,10 +57,21 @@ class FeatureNodeConverter:
                     node_node_mask.extend([0, 0])
                     node_feat_mask.extend([1, 1])
 
+
         edge_index = torch.tensor(edge_index, dtype=torch.long, device=self.device).t().contiguous()
-        edge_weight = torch.tensor(edge_weight, dtype=torch.float, device=self.device)
+
+        # 處理 edge_weight → abs + normalize + clip
+        edge_weight_np = np.array(edge_weight, dtype=float)
+        edge_weight_np = np.abs(edge_weight_np)
+        vmin, vmax = edge_weight_np.min(), edge_weight_np.max()
+        edge_weight_np = (edge_weight_np - vmin) / (vmax - vmin + 1e-6)
+        edge_weight_np = np.clip(edge_weight_np, 1e-6, 1.0)
+        print(f"[Feature-to-Node] Processed edge weight range: min={edge_weight_np.min()}, max={edge_weight_np.max()}")
+        edge_weight = torch.tensor(edge_weight_np, dtype=torch.float, device=self.device)
+        
         node_node_mask = torch.tensor(node_node_mask, dtype=torch.bool, device=self.device)
         node_feat_mask = torch.tensor(node_feat_mask, dtype=torch.bool, device=self.device)
+
 
         # 節點特徵設為 1（原始 + feature node）(暫時)
         x = torch.ones((num_nodes + num_features, 1), device=self.device)
