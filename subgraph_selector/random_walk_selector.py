@@ -11,7 +11,7 @@ class RandomWalkEdgeSelector:
     """
 
     def __init__(self, data, node_ratio="auto", edge_ratio=0.5, fraction=0.1,  
-                 walk_length=10, num_walks=5, node_choose="top_pagerank", feature_type="categorical", device="cpu", manual_nodes=None, mask_type="train", top_k_percent_feat=0.1, ori_data=None):
+                 walk_length=10, num_walks=5, node_choose="top_pagerank", feature_type="categorical", device="cpu", manual_nodes=None, mask_type="train", top_k_percent_feat=0.1):
         """
         :param data: PyG graph data
         :param node_ratio: "auto" for automatic calculation or a numeric value to manually set node selection ratio
@@ -35,7 +35,6 @@ class RandomWalkEdgeSelector:
         self.manual_nodes = manual_nodes
         self.mask_type = mask_type
         self.top_k_percent_feat = top_k_percent_feat
-        self.ori_data = ori_data
 
         self._get_start_nodes()
         self._calculate_neighbor_edges()
@@ -70,7 +69,7 @@ class RandomWalkEdgeSelector:
         return self.neighbor_edge_ratio
        
 
-    def select_edges(self, return_feat_ids=False):
+    def select_edges(self):
         """
         1. Perform random walks using PyG's `random_walk()`.
         2. Count how many times each edge is visited.
@@ -128,9 +127,12 @@ class RandomWalkEdgeSelector:
         }
 
         num_total_edges = edge_index.shape[1]
-        num_ori_edges = self.ori_data.edge_index.shape[1] if self.ori_data is not None else num_total_edges
-        # print("Total edges in original data:", num_ori_edges)
-        num_feat = num_total_edges - num_ori_edges
+        node_node_mask = self.data.node_node_mask.cpu().numpy() 
+        node_feat_mask = self.data.node_feat_mask.cpu().numpy()
+        num_ori_edges = node_node_mask.sum()  # 幾條 node-node edge
+        num_feat_edges = node_feat_mask.sum()      # 幾條 node-feature edge
+        ori_num_features = self.data.is_feature_node.sum().item() # 原始特徵節點數量
+
 
         selected_ori = []
         selected_feat = []
@@ -138,10 +140,12 @@ class RandomWalkEdgeSelector:
         for edge, _ in all_edges:
             if edge in edge_map:
                 idx = edge_map[edge]
-                if idx < num_ori_edges:
+                if node_node_mask[idx]:
                     selected_ori.append(idx)
-                else:
+                elif node_feat_mask[idx]:
                     selected_feat.append(idx)
+                else:
+                    print(f"[Warning] Edge idx={idx} 不在 node_node_mask 或 node_feat_mask 裡！")
 
 
         num_visited_ori_edges = len(selected_ori)
@@ -171,17 +175,15 @@ class RandomWalkEdgeSelector:
             selected_ori = selected_ori[:num_selected_ori]
 
 
-              
-        ori_num_features = self.ori_data.x.size(1) if self.ori_data is not None else None
 
-        if num_feat > 0:
+        if num_feat_edges > 0:
             if self.feature_type == "categorical":
-                num_selected_feat = int(num_feat * self.top_k_percent_feat)
+                num_selected_feat = int(num_feat_edges * self.top_k_percent_feat) # 只有有值(1)才會被納入特徵邊候選
             elif self.feature_type == "continuous":
-                num_selected_feat = int(ori_num_features * self.top_k_percent_feat * self.ori_data.num_nodes)  # 特徵數量 × top_k_percent_feat × 節點數 (類別型的話會超過實際的特徵邊數..)
+                num_selected_feat = int(num_feat_edges * self.top_k_percent_feat)
 
             print(f"應挑 {num_selected_feat} feature edges (top {self.top_k_percent_feat * 100}%)")
-            print(f"實際走的特徵邊比例: {num_visited_feat_edges / num_feat * 100:.2f}%")
+            print(f"實際走的特徵邊比例: {num_visited_feat_edges / num_feat_edges * 100:.2f}%")
 
             # 如果選擇的特徵邊數量少於應挑的數量，則從剩餘的特徵邊中補齊
             if len(selected_feat) < num_selected_feat:
@@ -208,20 +210,13 @@ class RandomWalkEdgeSelector:
         selected_tensor = torch.tensor(selected_indices, dtype=torch.long, device=self.device)
 
         ori_edge_visit_ratio = num_visited_ori_edges / num_ori_edges if num_ori_edges > 0 else 0
-        feat_edge_visit_ratio = num_visited_feat_edges / num_feat if num_feat > 0 else 0
+        feat_edge_visit_ratio = num_visited_feat_edges / num_feat_edges if num_feat_edges > 0 else 0
 
+        selected_feat_ids = []
+        for idx in selected_feat:
+            rel_idx = idx - num_ori_edges
+            pair_id = rel_idx // 2
+            feat_id = pair_id % ori_num_features
+            selected_feat_ids.append(feat_id)
 
-        if return_feat_ids:
-            if ori_num_features is None:
-                raise ValueError("num_features must be provided when return_feat_ids=True.")
-
-            selected_feat_ids = []
-            for idx in selected_feat:
-                rel_idx = idx - num_ori_edges
-                pair_id = rel_idx // 2
-                feat_id = pair_id % ori_num_features
-                selected_feat_ids.append(feat_id)
-
-            return selected_tensor, selected_feat_ids, ori_edge_visit_ratio, feat_edge_visit_ratio
-
-        return selected_tensor, [], ori_edge_visit_ratio, feat_edge_visit_ratio
+        return selected_tensor, selected_feat_ids, ori_edge_visit_ratio, feat_edge_visit_ratio

@@ -98,7 +98,7 @@ if __name__ == "__main__":
     for repeat_id in range(10): 
         # Load the split mask
         train_mask, _, _ = load_split_csv(args.dataset, repeat_id, DEVICE) # 這裏的mask是原dataset的長度
-        train_nodes = train_mask.nonzero(as_tuple=True)[0].cpu().tolist()
+        train_nodes = train_mask.nonzero(as_tuple=True)[0].cpu().tolist() # 原始節點的編號
         
         # try only one node
         print("====Note: For testing, only one node will be selected.====")

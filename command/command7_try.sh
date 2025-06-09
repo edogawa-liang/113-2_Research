@@ -49,4 +49,10 @@ python stage2_expsubg.py --dataset Cora --explainer_type GNNExplainer --run_mode
 python stage2_expsubg.py --dataset FacebookPagePage --normalize --explainer_type GNNExplainer --run_mode try_sstage2_train --stage1_path saved/try_original_feature2node_fn --feature_to_node --structure_mode random+imp --only_feature_node --epoch 1 
 
 
+# Stage 3: 訓練移除解釋子圖後模型
+
+
+
+
+# 表格式資料
 wait
