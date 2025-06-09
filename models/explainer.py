@@ -17,8 +17,7 @@ class SubgraphExplainer:
 
     def __init__(self, model_class, dataset, data, model_path, trial_name, 
                  explainer_type="GNNExplainer", hop=2, epoch=100, lr=0.01,
-                 run_mode="stage2", remove_feature=None, 
-                 choose_nodes="random", cf_beta=0.5):
+                 run_mode="stage2", remove_feature=None, cf_beta=0.5):
         """
         Initializes the explainer.
 
@@ -43,7 +42,6 @@ class SubgraphExplainer:
         self.trial_name = trial_name
         self.run_mode = run_mode
         self.remove_feature = remove_feature
-        self.choose_nodes = choose_nodes
         self.cf_beta = cf_beta
         self.explainer_type = explainer_type
 
@@ -186,7 +184,7 @@ class SubgraphExplainer:
         """
 
         # Define save directory based on run mode, dataset, and explainer type
-        save_exp_dir = os.path.join("saved", self.run_mode, explainer_type, self.dataset, self.choose_nodes, f"{self.trial_name}_{self.model_class.__name__}")
+        save_exp_dir = os.path.join("saved", self.run_mode, explainer_type, self.dataset,  f"{self.trial_name}_{self.model_class.__name__}")
         os.makedirs(save_exp_dir, exist_ok=True)
 
         # Define file path for saving explanations

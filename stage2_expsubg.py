@@ -101,9 +101,8 @@ if __name__ == "__main__":
         train_nodes = train_mask.nonzero(as_tuple=True)[0].cpu().tolist()
 
         # model path
-        model_path = os.path.join(args.stage1_path, "model", args.dataset, f"1_{model_class.__name__}.pth")
+        model_path = os.path.join(args.stage1_path, "model", args.dataset, f"{repeat_id}_{model_class.__name__}.pth")
         print(f"Loading model from {model_path}")
-        # 還沒搞定model_path 要讀到對應的stage1 model
     
         # Initialize explainer
         explainer = SubgraphExplainer(
@@ -116,8 +115,7 @@ if __name__ == "__main__":
             epoch=args.epoch,
             lr=args.lr,
             run_mode=args.run_mode,
-            trial_name=feature_trials[i],
-            choose_nodes=args.choose_nodes,
+            trial_name=repeat_id,
             cf_beta=args.cf_beta,
         )
 
@@ -126,9 +124,9 @@ if __name__ == "__main__":
         cf_success_nodes = []
         cf_fail_nodes = []
 
-        for node_idx in node_indices:
+        for node_idx in train_nodes:
             print(f"\nExplaining node {node_idx}.")
-            result = explainer.explain_node(node_idx, modified_graphs[i], save=True)
+            result = explainer.explain_node(node_idx, graph, save=True)
 
             # 只有CF要計算
             if args.explainer_type == "CFExplainer":
@@ -140,7 +138,7 @@ if __name__ == "__main__":
         if args.explainer_type == "CFExplainer":
             # Print summary
             print("\n========== CF Explanation Summary ==========")
-            print(f"Total nodes selected: {len(node_indices)}")
+            print(f"Total nodes selected: {len(train_nodes)}")
             print(f"Nodes with counterfactual explanation: {len(cf_success_nodes)}")
             print(f"Nodes without counterfactual explanation: {len(cf_fail_nodes)}")
             if cf_fail_nodes:
@@ -153,7 +151,7 @@ if __name__ == "__main__":
                 "success_nodes": cf_success_nodes,
                 "fail_nodes": cf_fail_nodes
             }
-            save_dir = os.path.join("saved", args.run_mode, args.explainer_type, args.dataset, args.choose_nodes, f"{feature_trials[i]}_{explainer.model_class.__name__}")
+            save_dir = os.path.join("saved", args.run_mode, args.explainer_type, args.dataset, f"{repeat_id}_{explainer.model_class.__name__}")
             os.makedirs(save_dir, exist_ok=True)
             
             save_path = os.path.join(save_dir, "cf_summary.pkl")

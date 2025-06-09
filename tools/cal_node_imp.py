@@ -5,7 +5,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import os
 import csv
 import numpy as np
-import networkx as nx
 import torch
 from utils.device import DEVICE
 from torch_geometric.data import Data
@@ -66,8 +65,8 @@ class NodeImportanceCalculator:
 
 
     def compute(self):
-        """Convert edge_index to NetworkX graph and compute importance scores."""
-        G = nx.Graph()
+        """Convert edge_index to igraph Graph and compute importance scores."""
+        print("Converting to igraph...")
         edge_index_np = self.edge_index.cpu().numpy()
         edge_weights = (
             self.edge_weight.cpu().numpy()
@@ -75,49 +74,43 @@ class NodeImportanceCalculator:
             else np.ones(edge_index_np.shape[1], dtype=float)
         )
 
-        # Add weighted edges
-        for (u, v), w in zip(edge_index_np.T, edge_weights):
-            G.add_edge(int(u), int(v), weight=float(w))
-
-        # Centrality metrics with edge weights
-        deg = dict(G.degree(weight="weight"))  # Weighted degree
-        print("Complete degree calculation.")
-        pr = nx.pagerank(G, alpha=0.85, weight="weight")  # Weighted PageRank
-        print("Complete PageRank calculation.")
-
-        # Convert to igraph for faster betweenness, closeness calculation
-        print("Converting to igraph...")
         g_ig = ig.Graph()
-        g_ig.add_vertices(max(G.nodes) + 1)
-        edges = list(G.edges(data="weight"))
-        g_ig.add_edges([(u, v) for u, v, w in edges])
-        g_ig.es["weight"] = [w for u, v, w in edges]
+        g_ig.add_vertices(self.data.num_nodes)
+        edges = list(zip(edge_index_np[0], edge_index_np[1]))
+        g_ig.add_edges(edges)
+        g_ig.es["weight"] = edge_weights.tolist()
         print("Complete igraph conversion.")
+
+        # Degree
+        print("Calculating Degree ...")
+        deg_list = g_ig.strength(weights="weight")
+        deg = {node_id: score for node_id, score in enumerate(deg_list)}
+        print("Complete Degree calculation.")
+
+        # PageRank
+        print("Calculating PageRank ...")
+        pr_list = g_ig.pagerank(damping=0.85, weights="weight")
+        pr = {node_id: score for node_id, score in enumerate(pr_list)}
+        print("Complete PageRank calculation.")
 
         # Betweenness with cutoff
         print("Calculating Betweenness with cutoff=4 ...")
         bet_list = g_ig.betweenness(weights="weight", cutoff=4)
-        print("Complete Betweenness calculation.")
         bet = {node_id: score for node_id, score in enumerate(bet_list)}
+        print("Complete Betweenness calculation.")
 
-        # Closeness with weights
-        clo_list = g_ig.closeness(weights="weight") 
+        # Closeness
+        print("Calculating Closeness ...")
+        clo_list = g_ig.closeness(weights="weight")
         clo = {node_id: score for node_id, score in enumerate(clo_list)}
         print("Complete Closeness calculation.")
 
-
-        # Force node list to be ordered: 0 to N-1
+        # Save results
         self.nodes = list(range(self.data.num_nodes))
-        # self.degree_vals = min_max_norm([deg.get(n, 0.0) for n in self.nodes])
-        # self.pagerank_vals = min_max_norm([pr.get(n, 0.0) for n in self.nodes])
-        # self.betweenness_vals = min_max_norm([bet.get(n, 0.0) for n in self.nodes])
-        # self.closeness_vals = min_max_norm([clo.get(n, 0.0) for n in self.nodes])
         self.degree_vals = [deg.get(n, 0.0) for n in self.nodes]
         self.pagerank_vals = [pr.get(n, 0.0) for n in self.nodes]
         self.betweenness_vals = [bet.get(n, 0.0) for n in self.nodes]
         self.closeness_vals = [clo.get(n, 0.0) for n in self.nodes]
-
-
 
 
     def save(self):
