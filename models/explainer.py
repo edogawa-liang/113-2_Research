@@ -17,7 +17,7 @@ class SubgraphExplainer:
 
     def __init__(self, model_class, dataset, data, model_path, trial_name, 
                  explainer_type="GNNExplainer", hop=2, epoch=100, lr=0.01,
-                 run_mode="stage2", remove_feature=None, cf_beta=0.5):
+                 run_mode="stage2", cf_beta=0.5):
         """
         Initializes the explainer.
 
@@ -41,7 +41,6 @@ class SubgraphExplainer:
         self.model_class = model_class
         self.trial_name = trial_name
         self.run_mode = run_mode
-        self.remove_feature = remove_feature
         self.cf_beta = cf_beta
         self.explainer_type = explainer_type
 
@@ -211,7 +210,6 @@ class SubgraphExplainer:
                 "task_type": self.task_type, 
                 "node_idx": node_idx,
                 # "y_value": y_value, # 好像用不到
-                "removed_feature_index": self.remove_feature
             }
 
             # Convert masks to NumPy and reduce precision

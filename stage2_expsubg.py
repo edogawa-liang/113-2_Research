@@ -99,6 +99,7 @@ if __name__ == "__main__":
         # Load the split mask
         train_mask, _, _ = load_split_csv(args.dataset, repeat_id, DEVICE) # 這裏的mask是原dataset的長度
         train_nodes = train_mask.nonzero(as_tuple=True)[0].cpu().tolist()
+        train_nodes=train_nodes[0] # try only one node
 
         # model path
         model_path = os.path.join(args.stage1_path, "model", args.dataset, f"{repeat_id}_{model_class.__name__}.pth")
