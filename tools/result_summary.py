@@ -1,12 +1,14 @@
 # 計算 10 次 repeat 的結果 & 標準差
-# analyze_result.py
+# result_summary.py
 import argparse
 import pandas as pd
 import glob
 import os
 
+# python tools/result_summary.py --run_mode try_original_structure
+
 def parse_args():
-    parser = argparse.ArgumentParser(description="Analyze result ACC per group")
+    parser = argparse.ArgumentParser(description="Analyze result Acc per group")
     parser.add_argument("--run_mode", type=str, required=True, help="Run mode (folder name)")
     return parser.parse_args()
 
@@ -14,7 +16,8 @@ if __name__ == "__main__":
     args = parse_args()
 
     # 搜尋檔案
-    result_files = glob.glob(f"113-2_Research/saved/{args.run_mode}/result/result_*.xlsx")
+    path = f"saved/{args.run_mode}/result/"
+    result_files = glob.glob(f"{path}*.xlsx")
     print(f"Found {len(result_files)} result files.")
 
     for file_path in result_files:
@@ -34,7 +37,7 @@ if __name__ == "__main__":
                 print(f"Sheet {sheet_name} missing repeat_id column, skipping.")
                 continue
 
-            # Group by repeat_id → 你希望是「0-9 一組」，但可能有很多組 → 要分組
+            # Group by repeat_id → 希望是「0-9 一組」，但可能有很多組 → 要分組
             # 方法：假設一組 repeat_id=0~9 出現一次，下一組再出現一遍0~9
             # 我用 group_counter 記錄 → 這樣可以拆多組
             repeat_id_counts = df['repeat_id'].value_counts().to_dict()
@@ -58,20 +61,31 @@ if __name__ == "__main__":
                     # 如果完整收集到一組 0~9
                     group_df = pd.DataFrame(group_rows)
 
-                    acc_mean = group_df['ACC'].mean()
-                    acc_std = group_df['ACC'].std()
+                    acc_mean = group_df['Acc'].mean()
+                    acc_std = group_df['Acc'].std()
 
-                    print(f"\n[Sheet: {sheet_name}] [Group {group_idx}] ACC mean: {acc_mean:.4f}, std: {acc_std:.4f}")
+                    print(f"\n[Sheet: {sheet_name}] [Group {group_idx}] Acc mean: {acc_mean:.4f}, std: {acc_std:.4f}")
 
                     # 排除要排除的欄位
-                    exclude_columns = ["Model", "LR", "Epochs", "Best Epoch", "Loss", "ACC", "Auc", "Precision", "Recall", "F1", "CM", "Threshold"]
+                    exclude_columns = ["Model", "LR", "Epochs", "Best Epoch", "Loss", "Acc", "Auc", "Precision", "Recall", "F1", "CM", "Threshold"]
 
                     remaining_columns = [col for col in df.columns if col not in exclude_columns]
 
                     if len(remaining_columns) > 0:
                         print("Other columns:")
-                        # 印 group 內第一筆 row 的其他欄位
-                        print(group_df[remaining_columns].iloc[0].to_string())
-                    else:
-                        print("(No other columns)")
+                        
+                        nunique_series = group_df[remaining_columns].nunique()
+                        varying_columns = nunique_series[nunique_series > 1].index.tolist()
+                        constant_columns = nunique_series[nunique_series == 1].index.tolist()
+
+                        # 處理有變化的欄位 → 收集所有值
+                        for col in varying_columns:
+                            unique_values = group_df[col].unique()
+                            unique_values_str = ", ".join(map(str, unique_values))
+                            print(f"{col}={unique_values_str},")   # 每一行換行
+
+                        # 處理不變的欄位 → 取第一個值
+                        for col in constant_columns:
+                            value = group_df[col].iloc[0]
+                            print(f"{col}={value},")   # 每一行換行
 
