@@ -3,7 +3,7 @@ import os
 import torch
 import torch.nn.functional as F
 from utils.plot import ClassificationPlotter, RegressionPlotter
-from utils.evaluation import ClassificationEvaluator, RegressionEvaluator
+from utils.evaluation import ClassificationEvaluator
 from utils.save_model import save_model_and_config
 
 class MLPClassifierTrainer:

@@ -58,35 +58,12 @@ if __name__ == "__main__":
         # FeatureNodeConverter 提供feature連到node後的所有邊，並多了 node_node_mask, node_feat_mask (後續要記得處理!)
         data = converter.convert(data)
 
-    # 2. Structure feature building (node features)
-    if args.feature_to_node or args.only_structure:
-        print("Using StructureFeatureBuilder...")
-        # 將 Feature 改成新的算法 (random (32 dim)+ [PageRank, Betweenness, Degree, Closeness])
-        builder = StructureFeatureBuilder(
-            data=data, device=DEVICE, dataset_name=args.dataset,
-            feature_to_node=args.feature_to_node,
-            only_feature_node=args.only_feature_node,
-            only_structure=args.only_structure,
-            mode=args.structure_mode,
-            normalize_type="row_l1",
-            learn_embedding=False,  # 不學習 init random embedding
-        )
-        structure_x = builder.build()
-        num_features = structure_x.shape[1]
-        data.x = structure_x
-
-    # 3. Use original node features
-    else:
-        print("Using original graph and node features.")
-        num_features = data.x.shape[1]
 
     # 統一更新 edge_index, edge_weight (不論原 graph 或 feature to node 都可以用 extract_edges)
     edge_index, edge_weight = extract_edges(data, args.feature_to_node, args.only_feature_node)
     data.edge_index = edge_index
     data.edge_weight = edge_weight
 
-    # data for generating subgraph
-    graph = data
 
     # Model mapping
     model_mapping = {"GCN2Classifier": GCN2Classifier, "GCN3Classifier": GCN3Classifier}
@@ -97,12 +74,53 @@ if __name__ == "__main__":
     # Select nodes to explain 
     for repeat_id in range(10): 
         # Load the split mask
-        train_mask, _, _ = load_split_csv(args.dataset, repeat_id, DEVICE) # 這裏的mask是原dataset的長度
+        train_mask, _, _, _ = load_split_csv(args.dataset, repeat_id, DEVICE) # 這裏的mask是原dataset的長度
         train_nodes = train_mask.nonzero(as_tuple=True)[0].cpu().tolist() # 原始節點的編號
         
         # try only one node
         print("====Note: For testing, only one node will be selected.====")
-        train_nodes=train_nodes[0] 
+        train_nodes=train_nodes[0:2] 
+
+        # Build feature X
+        if (args.feature_to_node or args.only_structure):
+            if args.structure_mode == "random+imp":
+                embedding_save_dir = os.path.join("saved", args.run_mode, "embedding", args.dataset)
+                embedding_save_path = os.path.join(embedding_save_dir, f"{repeat_id}_embedding.npy")
+                print(f"[Repeat {repeat_id}] Loading embedding from {embedding_save_path}")
+
+                embedding_np = np.load(embedding_save_path)
+                embedding_tensor = torch.tensor(embedding_np, device=DEVICE, dtype=torch.float)
+
+                builder = StructureFeatureBuilder(
+                    data=data, device=DEVICE, dataset_name=args.dataset,
+                    feature_to_node=args.feature_to_node,
+                    only_feature_node=args.only_feature_node,
+                    only_structure=args.only_structure,
+                    mode=args.structure_mode,
+                    emb_dim=32,
+                    normalize_type="row_l1",
+                    learn_embedding=False,
+                    external_embedding=embedding_tensor
+                )
+            else: # "one" mode
+                print(f"[Repeat {repeat_id}] Using StructureFeatureBuilder with mode={args.structure_mode} (no external embedding)")
+                builder = StructureFeatureBuilder(
+                    data=data, device=DEVICE, dataset_name=args.dataset,
+                    feature_to_node=args.feature_to_node,
+                    only_feature_node=args.only_feature_node,
+                    only_structure=args.only_structure,
+                    mode=args.structure_mode,
+                    emb_dim=32,
+                    normalize_type="row_l1",
+                    learn_embedding=False
+                )
+
+            structure_x = builder.build()
+            data.x = structure_x
+            
+        else:
+            print(f"[Repeat {repeat_id}] Using original data.x (no StructureFeatureBuilder rebuild).")
+
 
         # model path
         model_path = os.path.join(args.stage1_path, "model", args.dataset, f"{repeat_id}_{model_class.__name__}.pth")
@@ -112,7 +130,7 @@ if __name__ == "__main__":
         explainer = SubgraphExplainer(
             model_class=model_class,
             dataset=args.dataset,
-            data=graph,
+            data=data,
             model_path=model_path,
             explainer_type=args.explainer_type,
             hop= 2 if args.model == "GCN2" else 3,
@@ -130,7 +148,7 @@ if __name__ == "__main__":
 
         for node_idx in train_nodes:
             print(f"\nExplaining node {node_idx}.")
-            result = explainer.explain_node(node_idx, graph, save=True)
+            result = explainer.explain_node(node_idx, data, save=True)
 
             # 只有CF要計算
             if args.explainer_type == "CFExplainer":

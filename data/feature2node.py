@@ -93,15 +93,16 @@ class FeatureNodeConverter:
             is_original_node=is_original_node
         )
 
-
-        # 延伸 mask
-        for attr in ["train_mask", "val_mask", "test_mask", "unknown_mask"]:
-            if hasattr(data, attr):
-                old_mask = getattr(data, attr)
-                if old_mask is not None and old_mask.shape[0] == num_nodes:
-                    pad = torch.zeros(num_features, dtype=torch.bool, device=old_mask.device)
-                    new_mask = torch.cat([old_mask, pad], dim=0)
-                    setattr(new_data, attr, new_mask)
-
-        print(f"Converted graph: {new_data}")
         return new_data
+
+        # # 延伸 mask
+        # for attr in ["train_mask", "val_mask", "test_mask", "unknown_mask"]:
+        #     if hasattr(data, attr):
+        #         old_mask = getattr(data, attr)
+        #         if old_mask is not None and old_mask.shape[0] == num_nodes:
+        #             pad = torch.zeros(num_features, dtype=torch.bool, device=old_mask.device)
+        #             new_mask = torch.cat([old_mask, pad], dim=0)
+        #             setattr(new_data, attr, new_mask)
+
+        # print(f"Converted graph: {new_data}")
+        # return new_data

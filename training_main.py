@@ -1,5 +1,6 @@
 import argparse
 import torch
+import numpy as np
 import os
 from data.dataset_loader import GraphDatasetLoader
 from models.basic_GCN import GCN2Classifier, GCN3Classifier
@@ -41,9 +42,12 @@ def parse_args():
     parser.add_argument("--only_feature_node", action="store_true", help="Use only feature-node edges, no node-node edges.")
     
     # Structure Mode
-    parser.add_argument("--structure_mode", type=str, default="random+imp", choices=["one", "random+imp"], help="Mode for structure features: 'one' or 'random+imp'")
-    return parser.parse_args()
+    parser.add_argument("--structure_mode", type=str, default="random+imp", choices=["one+imp", "random+imp"], help="Mode for structure features: 'one' or 'random+imp'")
 
+    # structure mode 是 "random+imp" 時，要不要使用 learnable embedding
+    parser.add_argument("--learn_embedding", action="store_true", help="Use learnable random embedding")
+
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
@@ -75,7 +79,9 @@ if __name__ == "__main__":
             only_feature_node=args.only_feature_node,
             only_structure=args.only_structure,
             mode=args.structure_mode,
-            normalize_type="row_l1"
+            emb_dim=32,
+            normalize_type="row_l1",
+            learn_embedding=args.learn_embedding,
         )
         structure_x = builder.build()
         num_features = structure_x.shape[1]
@@ -101,7 +107,7 @@ if __name__ == "__main__":
         num_orig_nodes = train_mask.shape[0]
         num_total_nodes = data.x.shape[0]
         
-        # add padding to feature node
+        # add padding to feature node (mask會補滿，但y不會)
         if args.feature_to_node and num_total_nodes > num_orig_nodes:
             pad_len = num_total_nodes - num_orig_nodes
             print(f"Padding masks with {pad_len} additional nodes for feature nodes...")
@@ -120,9 +126,6 @@ if __name__ == "__main__":
         data.test_mask = test_mask
         data.unknown_mask = unknown_mask
 
-        # data for training!
-        graph = data
-
         # Initialize logger
         logger = ExperimentLogger(file_name=args.result_filename, note=args.note, copy_old=args.copy_old, run_mode=args.run_mode)
 
@@ -131,25 +134,35 @@ if __name__ == "__main__":
         label_source = "Original Label"
         try:
             trial_number = logger.get_next_trial_number(args.dataset + "_classification")
-            num_classes = len(torch.unique(graph.y))
+            num_classes = len(torch.unique(data.y))
             print(f"Training Classification Model - Trial {trial_number}")
             
             if args.model == "MLP":
-                trainer = MLPClassifierTrainer(dataset_name=args.dataset, data=graph,
+                trainer = MLPClassifierTrainer(dataset_name=args.dataset, data=data,
                                     num_features=num_features, num_classes=num_classes,
                                     model_class= MLPClassifier, 
                                     trial_number=trial_number, device=DEVICE,
                                     epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
                                     run_mode=args.run_mode, threshold=args.threshold)
             else: # GNN
-                trainer = GNNClassifierTrainer(dataset_name=args.dataset, data=graph, 
+                trainer = GNNClassifierTrainer(dataset_name=args.dataset, data=data, 
                                             num_features=num_features, num_classes=num_classes,  
                                             model_class=GCN2Classifier if args.model == "GCN2" else GCN3Classifier,
                                             trial_number=trial_number, device=DEVICE,
                                             epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay, 
-                                            run_mode=args.run_mode, threshold=args.threshold)
+                                            run_mode=args.run_mode, threshold=args.threshold,
+                                            extra_params=[builder.embedding.weight] if (args.feature_to_node or args.only_structure) and args.structure_mode == "random+imp" and args.learn_embedding else None)
             result = trainer.run()
             logger.log_experiment(args.dataset + "_classification", result, label_source, repeat_id=repeat_id)
 
+            # Save embedding
+            if (args.feature_to_node or args.only_structure) and args.structure_mode == "random+imp": # 即使不是 learn_embedding 也要保存 embedding
+                embedding_save_dir = os.path.join("saved", args.run_mode, "embedding", args.dataset)
+                os.makedirs(embedding_save_dir, exist_ok=True)
+                embedding_save_path = os.path.join(embedding_save_dir, f"{repeat_id}_embedding.npy")
+                learned_embedding = builder.embedding.weight.detach().cpu().numpy()
+                np.save(embedding_save_path, learned_embedding)
+                print(f"[Repeat {repeat_id}] Saved embedding to {embedding_save_path}")
+                
         except ValueError as e:
             raise

@@ -107,8 +107,9 @@ if __name__ == "__main__":
             only_feature_node=args.only_feature_node,
             only_structure=args.only_structure,
             mode=args.structure_mode,
+            emb_dim=32,
             normalize_type="row_l1",
-            learn_embedding=False,  # 不學習 init random embedding
+            learn_embedding=True,  # 不學習 init random embedding
         )
         structure_x = builder.build()
         num_features = structure_x.shape[1]

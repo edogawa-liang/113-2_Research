@@ -80,7 +80,7 @@ class ExperimentLogger:
         df = self.trial_cache.get(dataset_name, pd.DataFrame())
         if "Trial" in df.columns and not df.empty:
             return df["Trial"].max() + 1
-        return 1  
+        return 0  
 
     def log_experiment(self, dataset_name, experiment_data, label_source, **extra_columns):
         """

@@ -15,19 +15,19 @@ python training_main.py --dataset FacebookPagePage --model GCN2 --epochs 1 --lr 
 # 2. 原圖 (只有結構)
 # (1) random32+imp
 python training_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --run_mode try_original_structure --note random+imp --only_structure --structure_mode random+imp
-python training_main.py --dataset FacebookPagePage --model GCN2 --epochs 1 --lr 0.01 --run_mode try_original --note original
+python training_main.py --dataset FacebookPagePage --model GCN2 --epochs 1 --lr 0.01 --run_mode try_original_structure --note original
 
 ## (2) one+imp
 python training_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --run_mode try_original_structure_one --note one+imp --only_structure --structure_mode one+imp
-python training_main.py --dataset FacebookPagePage --model GCN2 --epochs 1 --lr 0.01 --run_mode try_original --note original
+python training_main.py --dataset FacebookPagePage --model GCN2 --epochs 1 --lr 0.01 --run_mode try_original_structure_one --note original
 
 # 3. Feature to Node (含節點邊 & 特徵邊)
 python training_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --run_mode try_original_feature2node_nn_fn --note feature2node_nn_fn  --feature_to_node --structure_mode random+imp
-python training_main.py --dataset FacebookPagePage --model GCN2 --epochs 1 --lr 0.01 --run_mode try_original --note original
+python training_main.py --dataset FacebookPagePage --model GCN2 --epochs 1 --lr 0.01 --run_mode try_original_feature2node_nn_fn --note original
 
 # 4. Feature to Node (只有特徵邊)
 python training_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --run_mode try_original_feature2node_fn --note feature2node_fn  --feature_to_node --structure_mode random+imp --only_feature_node
-python training_main.py --dataset FacebookPagePage --model GCN2 --epochs 1 --lr 0.01 --run_mode try_original --note original
+python training_main.py --dataset FacebookPagePage --model GCN2 --epochs 1 --lr 0.01 --run_mode try_original_feature2node_fn --note original
 
 
 # Stage 2: 生成解釋子圖 (GNNExplainer)
