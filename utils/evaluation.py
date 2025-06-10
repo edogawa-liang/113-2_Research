@@ -22,14 +22,18 @@ class ClassificationEvaluator:
         model.eval()
         out = model(data.x, data.edge_index)
 
+        # 安全地過濾掉 feature node
+        is_ori = data.is_original_node if hasattr(data, "is_original_node") else torch.ones(data.y.shape[0], dtype=torch.bool, device=data.y.device)
+
         num_nodes = data.y.shape[0]  # 原始節點數
         out = out[:num_nodes]        # 僅取原始節點的輸出 (feature to node 時要注意)
 
         prob = F.softmax(out, dim=-1)  # get class probabilities
         pred = prob.argmax(dim=-1)  # get predicted class
         
-        val_mask = data.val_mask[:num_nodes]
-        test_mask = data.test_mask[:num_nodes]
+        val_mask = data.val_mask[:num_nodes] & is_ori
+        test_mask = data.test_mask[:num_nodes] & is_ori
+        
 
         # Compute accuracy
         acc_val = (pred[val_mask] == data.y[val_mask]).sum().item() / val_mask.sum().item()
