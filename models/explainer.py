@@ -71,7 +71,7 @@ class SubgraphExplainer:
             raise FileNotFoundError(f"Model config not found: {config_path}")
 
         full_config = torch.load(config_path, map_location=self.device)
-        print("Full config loaded:", full_config)
+        # print("Full config loaded:", full_config)
 
         # 只取出模型需要的參數
         allowed_keys = ['in_channels', 'hidden_channels', 'hidden_channels1', 'hidden_channels2', 'out_channels']

@@ -132,19 +132,23 @@ class StructureFeatureBuilder:
             edge_type_feat = None  # 不需要用到
 
         # Build feature
-        if self.mode == "one":
+        if self.mode == "one+imp":
             print("[StructureFeatureBuilder] Mode: one → concat [1, imp]")
             one_feat = torch.ones((self.num_nodes, 1), device=self.device)
             base_feat = torch.cat([one_feat, imp_feat], dim=1)
 
         elif self.mode == "random+imp":
             node_ids = torch.arange(self.num_nodes, device=self.device)
-            rand_embed = self.embedding(node_ids.to(self.device))
+            # rand_embed = self.embedding(node_ids.to(self.device))
+            if isinstance(self.embedding, nn.Embedding):
+                rand_embed = self.embedding(node_ids.to(self.device))
+            else:
+                rand_embed = self.embedding[node_ids.to(self.device)]
             print(f"[StructureFeatureBuilder] Mode: random+imp → rand_embed shape: {rand_embed.shape}")
             base_feat = torch.cat([rand_embed, imp_feat], dim=1)
 
         else:
-            raise ValueError(f"Unknown mode {self.mode}, must be 'one' or 'random+imp'.")
+            raise ValueError(f"Unknown mode {self.mode}, must be 'one+imp' or 'random+imp'.")
 
         # Decide final concat
         if self.only_structure:

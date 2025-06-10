@@ -1,6 +1,7 @@
 import argparse
 import torch
 import os
+import numpy as np
 import pickle
 from utils.device import DEVICE
 from data.dataset_loader import GraphDatasetLoader
@@ -84,11 +85,12 @@ if __name__ == "__main__":
         # Build feature X
         if (args.feature_to_node or args.only_structure):
             if args.structure_mode == "random+imp":
-                embedding_save_dir = os.path.join("saved", args.run_mode, "embedding", args.dataset)
+                embedding_save_dir = os.path.join(args.stage1_path, "embedding", args.dataset)
                 embedding_save_path = os.path.join(embedding_save_dir, f"{repeat_id}_embedding.npy")
                 print(f"[Repeat {repeat_id}] Loading embedding from {embedding_save_path}")
 
                 embedding_np = np.load(embedding_save_path)
+                print(f"loaded embedding from {embedding_save_path}, shape: {embedding_np.shape}")
                 embedding_tensor = torch.tensor(embedding_np, device=DEVICE, dtype=torch.float)
 
                 builder = StructureFeatureBuilder(
@@ -117,7 +119,7 @@ if __name__ == "__main__":
 
             structure_x = builder.build()
             data.x = structure_x
-            
+
         else:
             print(f"[Repeat {repeat_id}] Using original data.x (no StructureFeatureBuilder rebuild).")
 
