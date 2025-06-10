@@ -78,9 +78,9 @@ if __name__ == "__main__":
         train_mask, _, _, _ = load_split_csv(args.dataset, repeat_id, DEVICE) # 這裏的mask是原dataset的長度
         train_nodes = train_mask.nonzero(as_tuple=True)[0].cpu().tolist() # 原始節點的編號
         
-        # try only one node
-        print("====Note: For testing, only one node will be selected.====")
-        train_nodes=train_nodes[0:2] 
+        # # try only one node
+        # print("====Note: For testing, only one node will be selected.====")
+        # train_nodes=train_nodes[0:2] 
 
         # Build feature X
         if (args.feature_to_node or args.only_structure):
