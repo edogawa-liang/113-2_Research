@@ -178,3 +178,32 @@ class GNNClassifierTrainer:
             "CM": self.best_metrics.get("CM", []),
             "Threshold": self.best_metrics.get("Threshold", None),
         }
+    
+    def load_model(self, model_path):
+        print(f"[GNNClassifierTrainer] Loading model from {model_path}")
+        state_dict = torch.load(model_path, map_location=self.device)
+        self.model.load_state_dict(state_dict)
+        self.model.eval()  # Set to eval mode
+
+    @torch.no_grad()
+    def test(self):
+        print("[GNNClassifierTrainer] Running test on current test_mask...")
+        metrics = ClassificationEvaluator.evaluate(self.model, self.data, self.threshold)
+
+        print(f"Test Acc: {metrics['Test_Acc']:.4f}, Test F1: {metrics['Test_F1']:.4f}, Test AUC: {metrics['Test_AUC']:.4f}")
+
+        # Return results for external logging
+        return {
+            "Model": self.model_name,
+            'LR': self.lr,
+            "Epochs": self.epochs,
+            "Loss": None,  # Test 不需要 loss
+            "Acc": metrics.get("Test_Acc", 0),
+            "Auc": metrics.get("Test_AUC", 0),
+            "Precision": metrics.get("Test_Pr", 0),
+            "Recall": metrics.get("Test_Re", 0),
+            "F1": metrics.get("Test_F1", 0),
+            "CM": metrics.get("CM", []),
+            "Threshold": metrics.get("Threshold", None),
+        }
+

@@ -52,6 +52,13 @@ python stage2_expsubg.py --dataset Cora --explainer_type GNNExplainer --run_mode
 python stage2_expsubg.py --dataset FacebookPagePage --normalize --explainer_type GNNExplainer --run_mode try_stage2_original_feature2node_fn --stage1_path saved/try_original_feature2node_fn --feature_to_node --structure_mode random+imp --only_feature_node --epoch 1 
 
 
+# 切分測試集
+python data/split_unknown_to_test.py --dataset Cora --use_id 0 --num_repeat 10
+
+# Stage 1 (part2): 訓練原模型 (train/val 固定 (以 split0 為例)，test 重抽，抽10次)
+
+python training_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --run_mode try_original_split0 --note original_split0 --fix_train_valid --split_id 0
+
 # Stage 3: 訓練移除解釋子圖後模型
 
 

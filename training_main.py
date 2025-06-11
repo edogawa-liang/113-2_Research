@@ -11,9 +11,11 @@ from trainer.mlp_trainer import MLPClassifierTrainer
 from data.feature2node import FeatureNodeConverter
 from data.structure import StructureFeatureBuilder, extract_edges
 from data.prepare_split import load_split_csv
+from data.split_unknown_to_test import load_split_test
 from utils.device import DEVICE
 
-
+# 如果沒有 fix_train_valid，會 train/valid/test 每一次都重抽 (確定方法有效)
+# 如果有 fix_train_valid，則固定 train/valid，只會重抽 test_mask (確定子圖適用於整體，並且用同一個模型)
 
 
 def parse_args():
@@ -53,6 +55,9 @@ def parse_args():
 
     # 是否固定 train/valid mask
     parser.add_argument("--fix_train_valid", action="store_true", help="If set, use fixed train/valid masks, only test mask varies by repeat_id.")
+
+    # 使用的 split_id
+    parser.add_argument("--split_id", type=int, default=0, help="Split ID to use for fixed train/valid masks (default: 0)")
 
     return parser.parse_args()
 
@@ -104,29 +109,63 @@ if __name__ == "__main__":
     data.edge_index = edge_index
     data.edge_weight = edge_weight
 
-
-    # Repeat 10 time selecting different splits
-    for repeat_id in range(args.repeat_start, args.repeat_end + 1):
-
-        print(f"\n===== [Repeat {repeat_id}] =====")
-
-        # Load the split mask
-        train_mask, val_mask, test_mask, unknown_mask = load_split_csv(args.dataset, repeat_id, DEVICE) # 這裏的mask是原dataset的長度
+    # 如果固定 train/valid mask 在loop外面先載入
+    if args.fix_train_valid:
+        print("\nLoading fixed train/valid masks...")
+        # 固定取 repeat_id = 0 的 train/valid mask
+        train_mask, val_mask, _, unknown_mask = load_split_csv(args.dataset, args.split_id, DEVICE)
         num_orig_nodes = train_mask.shape[0]
         num_total_nodes = data.x.shape[0]
-        
-        # add padding to feature node (mask會補滿，但y不會)
+
+        # 如果有 feature_to_node 也一樣要 pad
         if args.feature_to_node and num_total_nodes > num_orig_nodes:
             pad_len = num_total_nodes - num_orig_nodes
-            print(f"Padding masks with {pad_len} additional nodes for feature nodes...")
+            print(f"Padding fixed masks with {pad_len} additional nodes for feature nodes...")
 
             def pad_mask(mask):
                 return torch.cat([mask, torch.zeros(pad_len, dtype=torch.bool, device=mask.device)], dim=0)
 
             train_mask = pad_mask(train_mask)
             val_mask = pad_mask(val_mask)
-            test_mask = pad_mask(test_mask)
-            unknown_mask = pad_mask(unknown_mask) 
+            unknown_mask = pad_mask(unknown_mask)
+
+        data.train_mask = train_mask
+        data.val_mask = val_mask
+        data.unknown_mask = unknown_mask
+
+
+
+    # Repeat 10 time selecting different splits
+    # 在 train/valid/test 情況下是 load 不同種組合，fix_train_valid情況下是 load 不同的 test
+    for repeat_id in range(args.repeat_start, args.repeat_end + 1):
+
+        print(f"\n===== [Repeat {repeat_id}] =====")
+
+        if args.fix_train_valid:
+            # 只 load test_mask
+            print("fix train, Loading test_mask only...")
+            test_mask = load_split_test(args.dataset, args.split_id, repeat_id, DEVICE)
+
+            if args.feature_to_node and num_total_nodes > num_orig_nodes:
+                test_mask = pad_mask(test_mask)
+
+            data.test_mask = test_mask
+
+        else:
+            # Load the split mask
+            train_mask, val_mask, test_mask, unknown_mask = load_split_csv(args.dataset, repeat_id, DEVICE) # 這裏的mask是原dataset的長度
+            num_orig_nodes = train_mask.shape[0]
+            num_total_nodes = data.x.shape[0]
+            
+            # add padding to feature node (mask會補滿，但y不會)
+            if args.feature_to_node and num_total_nodes > num_orig_nodes:
+                pad_len = num_total_nodes - num_orig_nodes
+                print(f"Padding masks with {pad_len} additional nodes for feature nodes...")
+
+                train_mask = pad_mask(train_mask)
+                val_mask = pad_mask(val_mask)
+                test_mask = pad_mask(test_mask)
+                unknown_mask = pad_mask(unknown_mask) 
 
 
         data.train_mask = train_mask
@@ -160,7 +199,21 @@ if __name__ == "__main__":
                                             epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay, 
                                             run_mode=args.run_mode, threshold=args.threshold,
                                             extra_params=[builder.embedding.weight] if (args.feature_to_node or args.only_structure) and args.structure_mode == "random+imp" and args.learn_embedding else None)
-            result = trainer.run()
+            
+            if args.fix_train_valid: # 因目的是檢測不同的 test，所以固定模型
+                # 因為這時的 run_mode 後面會+split_0，所以要去掉
+                model_dir = os.path.join("saved", args.run_mode.replace(f"_split{args.split_id}", ""), "model", args.dataset)
+                model_name = f"{args.split_id}_{trainer.model_name}.pth"  # 你的 save_model_path 是這個 pattern
+                path_to_model = os.path.join(model_dir, model_name)
+                print(f"Loading fixed model from {path_to_model}")
+                trainer.load_model(path_to_model)
+                # test 用固定模型
+                result = trainer.test()
+
+            else:
+                result = trainer.run()
+
+
             logger.log_experiment(args.dataset + "_classification", result, label_source, repeat_id=repeat_id)
 
             # Save embedding
