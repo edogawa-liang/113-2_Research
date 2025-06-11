@@ -40,6 +40,10 @@ def parse_args():
     # Structure Mode
     parser.add_argument("--structure_mode", type=str, default="random+imp", choices=["one", "random+imp"], help="Mode for structure features: 'one' or 'random+imp'")
 
+    # repeat settings
+    parser.add_argument("--repeat_start", type=int, default=0, help="Start repeat id (inclusive)")
+    parser.add_argument("--repeat_end", type=int, default=9, help="End repeat id (inclusive)")
+
     return parser.parse_args()
 
 
@@ -73,7 +77,7 @@ if __name__ == "__main__":
     model_class = model_mapping[f"{args.model}Classifier"]
 
     # Select nodes to explain 
-    for repeat_id in range(10): 
+    for repeat_id in range(args.repeat_start, args.repeat_end + 1):
         # Load the split mask
         train_mask, _, _, _ = load_split_csv(args.dataset, repeat_id, DEVICE) # 這裏的mask是原dataset的長度
         train_nodes = train_mask.nonzero(as_tuple=True)[0].cpu().tolist() # 原始節點的編號

@@ -47,6 +47,13 @@ def parse_args():
     # structure mode 是 "random+imp" 時，要不要使用 learnable embedding
     parser.add_argument("--learn_embedding", action="store_true", help="Use learnable random embedding")
 
+    # repeat settings
+    parser.add_argument("--repeat_start", type=int, default=0, help="Start repeat id (inclusive)")
+    parser.add_argument("--repeat_end", type=int, default=9, help="End repeat id (inclusive)")
+
+    # 是否固定 train/valid mask
+    parser.add_argument("--fix_train_valid", action="store_true", help="If set, use fixed train/valid masks, only test mask varies by repeat_id.")
+
     return parser.parse_args()
 
 
@@ -99,7 +106,8 @@ if __name__ == "__main__":
 
 
     # Repeat 10 time selecting different splits
-    for repeat_id in range(10):
+    for repeat_id in range(args.repeat_start, args.repeat_end + 1):
+
         print(f"\n===== [Repeat {repeat_id}] =====")
 
         # Load the split mask
