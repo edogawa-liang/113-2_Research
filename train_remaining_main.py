@@ -193,17 +193,20 @@ if __name__ == "__main__":
                 test_mask = pad_mask(test_mask)
                 unknown_mask = pad_mask(unknown_mask) 
 
-        data.train_mask = train_mask
-        data.val_mask = val_mask
-        data.test_mask = test_mask
-        data.unknown_mask = unknown_mask
+            data.train_mask = train_mask
+            data.val_mask = val_mask
+            data.test_mask = test_mask
+            data.unknown_mask = unknown_mask
 
-        # pick node: 挑選所有的訓練節點作為起點 or 部分的訓練節點 (by random, Degree, PageRank, Betweenness, Closeness)
-        picker = NodePicker(data=data, dataset_name=args.dataset, node_choose=args.node_choose, feature_to_node=args.feature_to_node, only_feature_node=args.only_feature_node)
+
+        # pick node: 挑選所有的訓練節點作為起點 (all_train) or 部分的訓練節點 (by random, Degree, PageRank, Betweenness, Closeness)
+        picker = NodePicker(
+            data=data, dataset_name=args.dataset, node_choose=args.node_choose,
+            feature_to_node=args.feature_to_node, only_feature_node=args.only_feature_node,
+            node_ratio=args.node_ratio, edge_ratio=args.edge_ratio
+        )
         selected_nodes = picker.pick_nodes()
-        node_ratio, node_2hop_ratio, edge_2hop_ratio = picker.compute_coverage(selected_nodes)
 
-        # 後面要改成只從  selected_nodes
 
         # Select subgraph
         if args.selector_type == "random": # 使用時不要加feature_to_node
@@ -243,22 +246,18 @@ if __name__ == "__main__":
                     base_dir=args.base_dir,
                     explainer_name=args.explainer_name,
                     dataset_name=args.dataset,
-                    node_choose=args.node_choose,
+                    selected_nodes=selected_nodes,
                     top_k_percent=args.fraction,
                     feature_type=feature_type,
                     device=DEVICE,
                     top_k_percent_feat=args.fraction_feat,
                     use_feature_to_node=args.feature_to_node # 若要使用特徵，分成直接使用(node_mask)還是將特徵轉為結構使用(edge_mask)
                 )            
-                selector.load_data()
+                selector.load_data(args.split_id)
                 selector.plot_edge_distribution()
-                num_node = selector.get_node_count()
-                num_edge = selector.get_edge_count()
-                # 只有需要選特徵邊時，selected_feat_ids 才會有值，不然就是空的
 
-                # 可以改成傳入data 就知道哪些是 node-node 邊，哪些是 node-feature 邊
-                # 改 select_edge
-                selected_edges, selected_feat_ids = selector.select_edges()
+                # 只有需要選特徵邊時，selected_feat_ids 才會有值，不然就是空的
+                selected_edges, selected_feat_ids = selector.select_edges() # 選到的所有邊 (包含特徵邊), 即這些特徵是哪幾個
                 # 如果需要使用解釋子圖自身的特徵重要度
                 if not args.feature_to_node and args.fraction_feat > 0:
                     # 改 select_node_features
@@ -327,8 +326,21 @@ if __name__ == "__main__":
 
         result = trainer.run()
 
+
         # Save experiment results
         # 移除的邊數量都是 fraction
+
+        # compute coverage (7 values)
+        coverage_stats = picker.compute_coverage(selected_nodes)
+        num_selected_nodes = coverage_stats[0] # selected node 數量 
+        node_ratio_ori = coverage_stats[1] # selected node 在原圖的比例 
+        node_ratio_current = coverage_stats[2] # selected node 在現在圖的比例 
+        node_2hop_ratio_ori = coverage_stats[3] # selected node 的 2hop  (original node) 在原圖的比例
+        node_2hop_ratio_current = coverage_stats[4] # selected node 的 2hop (original node + feature node) 在現在圖的比例 
+        edge_2hop_ratio_ori = coverage_stats[5] # selected node 在 2hop edge (node-node) 在原圖的比例
+        edge_2hop_ratio_current = coverage_stats[6] # selected node 在 2hop edge  (node-node + feature-node) 在現在的圖的比例
+
+
         if args.selector_type == "random":
             logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, fraction=args.fraction, fraction_feat=args.fraction_feat, remove_feat=zero_feature_cols)
         
