@@ -135,7 +135,7 @@ class ExplainerEdgeSelector:
             # Rel idx in feature edges
             rel_idx = np.arange(num_feat_edges)[top_feat]
             pair_idx = rel_idx // 2
-            selected_feat_ids = pair_idx % ori_num_features
+            selected_feat_ids = pair_idx % ori_num_features # feat_id 每次從 0 到 num_features-1 走一輪。
 
             # 回傳子圖的邊 (含原始邊和特徵邊) 及 這次解釋 subgraph 中 importance 最高的 feature edge，對應的 feature 是哪些
             return selected_idx_tensor, selected_feat_ids 

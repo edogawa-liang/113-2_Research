@@ -258,6 +258,7 @@ if __name__ == "__main__":
 
                 # 只有需要選特徵邊時，selected_feat_ids 才會有值，不然就是空的
                 selected_edges, selected_feat_ids = selector.select_edges() # 選到的所有邊 (包含特徵邊), 即這些特徵是哪幾個
+                
                 # 如果需要使用解釋子圖自身的特徵重要度
                 if not args.feature_to_node and args.fraction_feat > 0:
                     # 改 select_node_features

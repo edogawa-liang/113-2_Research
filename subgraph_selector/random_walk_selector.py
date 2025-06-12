@@ -1,8 +1,8 @@
 import torch
+import numpy as np
 from torch_cluster import random_walk
 from collections import defaultdict
 
-from subgraph_selector.utils.choose_node import ChooseNodeSelector
 
 # 目前的random walk 沒有考慮 edge weight
 class RandomWalkEdgeSelector:
@@ -11,7 +11,7 @@ class RandomWalkEdgeSelector:
     """
 
     def __init__(self, data, node_ratio="auto", edge_ratio=0.5, fraction=0.1,  
-                 walk_length=10, num_walks=5, node_choose="top_pagerank", feature_type="categorical", device="cpu", manual_nodes=None, mask_type="train", top_k_percent_feat=0.1):
+                 walk_length=10, num_walks=5, feature_type="categorical", device="cpu", manual_nodes=None, mask_type="train", top_k_percent_feat=0.1):
         """
         :param data: PyG graph data
         :param node_ratio: "auto" for automatic calculation or a numeric value to manually set node selection ratio
@@ -29,46 +29,15 @@ class RandomWalkEdgeSelector:
         self.fraction = fraction
         self.walk_length = walk_length
         self.num_walks = num_walks
-        self.node_choose = node_choose
         self.feature_type = feature_type  # 用於選擇特徵邊
         self.device = device
         self.manual_nodes = manual_nodes
         self.mask_type = mask_type
         self.top_k_percent_feat = top_k_percent_feat
 
-        self._get_start_nodes()
         self._calculate_neighbor_edges()
 
-
-    def _get_start_nodes(self):
-        """
-        Uses `ChooseNodeSelector` to select the starting nodes based on the given strategy.
-        """
-        node_selector = ChooseNodeSelector(self.ori_data, node_ratio=self.node_ratio, edge_ratio=self.edge_ratio,
-                                        strategy=self.node_choose, manual_nodes=self.manual_nodes, mask_type=self.mask_type)
-
-        selected_nodes = node_selector.select_nodes() # 因為特徵節點接在普通節點後，可以直接把ori data 的 node_indices 當成新 data 要解釋的indices
-        self.start_nodes = torch.tensor(selected_nodes, dtype=torch.long, device=self.device)
-        self.final_node_ratio = len(selected_nodes) / self.data.x.shape[0]
-
-    def _calculate_neighbor_edges(self):
-        """
-        計算選中的節點的鄰居邊數量。
-        """
-        edge_index = self.data.edge_index
-        selected_set = set(self.start_nodes.tolist())
-        self.neighbor_edges = [
-            (src, dst) for src, dst in edge_index.t().tolist() if src in selected_set or dst in selected_set
-        ]
-        self.neighbor_edge_ratio = len(self.neighbor_edges)/self.data.edge_index.shape[1]
-
-    def get_final_node_ratio(self):
-        return self.final_node_ratio
-    
-    def get_neighbor_edge_ratio(self):
-        return self.neighbor_edge_ratio
        
-
     def select_edges(self):
         """
         1. Perform random walks using PyG's `random_walk()`.
@@ -117,8 +86,14 @@ class RandomWalkEdgeSelector:
         all_edges = list(visited_edge_count.items())  # [(edge, freq), ...]
         all_edges.sort(key=lambda x: x[1], reverse=True)
 
-        total_all_edges = len(all_edges)
-        print(f"Total edges explored (all_edges): {total_all_edges}")
+        # Edge masks
+        node_node_mask_np = self.data.node_node_mask.cpu().numpy()
+        node_feat_mask_np = self.data.node_feat_mask.cpu().numpy()
+        
+        num_ori_edges = node_node_mask_np.sum()  # 幾條 node-node edge
+        num_feat_edges = node_feat_mask_np.sum() # 幾條 node-feature edge
+        num_total_edges = len(node_node_mask_np)
+        ori_num_features = self.data.is_feature_node.sum().item()  # 原始特徵節點數量
 
 
         # 建立 (src, dst) → edge_index 映射
@@ -126,31 +101,24 @@ class RandomWalkEdgeSelector:
             tuple(edge.tolist()): idx for idx, edge in enumerate(edge_index.t())
         }
 
-        num_total_edges = edge_index.shape[1]
-        node_node_mask = self.data.node_node_mask.cpu().numpy() 
-        node_feat_mask = self.data.node_feat_mask.cpu().numpy()
-        num_ori_edges = node_node_mask.sum()  # 幾條 node-node edge
-        num_feat_edges = node_feat_mask.sum()      # 幾條 node-feature edge
-        ori_num_features = self.data.is_feature_node.sum().item() # 原始特徵節點數量
-
-
         selected_ori = []
         selected_feat = []
 
         for edge, _ in all_edges:
             if edge in edge_map:
                 idx = edge_map[edge]
-                if node_node_mask[idx]:
+                if node_node_mask_np[idx]:
                     selected_ori.append(idx)
-                elif node_feat_mask[idx]:
+                elif node_feat_mask_np[idx]:
                     selected_feat.append(idx)
                 else:
                     print(f"[Warning] Edge idx={idx} 不在 node_node_mask 或 node_feat_mask 裡！")
 
 
         num_visited_ori_edges = len(selected_ori)
-        print(f"走過的原始邊數量: {num_visited_ori_edges}")
         num_visited_feat_edges = len(selected_feat)
+
+        print(f"走過的原始邊數量: {num_visited_ori_edges}")
         print(f"走過的特徵邊數量: {num_visited_feat_edges}")
         
         # 按比例選擇
@@ -173,7 +141,6 @@ class RandomWalkEdgeSelector:
                 selected_ori += remaining_ori
         else:
             selected_ori = selected_ori[:num_selected_ori]
-
 
 
         if num_feat_edges > 0:
@@ -200,8 +167,6 @@ class RandomWalkEdgeSelector:
             else:
                 selected_feat = selected_feat[:num_selected_feat]
 
-            # selected_feat = selected_feat[:num_selected_feat]
-
         else:
             selected_feat = []
             print("No feature edges found.")
@@ -212,11 +177,9 @@ class RandomWalkEdgeSelector:
         ori_edge_visit_ratio = num_visited_ori_edges / num_ori_edges if num_ori_edges > 0 else 0
         feat_edge_visit_ratio = num_visited_feat_edges / num_feat_edges if num_feat_edges > 0 else 0
 
-        selected_feat_ids = []
-        for idx in selected_feat:
-            rel_idx = idx - num_ori_edges
-            pair_id = rel_idx // 2
-            feat_id = pair_id % ori_num_features
-            selected_feat_ids.append(feat_id)
+        selected_feat = np.array(selected_feat)
+        rel_idx = selected_feat - num_ori_edges
+        pair_idx = rel_idx // 2
+        selected_feat_ids = (pair_idx % ori_num_features).tolist()
 
         return selected_tensor, selected_feat_ids, ori_edge_visit_ratio, feat_edge_visit_ratio
