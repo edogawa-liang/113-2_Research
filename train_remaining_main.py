@@ -20,6 +20,7 @@ from data.feature2node import FeatureNodeConverter
 from data.node2feature import FeatureNodeReverter
 from data.prepare_split import load_split_csv
 from data.split_unknown_to_test import load_split_test
+from utils.node_coverage_summary import save_coverage_log
 
 
 from utils.feature_utils import remove_all_zero_features, remove_top_common_features
@@ -53,7 +54,6 @@ def parse_args():
     parser.add_argument("--num_walks", type=int, default=5, help="Number of walks per selected node")
     parser.add_argument("--node_ratio", type=str, default="auto", help="'auto' for automatic calculation or a numeric value to manually set node selection ratio")
     parser.add_argument("--edge_ratio", type=float, default=0.5, help="Ensures sufficient edges in the subgraph, required only if node_ratio is 'auto'")
-    parser.add_argument("--mask_type", type=str, default="train", choices=["train", "test", "all"], help="Mask type for node selection")
 
     parser.add_argument("--run_mode", type=str, default="try", help="Run mode") # 如果跑的是移除test的子圖，run_mode 前加入"test"
     parser.add_argument("--filename", type=str, default="result", help="File name for saving results")
@@ -200,12 +200,20 @@ if __name__ == "__main__":
 
 
         # pick node: 挑選所有的訓練節點作為起點 (all_train) or 部分的訓練節點 (by random, Degree, PageRank, Betweenness, Closeness)
-        picker = NodePicker(
-            data=data, dataset_name=args.dataset, node_choose=args.node_choose,
-            feature_to_node=args.feature_to_node, only_feature_node=args.only_feature_node,
-            node_ratio=args.node_ratio, edge_ratio=args.edge_ratio
-        )
-        selected_nodes = picker.pick_nodes()
+        if args.selector_type == "explainer" or args.selector_type == "random_walk":
+            picker = NodePicker(
+                data=data, dataset_name=args.dataset, node_choose=args.node_choose,
+                feature_to_node=args.feature_to_node, only_feature_node=args.only_feature_node,
+                node_ratio=args.node_ratio, edge_ratio=args.edge_ratio
+            )
+            selected_nodes = picker.pick_nodes()
+            coverage_stats = picker.compute_coverage()  # 獲取 coverage 統計
+
+            # 如果 train/valid/test 重抽，每次都要存
+            # 如果是固定的 train/valid，則只在第一次存
+            if not args.fix_train_valid or repeat_id == args.repeat_start:
+                save_coverage_log(args, coverage_stats, repeat_id, selected_nodes=selected_nodes, save_dir="saved/node_coverage")
+
 
 
         # Select subgraph
@@ -220,7 +228,7 @@ if __name__ == "__main__":
                 feature_to_node=args.feature_to_node
             )
             # 改 select_edge
-            selected_edges = selector.select_edges()#  # 必須傳入以正確區分 node-node 和 node-feature 邊)
+            selected_edges = selector.select_edges(num_ori_edges)#  # 必須傳入以正確區分 node-node 和 node-feature 邊)
 
             # 特徵的選擇器（如果有指定 fraction_feat）
             # 可指定要不要選擇相同的特徵
@@ -268,9 +276,9 @@ if __name__ == "__main__":
         elif args.selector_type == "random_walk":
             print("Using Random Walk Selector")
             # 改成直接傳入node
-            selector = RandomWalkEdgeSelector(data, node_ratio=args.node_ratio, edge_ratio =args.edge_ratio , fraction=args.fraction, 
-                                            walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, feature_type=feature_type, 
-                                            device=DEVICE, mask_type=args.mask_type, top_k_percent_feat=args.fraction_feat)
+            selector = RandomWalkEdgeSelector(data ,fraction=args.fraction, selected_nodes=selected_nodes,
+                                            walk_length=args.walk_length, num_walks=args.num_walks, feature_type=feature_type, 
+                                            device=DEVICE, top_k_percent_feat=args.fraction_feat)
             node_start_ratio = selector.get_final_node_ratio()
             edge_neighbor_ratio = selector.get_neighbor_edge_ratio()
             selected_edges, selected_feat_ids, ori_edge_visit_ratio, feat_edge_visit_ratio = selector.select_edges()
@@ -295,7 +303,7 @@ if __name__ == "__main__":
             num_features = remaining_graph.x.size(1)
 
             # 如果設定了要遮蔽相同的特徵，且有 selected_feat_ids，就從 ori_data 上遮蔽
-            if args.same_feat and selected_feat_ids and args.fraction_feat > 0: # 如果沒有使用feat2node, selected_feat_ids會是空的
+            if args.same_feat and selected_feat_ids is not None and len(selected_feat_ids) > 0 and args.fraction_feat > 0: # 如果沒有使用feat2node, selected_feat_ids會是空的
                 print("改成 remove same features")
                 remaining_graph.x, removed_feat_ids = remove_top_common_features(
                     x=ori_data.x, # 放入的是原始的data
@@ -330,27 +338,16 @@ if __name__ == "__main__":
 
         # Save experiment results
         # 移除的邊數量都是 fraction
-
-        # compute coverage (7 values)
-        coverage_stats = picker.compute_coverage(selected_nodes)
-        num_selected_nodes = coverage_stats[0] # selected node 數量 
-        node_ratio_ori = coverage_stats[1] # selected node 在原圖的比例 
-        node_ratio_current = coverage_stats[2] # selected node 在現在圖的比例 
-        node_2hop_ratio_ori = coverage_stats[3] # selected node 的 2hop  (original node) 在原圖的比例
-        node_2hop_ratio_current = coverage_stats[4] # selected node 的 2hop (original node + feature node) 在現在圖的比例 
-        edge_2hop_ratio_ori = coverage_stats[5] # selected node 在 2hop edge (node-node) 在原圖的比例
-        edge_2hop_ratio_current = coverage_stats[6] # selected node 在 2hop edge  (node-node + feature-node) 在現在的圖的比例
-
-
         if args.selector_type == "random":
             logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, fraction=args.fraction, fraction_feat=args.fraction_feat, remove_feat=zero_feature_cols)
         
         elif args.selector_type == "explainer":
-            logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, explaner=args.explainer_name, node_choose=args.node_choose, fraction=args.fraction, 
-                                node_explain_ratio=num_node/data.x.shape[0], edge_explain_ratio=num_edge/data.edge_index.shape[1], fraction_feat=args.fraction_feat, remove_feat=zero_feature_cols)
+            logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, explaner=args.explainer_name, node_choose=args.node_choose, 
+                                  fraction=args.fraction, fraction_feat=args.fraction_feat, remove_feat=zero_feature_cols)
         
         elif args.selector_type == "random_walk":
-            logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, 
-                                fraction=args.fraction, node_start_ratio=node_start_ratio, edge_neighbor_ratio= edge_neighbor_ratio, fraction_feat=args.fraction_feat, ori_edge_visit_ratio=ori_edge_visit_ratio, feat_edge_visit_ratio=feat_edge_visit_ratio, remove_feat=zero_feature_cols)
+            logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, 
+                                  walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, fraction=args.fraction, fraction_feat=args.fraction_feat, 
+                                  ori_edge_visit_ratio=ori_edge_visit_ratio, feat_edge_visit_ratio=feat_edge_visit_ratio, remove_feat=zero_feature_cols)
 
         print("Experiment finished and results saved.")
