@@ -182,11 +182,11 @@ if __name__ == "__main__":
                 test_mask = pad_mask(test_mask)
                 unknown_mask = pad_mask(unknown_mask) 
 
+            data.train_mask = train_mask
+            data.val_mask = val_mask
+            data.test_mask = test_mask
+            data.unknown_mask = unknown_mask
 
-        data.train_mask = train_mask
-        data.val_mask = val_mask
-        data.test_mask = test_mask
-        data.unknown_mask = unknown_mask
 
         # Initialize logger
         logger = ExperimentLogger(file_name=args.result_filename, note=args.note, copy_old=args.copy_old, run_mode=args.run_mode)
