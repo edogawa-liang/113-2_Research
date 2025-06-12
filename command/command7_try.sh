@@ -60,7 +60,8 @@ python data/split_unknown_to_test.py --dataset Cora --use_id 0 --num_repeat 10
 python training_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --run_mode try_original_split0 --note original_split0 --fix_train_valid --split_id 0
 
 # Stage 3: 訓練移除解釋子圖後模型
-
+先沒有fix_train_valid 一次 repeat_start 0 repeat_end 0 
+再 fix_train_valid repeat_start 0 repeat_end 9
 
 
 

@@ -10,12 +10,10 @@ class RandomWalkEdgeSelector:
     Selects the top fraction of most frequently visited edges (by random walk) for removal.
     """
 
-    def __init__(self, data, node_ratio="auto", edge_ratio=0.5, fraction=0.1,  
-                 walk_length=10, num_walks=5, feature_type="categorical", device="cpu", manual_nodes=None, mask_type="train", top_k_percent_feat=0.1):
+    def __init__(self, data, fraction, selected_nodes, walk_length=10, num_walks=5, 
+                 feature_type="categorical", device="cpu", manual_nodes=None, top_k_percent_feat=0.1):
         """
         :param data: PyG graph data
-        :param node_ratio: "auto" for automatic calculation or a numeric value to manually set node selection ratio
-        :param edge_ratio: Ensures sufficient edges in the subgraph, required only if node_ratio is 'auto'
         :param fraction: Fraction of most frequently visited edges to remove (0.1 → top 10%)
         :param walk_length: Number of steps per random walk
         :param num_walks: Number of random walks per starting node
@@ -24,18 +22,15 @@ class RandomWalkEdgeSelector:
         :param manual_nodes: Manually specified nodes if node_choose is "manual"
         """
         self.data = data
-        self.node_ratio = node_ratio
-        self.edge_ratio = edge_ratio
         self.fraction = fraction
         self.walk_length = walk_length
         self.num_walks = num_walks
         self.feature_type = feature_type  # 用於選擇特徵邊
         self.device = device
         self.manual_nodes = manual_nodes
-        self.mask_type = mask_type
         self.top_k_percent_feat = top_k_percent_feat
+        self.start_nodes = torch.tensor(selected_nodes, dtype=torch.long, device=self.device)
 
-        self._calculate_neighbor_edges()
 
        
     def select_edges(self):

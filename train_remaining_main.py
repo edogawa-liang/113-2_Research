@@ -1,5 +1,6 @@
 import torch
 import os
+import numpy as np
 import argparse
 from utils.device import DEVICE
 
@@ -21,8 +22,6 @@ from data.node2feature import FeatureNodeReverter
 from data.prepare_split import load_split_csv
 from data.split_unknown_to_test import load_split_test
 from utils.node_coverage_summary import save_coverage_log
-
-
 from utils.feature_utils import remove_all_zero_features, remove_top_common_features
 
 
@@ -32,7 +31,7 @@ from utils.feature_utils import remove_all_zero_features, remove_top_common_feat
 def parse_args():
     parser = argparse.ArgumentParser(description="Train GNN after removing a selected subgraph.")
     parser.add_argument("--dataset", type=str, required=True, help="Dataset name")
-    parser.add_argument("--normalize", type=lambda x: x.lower() == "true", default=False, help="Whether to normalize the dataset")
+    parser.add_argument("--normalize", action="store_true", help="Whether to normalize the dataset.")
 
     parser.add_argument("--model", type=str, default="GCN2", choices=["GCN2", "GCN3"], help="Model type")
     parser.add_argument("--epochs", type=int, default=300, help="Number of training epochs")
@@ -40,7 +39,6 @@ def parse_args():
     parser.add_argument("--weight_decay", type=float, default=1e-4, help="Weight decay for optimizer")
     
     parser.add_argument("--selector_type", type=str, default="random", choices=["random", "explainer", "random_walk"], help="Subgraph selector type")
-    # parser.add_argument("--fraction", type=float, default=0.1, help="Fraction of edges to remove for the subgraph") # random, explainer, random_walk
     parser.add_argument("--fraction", type=float, default=None, help="Fraction of edges to remove for the subgraph (None means not used)")
 
     # random
@@ -82,12 +80,12 @@ def parse_args():
     # 使用的 split_id
     parser.add_argument("--split_id", type=int, default=0, help="Split ID to use for fixed train/valid masks (default: 0)")
 
+    # 第一次訓練時，不能用 fix_train_valid。用fix_train_valid時，記得run_mode加 split 0
+
     return parser.parse_args()
 
 
-# 寫一個selected node的 function，讓explainer 跟random_walk 直接傳入選到的節點
 # 比較對象是 Original graph, (一般的含有節點特徵的圖)
-# 外圍包 repeat
 if __name__ == "__main__":
     args = parse_args()
     selected_feat = None
@@ -107,7 +105,6 @@ if __name__ == "__main__":
     # define pad_mask function
     def pad_mask(mask, pad_len):
         return torch.cat([mask, torch.zeros(pad_len, dtype=torch.bool, device=mask.device)], dim=0)
-
 
     # 1. Feature to node conversion
     if args.feature_to_node:
@@ -203,8 +200,8 @@ if __name__ == "__main__":
         if args.selector_type == "explainer" or args.selector_type == "random_walk":
             picker = NodePicker(
                 data=data, dataset_name=args.dataset, node_choose=args.node_choose,
-                feature_to_node=args.feature_to_node, only_feature_node=args.only_feature_node,
-                node_ratio=args.node_ratio, edge_ratio=args.edge_ratio
+                feature_to_node=args.feature_to_node, only_feature_node=args.only_feature_node, # 要從哪個csv import imp
+                node_ratio=args.node_ratio, edge_ratio=args.edge_ratio # 控制挑選的節點數量
             )
             selected_nodes = picker.pick_nodes()
             coverage_stats = picker.compute_coverage()  # 獲取 coverage 統計
@@ -333,11 +330,22 @@ if __name__ == "__main__":
                                     epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
                                     run_mode=args.run_mode)
 
-        result = trainer.run()
+
+        if args.fix_train_valid: # 因目的是檢測不同的 test，所以固定模型
+            # 因為這時的 run_mode 後面會+split_0，所以要去掉
+            model_dir = os.path.join("saved", args.run_mode.replace(f"_split{args.split_id}", ""), "model", args.dataset)
+            model_name = f"{args.split_id}_{trainer.model_name}.pth"  # 你的 save_model_path 是這個 pattern
+            path_to_model = os.path.join(model_dir, model_name)
+            print(f"Loading fixed model from {path_to_model}")
+            trainer.load_model(path_to_model)
+            # test 用固定模型
+            result = trainer.test()
+
+        else:
+            result = trainer.run()
 
 
         # Save experiment results
-        # 移除的邊數量都是 fraction
         if args.selector_type == "random":
             logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, fraction=args.fraction, fraction_feat=args.fraction_feat, remove_feat=zero_feature_cols)
         
