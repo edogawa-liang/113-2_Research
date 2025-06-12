@@ -74,6 +74,24 @@ if __name__ == "__main__":
     data, num_features, _, feature_type, _ = loader.load_dataset(args.dataset)
     data = data.to(DEVICE)
 
+    # define pad_mask function
+    def pad_mask(mask, pad_len):
+        return torch.cat([mask, torch.zeros(pad_len, dtype=torch.bool, device=mask.device)], dim=0)
+
+
+    # 1. Load embedding if fix_train_valid + random+imp
+    external_embedding = None
+
+    # inference (只看structure) 階段才會 load external_embedding
+    if args.fix_train_valid and (args.feature_to_node or args.only_structure) and args.structure_mode == "random+imp":        
+        embedding_save_dir = os.path.join("saved", args.run_mode.replace(f"_split{args.split_id}", ""), "embedding", args.dataset)
+        embedding_save_path = os.path.join(embedding_save_dir, f"{args.split_id}_embedding.npy")  # 使用的 split_id 的 embedding
+        print(f"Loading embedding from {embedding_save_path}")
+        embedding_np = np.load(embedding_save_path)
+        print(f"Loaded embedding shape: {embedding_np.shape}")
+        external_embedding = torch.tensor(embedding_np, device=DEVICE, dtype=torch.float)
+
+
     # 1. Feature to node conversion
     if args.feature_to_node:
         print("Converting node features into feature-nodes...")
@@ -93,7 +111,8 @@ if __name__ == "__main__":
             mode=args.structure_mode,
             emb_dim=32,
             normalize_type="row_l1",
-            learn_embedding=args.learn_embedding,
+            learn_embedding=args.learn_embedding if external_embedding is None else False, # 在訓練階段時是 True, Inference 階段是 False
+            external_embedding=external_embedding # 只有inference時才會有
         )
         structure_x = builder.build()
         num_features = structure_x.shape[1]
@@ -121,10 +140,6 @@ if __name__ == "__main__":
         if args.feature_to_node and num_total_nodes > num_orig_nodes:
             pad_len = num_total_nodes - num_orig_nodes
             print(f"Padding fixed masks with {pad_len} additional nodes for feature nodes...")
-
-            def pad_mask(mask):
-                return torch.cat([mask, torch.zeros(pad_len, dtype=torch.bool, device=mask.device)], dim=0)
-
             train_mask = pad_mask(train_mask)
             val_mask = pad_mask(val_mask)
             unknown_mask = pad_mask(unknown_mask)
@@ -217,7 +232,8 @@ if __name__ == "__main__":
             logger.log_experiment(args.dataset + "_classification", result, label_source, repeat_id=repeat_id)
 
             # Save embedding
-            if (args.feature_to_node or args.only_structure) and args.structure_mode == "random+imp": # 即使不是 learn_embedding 也要保存 embedding
+            # 即使不是 learn_embedding 也要保存 embedding。Inference 階段不需要存
+            if (args.feature_to_node or args.only_structure) and args.structure_mode == "random+imp" and not args.fix_train_valid: 
                 embedding_save_dir = os.path.join("saved", args.run_mode, "embedding", args.dataset)
                 os.makedirs(embedding_save_dir, exist_ok=True)
                 embedding_save_path = os.path.join(embedding_save_dir, f"{repeat_id}_embedding.npy")

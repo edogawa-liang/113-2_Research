@@ -122,32 +122,33 @@ python training_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --r
 python training_main.py --dataset FacebookPagePage --normalize --model GCN2 --epochs 300 --lr 0.01 --run_mode original_split0 --note original_split0 --fix_train_valid --split_id 0
 python training_main.py --dataset GitHub --normalize --model GCN2 --epochs 300 --lr 0.01 --run_mode original_split0 --note original_split0 --fix_train_valid --split_id 0
 
+# 重抽test的目的是檢查移除核心子圖後有沒有大掉，而比較對象只有original，經過feature to node 最後也會轉成ori graph，所以feature to node 的結果不需要重抽test
 
-# 2. 原圖 (只有結構)
-## (1) random32+imp
-python training_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode original_structure_split0 --note random+imp_split0 --only_structure --structure_mode random+imp --learn_embedding --fix_train_valid --split_id 0
-python training_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode original_structure_split0 --note random+imp_split0 --only_structure --structure_mode random+imp --learn_embedding --fix_train_valid --split_id 0
-python training_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode original_structure_split0 --note random+imp_split0 --only_structure --structure_mode random+imp --learn_embedding --fix_train_valid --split_id 0
-python training_main.py --dataset FacebookPagePage --normalize --model GCN2 --epochs 300 --lr 0.01 --run_mode original_structure_split0 --note random+imp_split0 --only_structure --structure_mode random+imp --learn_embedding --fix_train_valid --split_id 0
-python training_main.py --dataset GitHub --normalize --model GCN2 --epochs 300 --lr 0.01 --run_mode original_structure_split0 --note random+imp_split0 --only_structure --structure_mode random+imp --learn_embedding --fix_train_valid --split_id 0
-
-
-# 3. Feature to Node (含節點邊 & 特徵邊)
-python training_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode original_feature2node_nn_fn_split0 --note feature2node_nn_fn_split0  --feature_to_node --structure_mode random+imp --learn_embedding --fix_train_valid --split_id 0
-python training_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode original_feature2node_nn_fn_split0 --note feature2node_nn_fn_split0 --feature_to_node --structure_mode random+imp --learn_embedding --fix_train_valid --split_id 0
-python training_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode original_feature2node_nn_fn_split0 --note feature2node_nn_fn_split0 --feature_to_node --structure_mode random+imp --learn_embedding --fix_train_valid --split_id 0
-python training_main.py --dataset FacebookPagePage --normalize --model GCN2 --epochs 300 --lr 0.01 --run_mode original_feature2node_nn_fn_split0 --note feature2node_nn_fn_split0 --feature_to_node --structure_mode random+imp --learn_embedding --fix_train_valid --split_id 0
-python training_main.py --dataset GitHub --normalize --model GCN2 --epochs 300 --lr 0.01 --run_mode original_feature2node_nn_fn_split0 --note feature2node_nn_fn_split0 --feature_to_node --structure_mode random+imp --learn_embedding --fix_train_valid --split_id 0
-
-# 4. Feature to Node (只有特徵邊)
-python training_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode original_feature2node_fn_split0 --note feature2node_fn_split0  --feature_to_node --structure_mode random+imp --only_feature_node --learn_embedding --fix_train_valid --split_id 0
-python training_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode original_feature2node_fn_split0 --note feature2node_fn_split0 --feature_to_node --structure_mode random+imp --only_feature_node --learn_embedding --fix_train_valid --split_id 0
-python training_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode original_feature2node_fn_split0 --note feature2node_fn_split0 --feature_to_node --structure_mode random+imp --only_feature_node --learn_embedding --fix_train_valid --split_id 0
-python training_main.py --dataset FacebookPagePage --normalize --model GCN2 --epochs 300 --lr 0.01 --run_mode original_feature2node_fn_split0 --note feature2node_fn_split0 --feature_to_node --structure_mode random+imp --only_feature_node --learn_embedding --fix_train_valid --split_id 0
-python training_main.py --dataset GitHub --normalize --model GCN2 --epochs 300 --lr 0.01 --run_mode original_feature2node_fn_split0 --note feature2node_fn_split0 --feature_to_node --structure_mode random+imp --only_feature_node --learn_embedding --fix_train_valid --split_id 0
+# # 2. 原圖 (只有結構)
+# ## (1) random32+imp
+python training_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode original_structure_split0 --note random+imp_split0 --only_structure --structure_mode random+imp --fix_train_valid --split_id 0
+python training_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode original_structure_split0 --note random+imp_split0 --only_structure --structure_mode random+imp--fix_train_valid --split_id 0
+python training_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode original_structure_split0 --note random+imp_split0 --only_structure --structure_mode random+imp --fix_train_valid --split_id 0
+python training_main.py --dataset FacebookPagePage --normalize --model GCN2 --epochs 300 --lr 0.01 --run_mode original_structure_split0 --note random+imp_split0 --only_structure --structure_mode random+imp --fix_train_valid --split_id 0
+python training_main.py --dataset GitHub --normalize --model GCN2 --epochs 300 --lr 0.01 --run_mode original_structure_split0 --note random+imp_split0 --only_structure --structure_mode random+imp --fix_train_valid --split_id 0
 
 
+# # 3. Feature to Node (含節點邊 & 特徵邊)
+# python training_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode original_feature2node_nn_fn_split0 --note feature2node_nn_fn_split0  --feature_to_node --structure_mode random+imp --learn_embedding --fix_train_valid --split_id 0
+# python training_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode original_feature2node_nn_fn_split0 --note feature2node_nn_fn_split0 --feature_to_node --structure_mode random+imp --learn_embedding --fix_train_valid --split_id 0
+# python training_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode original_feature2node_nn_fn_split0 --note feature2node_nn_fn_split0 --feature_to_node --structure_mode random+imp --learn_embedding --fix_train_valid --split_id 0
+# python training_main.py --dataset FacebookPagePage --normalize --model GCN2 --epochs 300 --lr 0.01 --run_mode original_feature2node_nn_fn_split0 --note feature2node_nn_fn_split0 --feature_to_node --structure_mode random+imp --learn_embedding --fix_train_valid --split_id 0
+# python training_main.py --dataset GitHub --normalize --model GCN2 --epochs 300 --lr 0.01 --run_mode original_feature2node_nn_fn_split0 --note feature2node_nn_fn_split0 --feature_to_node --structure_mode random+imp --learn_embedding --fix_train_valid --split_id 0
 
+# # 4. Feature to Node (只有特徵邊)
+# python training_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --run_mode original_feature2node_fn_split0 --note feature2node_fn_split0  --feature_to_node --structure_mode random+imp --only_feature_node --learn_embedding --fix_train_valid --split_id 0
+# python training_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --run_mode original_feature2node_fn_split0 --note feature2node_fn_split0 --feature_to_node --structure_mode random+imp --only_feature_node --learn_embedding --fix_train_valid --split_id 0
+# python training_main.py --dataset Amazon --model GCN2 --epochs 300 --lr 0.01 --run_mode original_feature2node_fn_split0 --note feature2node_fn_split0 --feature_to_node --structure_mode random+imp --only_feature_node --learn_embedding --fix_train_valid --split_id 0
+# python training_main.py --dataset FacebookPagePage --normalize --model GCN2 --epochs 300 --lr 0.01 --run_mode original_feature2node_fn_split0 --note feature2node_fn_split0 --feature_to_node --structure_mode random+imp --only_feature_node --learn_embedding --fix_train_valid --split_id 0
+# python training_main.py --dataset GitHub --normalize --model GCN2 --epochs 300 --lr 0.01 --run_mode original_feature2node_fn_split0 --note feature2node_fn_split0 --feature_to_node --structure_mode random+imp --only_feature_node --learn_embedding --fix_train_valid --split_id 0
+
+
+# Stage 3 移除核心子圖
 
 
 # 

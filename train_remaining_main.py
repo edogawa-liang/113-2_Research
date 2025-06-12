@@ -19,6 +19,8 @@ from data.structure import StructureFeatureBuilder, extract_edges
 from data.feature2node import FeatureNodeConverter
 from data.node2feature import FeatureNodeReverter
 from data.prepare_split import load_split_csv
+from data.split_unknown_to_test import load_split_test
+
 
 from utils.feature_utils import remove_all_zero_features, remove_top_common_features
 
@@ -64,15 +66,27 @@ def parse_args():
     # Only use feature-node (no node-node edges)
     parser.add_argument("--only_feature_node", action="store_true", help="Use only feature-node edges, no node-node edges.")
     # Structure Mode
-    parser.add_argument("--structure_mode", type=str, default="random+imp", choices=["one", "random+imp"], help="Mode for structure features: 'one' or 'random+imp'")
+    parser.add_argument("--structure_mode", type=str, default="random+imp", choices=["one+imp", "random+imp"], help="Mode for structure features: 'one' or 'random+imp'")
 
     # select feature
     parser.add_argument("--fraction_feat", type=float, default=0, help="Fraction of features to select for feature-to-node conversion")
     parser.add_argument("--same_feat", type=lambda x: x.lower() == "true", default=True, help="If true, all nodes select the same features; otherwise, each node selects independently.")
+    
+    # repeat settings
+    parser.add_argument("--repeat_start", type=int, default=0, help="Start repeat id (inclusive)")
+    parser.add_argument("--repeat_end", type=int, default=9, help="End repeat id (inclusive)")
+
+    # 是否固定 train/valid mask
+    parser.add_argument("--fix_train_valid", action="store_true", help="If set, use fixed train/valid masks, only test mask varies by repeat_id.")
+
+    # 使用的 split_id
+    parser.add_argument("--split_id", type=int, default=0, help="Split ID to use for fixed train/valid masks (default: 0)")
+
     return parser.parse_args()
 
 
 # 寫一個selected node的 function，讓explainer 跟random_walk 直接傳入選到的節點
+# 比較對象是 Original graph, (一般的含有節點特徵的圖)
 # 外圍包 repeat
 if __name__ == "__main__":
     args = parse_args()
@@ -89,6 +103,11 @@ if __name__ == "__main__":
     data, num_features, num_classes, feature_type, num_ori_edges = loader.load_dataset(args.dataset)
     data = data.to(DEVICE)
     ori_data = data.clone() # 備份原始資料
+
+    # define pad_mask function
+    def pad_mask(mask, pad_len):
+        return torch.cat([mask, torch.zeros(pad_len, dtype=torch.bool, device=mask.device)], dim=0)
+
 
     # 1. Feature to node conversion
     if args.feature_to_node:
@@ -125,29 +144,54 @@ if __name__ == "__main__":
     data.edge_index = edge_index
     data.edge_weight = edge_weight
 
-
-    # 每次repeat 挑選的節點都不一樣，分別找子圖與訓練模型
-    for repeat_id in range(10):
-        print(f"\n===== [Repeat {repeat_id}] =====")
-
-        # Load the split mask
-        train_mask, val_mask, test_mask, unknown_mask = load_split_csv(args.dataset, repeat_id, DEVICE) # 這裏的mask是原dataset的長度
+    # 如果固定 train/valid mask 在loop外面先載入
+    if args.fix_train_valid:
+        print("\nLoading fixed train/valid masks...")
+        # 固定取 repeat_id = 0 的 train/valid mask
+        train_mask, val_mask, _, unknown_mask = load_split_csv(args.dataset, args.split_id, DEVICE)
         num_orig_nodes = train_mask.shape[0]
         num_total_nodes = data.x.shape[0]
-        
-        # add padding to feature node
+
+        # 如果有 feature_to_node 也一樣要 pad
         if args.feature_to_node and num_total_nodes > num_orig_nodes:
             pad_len = num_total_nodes - num_orig_nodes
-            print(f"Padding masks with {pad_len} additional nodes for feature nodes...")
-
-            def pad_mask(mask):
-                return torch.cat([mask, torch.zeros(pad_len, dtype=torch.bool, device=mask.device)], dim=0)
+            print(f"Padding fixed masks with {pad_len} additional nodes for feature nodes...")
 
             train_mask = pad_mask(train_mask)
             val_mask = pad_mask(val_mask)
-            test_mask = pad_mask(test_mask)
-            unknown_mask = pad_mask(unknown_mask) 
+            unknown_mask = pad_mask(unknown_mask)
 
+        data.train_mask = train_mask
+        data.val_mask = val_mask
+        data.unknown_mask = unknown_mask
+
+    # 每次repeat 挑選的節點都不一樣，分別找子圖與訓練模型
+    for repeat_id in range(args.repeat_start, args.repeat_end + 1):
+        print(f"\n===== [Repeat {repeat_id}] =====")
+
+        if args.fix_train_valid: # 只 load test_mask
+            print("fix train, Loading test_mask only...")
+            test_mask = load_split_test(args.dataset, args.split_id, repeat_id, DEVICE)
+
+            if args.feature_to_node and num_total_nodes > num_orig_nodes:
+                test_mask = pad_mask(test_mask)
+
+            data.test_mask = test_mask
+
+        else: # Load the split mask
+            train_mask, val_mask, test_mask, unknown_mask = load_split_csv(args.dataset, repeat_id, DEVICE) # 這裏的mask是原dataset的長度
+            num_orig_nodes = train_mask.shape[0]
+            num_total_nodes = data.x.shape[0]
+
+            # add padding to feature node (mask會補滿，但y不會)
+            if args.feature_to_node and num_total_nodes > num_orig_nodes:
+                pad_len = num_total_nodes - num_orig_nodes
+                print(f"Padding masks with {pad_len} additional nodes for feature nodes...")
+
+                train_mask = pad_mask(train_mask)
+                val_mask = pad_mask(val_mask)
+                test_mask = pad_mask(test_mask)
+                unknown_mask = pad_mask(unknown_mask) 
 
         data.train_mask = train_mask
         data.val_mask = val_mask
