@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-def save_coverage_log(args, coverage_stats, split_id, selected_nodes, save_dir="saved/node_coverage"):
+def save_coverage_log(args, coverage_stats, selected_nodes, save_dir="saved/node_coverage"):
     os.makedirs(save_dir, exist_ok=True)  # 確保資料夾存在
 
     # 準備一筆要寫入的資料

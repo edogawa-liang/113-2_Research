@@ -57,18 +57,27 @@ python data/split_unknown_to_test.py --dataset Cora --use_id 0 --num_repeat 10
 
 # Stage 1 (part2): 訓練原模型 (train/val 固定 (以 split0 為例)，test 重抽，抽10次)
 
-python training_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --run_mode try_original_split0 --note original_split0 --fix_train_valid --split_id 0
+python training_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --run_mode try_original --note original_split0 --fix_train_valid --split_start 0 --split_end 0
 
 # ======================
 
 # Stage 3: 訓練移除解釋子圖後模型
 # 1. 移除結構
 ## (1) Original Graph (edge mask)
-python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose Page --run_mode remove_from_GNNExplainer_samefeat
+### [1] random select
+### [2] explainer select
+### [3] random walk select
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type explainer --fraction 0.1 --base_dir saved/try_stage2 --explainer_name GNNExplainer --node_choose pagerank --run_mode try_remove_from_GNNExplainer --note split0_original_only_structure
+python train_remaining_main.py --dataset FacebookPagePage --normalize --model GCN2 --epochs 1 --lr 0.01 --selector_type explainer --fraction 0.1 --base_dir saved/try_stage2 --explainer_name GNNExplainer --node_choose stratified_by_degree --run_mode try_remove_from_GNNExplainer
 
---run_mode remove_from_GNNExplainer_samefeat --note true_y_GNNExplainer_node_mask --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose random --fraction_feat 0.2  --same_feat True
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type random --fraction 0.1 --run_mode try_baseline_Result
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type random_walk --walk_length 10 --num_walks 5 --fraction 0.1 --run_mode try_remove_from_RandomWalk
+
 
 ## (2) Only Structure
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type explainer --fraction 0.1 --base_dir saved/try_stage2 --explainer_name GNNExplainer --node_choose pagerank --run_mode try_remove_from_GNNExplainer --note split0_original_only_structure --only_structure
+python train_remaining_main.py --dataset FacebookPagePage --normalize --model GCN2 --epochs 1 --lr 0.01 --selector_type random_walk --walk_length 10 --num_walks 5 --fraction 0.1 --node_choose all_train --run_mode try_remove_from_RandomWalk --only_structure
+
 
 # 2. 移除特徵
 ## (1) Original Graph (node mask)

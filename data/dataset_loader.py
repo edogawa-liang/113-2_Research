@@ -79,7 +79,22 @@ class GraphDatasetLoader:
         # print(f"Has self-loops: {data.has_self_loops()}")
         # print(f"Is undirected: {data.is_undirected()}")
         # print(f"Node Feature: {data.x}")
-        
+
+        num_edges = data.edge_index.shape[1]
+        num_nodes = data.x.shape[0]
+
+        # Initialize extra attributes (for consistency even without feature2node)
+        num_edges = data.edge_index.shape[1]
+        num_nodes = data.x.shape[0]
+
+        # edge masks
+        data.node_node_mask = torch.ones((1, num_edges), device=data.x.device, dtype=torch.int32)
+        data.node_feat_mask = torch.zeros((1, num_edges), device=data.x.device, dtype=torch.int32)
+
+        # node masks
+        data.is_feature_node = torch.zeros((num_nodes,), device=data.x.device, dtype=torch.bool)
+        data.is_original_node = torch.ones((num_nodes,), device=data.x.device, dtype=torch.bool)
+
         return data, dataset.num_features, dataset.num_classes, feature_type, num_ori_edges
 
 if __name__ == "__main__":
