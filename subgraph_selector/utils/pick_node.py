@@ -175,6 +175,8 @@ class NodePicker:
 
         # 2-hop 邊 coverage
         node_node_mask_np = self.data.node_node_mask.cpu().numpy()
+
+        
         node_node_edge_mask_in_2hop = np.logical_and(edge_mask_np, node_node_mask_np)
         num_2hop_original_edge = node_node_edge_mask_in_2hop.sum()
 

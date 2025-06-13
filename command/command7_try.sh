@@ -81,8 +81,14 @@ python train_remaining_main.py --dataset FacebookPagePage --normalize --model GC
 
 # 2. 移除特徵
 ## (1) Original Graph (node mask)
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type random_walk --walk_length 5 --num_walks 3 --fraction 0.1 --run_mode try_remove_from_RandomWalk --fraction_feat 0.1 --node_choose stratified_by_degree
+
 ## (2) feature to Node (含節點邊 & 特徵邊)
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type random_walk --walk_length 1 --num_walks 1 --run_mode try_remove_from_RandomWalk --feature_to_node --structure_mode random+imp --fraction_feat 0.1 --node_choose stratified_by_degree --only_feature_node
+
 ## (3) feature to Node (只有特徵邊)
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type random_walk --walk_length 1 --num_walks 1 --fraction 0.1 --run_mode try_remove_from_RandomWalk --feature_to_node --structure_mode random+imp --fraction_feat 0.1 --same_feat --node_choose stratified_by_degree
+
 
 # 3. 移除結構+特徵 (特徵相同)
 ## (1) Original Graph

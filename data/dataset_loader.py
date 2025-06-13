@@ -87,13 +87,14 @@ class GraphDatasetLoader:
         num_edges = data.edge_index.shape[1]
         num_nodes = data.x.shape[0]
 
-        # edge masks
-        data.node_node_mask = torch.ones((1, num_edges), device=data.x.device, dtype=torch.int32)
-        data.node_feat_mask = torch.zeros((1, num_edges), device=data.x.device, dtype=torch.int32)
+        # edge masks → match Feature2Node 格式
+        data.node_node_mask = torch.ones((num_edges,), device=data.x.device, dtype=torch.int32)
+        data.node_feat_mask = torch.zeros((num_edges,), device=data.x.device, dtype=torch.int32)
 
-        # node masks
+        # node masks → match Feature2Node 格式 (目前沒加 feature node → (num_nodes,))
         data.is_feature_node = torch.zeros((num_nodes,), device=data.x.device, dtype=torch.bool)
         data.is_original_node = torch.ones((num_nodes,), device=data.x.device, dtype=torch.bool)
+
 
         return data, dataset.num_features, dataset.num_classes, feature_type, num_ori_edges
 
