@@ -169,7 +169,7 @@ if __name__ == "__main__":
             coverage_stats = picker.compute_coverage(selected_nodes)  # 獲取 coverage 統計
 
 
-            save_coverage_log(args, coverage_stats, selected_nodes=selected_nodes, save_dir="saved/node_coverage")
+            save_coverage_log(args, split_id, coverage_stats, selected_nodes=selected_nodes, save_dir="saved/node_coverage")
 
 
         # Select subgraph
@@ -216,7 +216,7 @@ if __name__ == "__main__":
                     top_k_percent_feat=args.fraction_feat,
                     use_feature_to_node=args.feature_to_node # 若要使用特徵，分成直接使用(node_mask)還是將特徵轉為結構使用(edge_mask)
                 )            
-                selector.load_data(args.split_id)
+                selector.load_data(split_id)
                 selector.plot_edge_distribution()
 
                 # 只有需要選特徵邊時，selected_feat_ids 才會有值，不然就是空的

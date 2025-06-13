@@ -1,12 +1,12 @@
 import pandas as pd
 import os
 
-def save_coverage_log(args, coverage_stats, selected_nodes, save_dir="saved/node_coverage"):
+def save_coverage_log(args, split_id, coverage_stats, selected_nodes, save_dir="saved/node_coverage"):
     os.makedirs(save_dir, exist_ok=True)  # 確保資料夾存在
 
     # 準備一筆要寫入的資料
     record = {
-        "split_id": args.split_id,
+        "split_id": split_id,
         "selector_type": args.selector_type,
         "dataset_name": args.dataset,
         "node_choose": args.node_choose,
@@ -24,7 +24,7 @@ def save_coverage_log(args, coverage_stats, selected_nodes, save_dir="saved/node
         "selected_nodes": selected_nodes,  # - 選擇的節點
     }
 
-    save_path = os.path.join(save_dir, f"split{args.split_id}_{args.dataset}.csv")
+    save_path = os.path.join(save_dir, f"split{split_id}_{args.dataset}.csv")
 
     # 如果檔案存在，append，否則新建
     file_exists = os.path.exists(save_path)
