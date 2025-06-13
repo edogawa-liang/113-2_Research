@@ -176,11 +176,17 @@ class NodePicker:
         # 2-hop 邊 coverage
         node_node_mask_np = self.data.node_node_mask.cpu().numpy()
 
-        
-        node_node_edge_mask_in_2hop = np.logical_and(edge_mask_np, node_node_mask_np)
-        num_2hop_original_edge = node_node_edge_mask_in_2hop.sum()
+        if self.only_feature_node:
+            # only_feature_node → subgraph 裡根本沒有 node-node edge → 直接設為 0
+            print(f"[compute_coverage] only_feature_node=True → num_2hop_original_edge = 0.")
+            num_2hop_original_edge = 0
+            num_2hop_edges = edge_mask_np.sum()
 
-        num_2hop_edges = edge_mask_np.sum()
+        else:
+            node_node_edge_mask_in_2hop = np.logical_and(edge_mask_np, node_node_mask_np)
+            num_2hop_original_edge = node_node_edge_mask_in_2hop.sum()
+            num_2hop_edges = edge_mask_np.sum()
+            
         edge_2hop_ratio_ori = num_2hop_original_edge / self.num_ori_edges
         edge_2hop_ratio_current = num_2hop_edges / self.data.edge_index.shape[1]
 
