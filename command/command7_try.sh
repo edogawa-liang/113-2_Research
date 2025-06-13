@@ -71,7 +71,7 @@ python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 
 python train_remaining_main.py --dataset FacebookPagePage --normalize --model GCN2 --epochs 1 --lr 0.01 --selector_type explainer --fraction 0.1 --base_dir saved/try_stage2 --explainer_name GNNExplainer --node_choose stratified_by_degree --run_mode try_remove_from_GNNExplainer
 
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type random --fraction 0.1 --run_mode try_baseline_Result
-python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type random_walk --walk_length 10 --num_walks 5 --fraction 0.1 --run_mode try_remove_from_RandomWalk
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type random_walk --walk_length 5 --num_walks 3 --fraction 0.1 --run_mode try_remove_from_RandomWalk
 
 
 ## (2) Only Structure

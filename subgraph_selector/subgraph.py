@@ -26,20 +26,33 @@ class CoreSubgraphExtractor:
         ori_edge_index_np = self.ori_data.edge_index.cpu().numpy()
         remain_edge_index_np = self.remaining_graph.edge_index.cpu().numpy()
 
+        print(f"[CoreSubgraphExtractor] ori_edge_index edges: {ori_edge_index_np.shape[1]}")
+        print(f"[CoreSubgraphExtractor] remain_edge_index edges: {remain_edge_index_np.shape[1]}")
+
+        # 先建 set
         ori_edges_set = self._edge_set(ori_edge_index_np)
         remain_edges_set = self._edge_set(remain_edge_index_np)
 
+        print(f"[CoreSubgraphExtractor] ori_edges_set size: {len(ori_edges_set)}")
+        print(f"[CoreSubgraphExtractor] remain_edges_set size: {len(remain_edges_set)}")
+
+        # 建 map: (src,dst) -> index
         ori_edge_map = {}
         for i in range(ori_edge_index_np.shape[1]):
             src, dst = ori_edge_index_np[0, i], ori_edge_index_np[1, i]
-            edge = (min(src, dst), max(src, dst)) if self.is_undirected else (src, dst)
+            edge = (src, dst)  # 不做 min/max → 就是直接比對 edge_index 裡的 pair
             ori_edge_map[edge] = i
 
         num_ori_edges = ori_edge_index_np.shape[1]
         self.edge_removed_mask = np.zeros((1, num_ori_edges), dtype=np.int32)
-        for edge in ori_edges_set - remain_edges_set:
+
+        removed_edges = ori_edges_set - remain_edges_set
+        print(f"[CoreSubgraphExtractor] removed_edges size: {len(removed_edges)}")
+
+        for edge in removed_edges:
             if edge in ori_edge_map:
-                self.edge_removed_mask[0, ori_edge_map[edge]] = 1
+                idx = ori_edge_map[edge]
+                self.edge_removed_mask[0, idx] = 1
 
         print("[CoreSubgraphExtractor] Removed masks computed.")
 
@@ -47,12 +60,10 @@ class CoreSubgraphExtractor:
         edges = set()
         for i in range(edge_index_np.shape[1]):
             src, dst = edge_index_np[0, i], edge_index_np[1, i]
-            if self.is_undirected:
-                edge = (min(src, dst), max(src, dst))
-            else:
-                edge = (src, dst)
+            edge = (src, dst)  # 不做 min/max
             edges.add(edge)
         return edges
+
 
 
     def summary(self):
