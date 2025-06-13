@@ -70,11 +70,10 @@ def parse_args():
     parser.add_argument("--fraction_feat", type=float, default=0, help="Fraction of features to select for feature-to-node conversion")
     parser.add_argument("--same_feat", type=lambda x: x.lower() == "true", default=True, help="If true, all nodes select the same features; otherwise, each node selects independently.")
     
-    # repeat settings
-    parser.add_argument("--repeat_start", type=int, default=0, help="Start repeat id (inclusive)")
-    parser.add_argument("--repeat_end", type=int, default=9, help="End repeat id (inclusive)")
+    # split settings
+    parser.add_argument("--split_start", type=int, default=0, help="Start repeat id (inclusive)")
+    parser.add_argument("--split_end", type=int, default=0, help="End repeat id (inclusive)")
 
-    # 第一次訓練時，不能用 fix_train_valid。用fix_train_valid時，記得run_mode加 split 0
     return parser.parse_args()
 
 
@@ -135,11 +134,11 @@ if __name__ == "__main__":
     data.edge_weight = edge_weight
 
 
-    # 每次repeat 挑選的節點都不一樣，分別找子圖與訓練模型
-    for repeat_id in range(args.repeat_start, args.repeat_end + 1):
-        print(f"\n===== [Repeat {repeat_id}] =====")
+    # 每次 repeat 挑選的節點都不一樣，分別找子圖與訓練模型
+    for split_id in range(args.split_start, args.split_end + 1):
+        print(f"\n===== [Repeat {split_id}] =====")
 
-        train_mask, val_mask, test_mask, unknown_mask = load_split_csv(args.dataset, repeat_id, DEVICE) # 這裏的mask是原dataset的長度
+        train_mask, val_mask, test_mask, unknown_mask = load_split_csv(args.dataset, split_id, DEVICE) # 這裏的mask是原dataset的長度
         num_orig_nodes = train_mask.shape[0]
         num_total_nodes = data.x.shape[0]
 
@@ -170,7 +169,7 @@ if __name__ == "__main__":
             coverage_stats = picker.compute_coverage()  # 獲取 coverage 統計
 
 
-            save_coverage_log(args, coverage_stats, repeat_id, selected_nodes=selected_nodes, save_dir="saved/node_coverage")
+            save_coverage_log(args, coverage_stats, split_id, selected_nodes=selected_nodes, save_dir="saved/node_coverage")
 
 
         # Select subgraph
@@ -265,12 +264,15 @@ if __name__ == "__main__":
                     fraction_feat=args.fraction_feat
                 ) # 把most common features 都變成0
 
-        save_dir = os.path.join(args.run_mode, f"split_{repeat_id}")
+        # 希望模型跟結果都存在 split_id 資料夾下。但檔名是trial_number開頭
+        save_dir = os.path.join(args.run_mode, f"split_{split_id}")
+
         logger = ExperimentLogger(file_name=args.filename, note=args.note, copy_old=True, run_mode=save_dir)
         trial_number = logger.get_next_trial_number(args.dataset + "_remaining_graph")
 
         # Build core subgraph mask
-        # 匯出核心子圖 mask
+        # 匯出核心子圖 mask 
+        # 存在split_id folder下
         extractor = CoreSubgraphExtractor(
             ori_data=ori_data,
             remaining_graph=remaining_graph,
@@ -282,7 +284,6 @@ if __name__ == "__main__":
         extractor.compute_masks()
         extractor.summary()  # 印出移除的特徵和邊的統計
         extractor.save()
-
 
         # 移除特徵全為0的欄位 (只在移除相同特徵時使用)
         if args.same_feat:

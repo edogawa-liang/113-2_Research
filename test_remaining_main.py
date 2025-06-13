@@ -24,12 +24,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Train GNN after removing a selected subgraph.")
     parser.add_argument("--dataset", type=str, required=True, help="Dataset name")
     parser.add_argument("--normalize", action="store_true", help="Whether to normalize the dataset.")
-
     parser.add_argument("--model", type=str, default="GCN2", choices=["GCN2", "GCN3"], help="Model type")
-    parser.add_argument("--epochs", type=int, default=300, help="Number of training epochs")
-    parser.add_argument("--lr", type=float, default=0.01, help="Learning rate")
-    parser.add_argument("--weight_decay", type=float, default=1e-4, help="Weight decay for optimizer")
-    
 
     # explainer
     parser.add_argument("--run_mode", type=str, default="try", help="Run mode") 
@@ -104,13 +99,10 @@ if __name__ == "__main__":
     edge_mask_tensor = torch.tensor(remaining_edge_mask[0], device=DEVICE, dtype=torch.bool)
     remaining_graph.edge_index = ori_edge_index[:, edge_mask_tensor]
 
-
-
     # Remove all-zero features
     if args.run_mode.endswith("_samefeat"):
         remaining_graph.x, zero_feature_cols = remove_all_zero_features(remaining_graph.x)
         print(f"Original features: {ori_data.x.shape[1]}, Removed features (all-zero): {len(zero_feature_cols)}")
-
 
     num_features = remaining_graph.x.size(1)
 
@@ -121,7 +113,6 @@ if __name__ == "__main__":
                                 num_features=num_features, num_classes=num_classes, 
                                 model_class=GCN2Classifier if args.model == "GCN2" else GCN3Classifier,
                                 trial_number=args.trial_number, device=DEVICE,
-                                epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
                                 run_mode=save_dir)
 
 

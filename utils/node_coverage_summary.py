@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-def save_coverage_log(args, coverage_stats, repeat_id, selected_nodes, save_dir="saved/node_coverage"):
+def save_coverage_log(args, coverage_stats, split_id, selected_nodes, save_dir="saved/node_coverage"):
     os.makedirs(save_dir, exist_ok=True)  # 確保資料夾存在
 
     # 準備一筆要寫入的資料
@@ -14,7 +14,6 @@ def save_coverage_log(args, coverage_stats, repeat_id, selected_nodes, save_dir=
         "only_feature_node": args.only_feature_node,
         "node_ratio": args.node_ratio,
         "edge_ratio": args.edge_ratio,
-        "repeat_id": repeat_id,
         "num_selected_nodes": coverage_stats[0],  # - selected node 數量 
         "node_ratio_ori": coverage_stats[1],  # - selected node 在原圖的比例 
         "node_ratio_current": coverage_stats[2],  # - selected node 在現在圖的比例 
