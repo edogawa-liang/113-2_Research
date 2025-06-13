@@ -44,7 +44,7 @@ def parse_args():
     # random
     parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
     # explainer
-    parser.add_argument("--base_dir", type=str, default="saved/stage2_node_ratio_0.01", help="Base directory for explainer results")
+    parser.add_argument("--base_dir", type=str, default="saved/stage2", help="Base directory for explainer results")
     parser.add_argument("--explainer_name", type=str, default="GNNExplainer", choices=["GNNExplainer", "PGExplainer", "DummyExplainer", "CFExplainer"], help="Name of the explainer model")
     parser.add_argument("--node_choose", type=str, default="random", choices=["all_train", "random", "stratified_by_degree", "degree", "pagerank", "betweenness", "closeness"],  help="Name of the experiment folder") # both for explainer and random walk
     # random walk
@@ -68,8 +68,8 @@ def parse_args():
 
     # select feature
     parser.add_argument("--fraction_feat", type=float, default=0, help="Fraction of features to select for feature-to-node conversion")
-    parser.add_argument("--same_feat", type=lambda x: x.lower() == "true", default=True, help="If true, all nodes select the same features; otherwise, each node selects independently.")
-    
+    parser.add_argument("--same_feat", action="store_true", help="all nodes select the same features; otherwise, each node selects independently.")
+
     # split settings
     parser.add_argument("--split_start", type=int, default=0, help="Start repeat id (inclusive)")
     parser.add_argument("--split_end", type=int, default=0, help="End repeat id (inclusive)")
@@ -281,7 +281,7 @@ if __name__ == "__main__":
             is_undirected=True, # 原本的 GNN 通常是 undirected
             trial_number=trial_number
         )
-        extractor.compute_masks()
+        extractor.compute_removed_masks()
         extractor.summary()  # 印出移除的特徵和邊的統計
         extractor.save()
 

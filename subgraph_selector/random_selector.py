@@ -61,16 +61,22 @@ class RandomEdgeSelector:
         num_nodes = self.data.num_nodes
         num_features = self.data.x.size(1)
 
-        train_mask = self.data.train_mask.to(self.device)
-        train_nodes = torch.where(train_mask)[0]
+        # Combine train/val/unknown masks → valid nodes
+        combined_mask = (
+            self.data.train_mask.to(self.device)
+            | self.data.val_mask.to(self.device)
+            | self.data.unknown_mask.to(self.device)
+        )
+        valid_nodes = torch.where(combined_mask)[0]
 
         # ========== 篩選訓練節點間的 node-node 邊 ==========
         ori_edge_index = edge_index[:, :num_ori_edges]
-        mask_train_edges = torch.isin(ori_edge_index[0], train_nodes) & torch.isin(ori_edge_index[1], train_nodes)
-        train_edge_indices = torch.where(mask_train_edges)[0]
-        num_train_edges = train_edge_indices.shape[0]
-        num_selected_ori = int(num_train_edges * self.fraction)
-        selected_ori = random.sample(train_edge_indices.tolist(), num_selected_ori)
+        mask_valid_edges = torch.isin(ori_edge_index[0], valid_nodes) & torch.isin(ori_edge_index[1], valid_nodes)
+        valid_edge_indices = torch.where(mask_valid_edges)[0]
+
+        num_valid_edges = valid_edge_indices.shape[0]
+        num_selected_ori = int(num_valid_edges * self.fraction)
+        selected_ori = random.sample(valid_edge_indices.tolist(), num_selected_ori)
 
         # ========== 篩選 node-feature 邊 ==========
         if num_feat > 0:
@@ -84,7 +90,7 @@ class RandomEdgeSelector:
         # ========== Combine ==========
         selected_idx = selected_ori + selected_feat
 
-        print(f"Selected {len(selected_ori)} training node-node edges from {num_train_edges} available.")
+        print(f"Selected {len(selected_ori)} node-node edges from {num_valid_edges} available (train + val + unknown).")
         print(f"Selected {len(selected_feat)} node-feature edges from {num_feat} available.")
 
         return torch.tensor(selected_idx, dtype=torch.long, device=self.device)

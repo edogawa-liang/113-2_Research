@@ -23,7 +23,6 @@ class ExplainerEdgeSelector:
         self.data = data.to(device)
         self.selected_nodes = selected_nodes  # 選擇的節點indices
         self.base_path = os.path.join(base_dir, explainer_name, dataset_name)
-        self.sub_dirs = sorted([d for d in os.listdir(self.base_path) if d.endswith("GCN2Classifier")]) # GCN2Regressor
         self.edge_masks = []  # 存放所有 edge_mask
         self.edge_aggregated = None  # 平均 edge_mask
         self.top_k_percent = top_k_percent
