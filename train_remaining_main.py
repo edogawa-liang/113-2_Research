@@ -166,10 +166,10 @@ if __name__ == "__main__":
                 node_ratio=args.node_ratio, edge_ratio=args.edge_ratio # 控制挑選的節點數量
             )
             selected_nodes = picker.pick_nodes()
-            coverage_stats = picker.compute_coverage()  # 獲取 coverage 統計
+            coverage_stats = picker.compute_coverage(selected_nodes)  # 獲取 coverage 統計
 
 
-            save_coverage_log(args, coverage_stats, split_id, selected_nodes=selected_nodes, save_dir="saved/node_coverage")
+            save_coverage_log(args, coverage_stats, selected_nodes=selected_nodes, save_dir="saved/node_coverage")
 
 
         # Select subgraph
