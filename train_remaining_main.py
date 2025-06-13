@@ -20,7 +20,6 @@ from data.structure import StructureFeatureBuilder, extract_edges
 from data.feature2node import FeatureNodeConverter
 from data.node2feature import FeatureNodeReverter
 from data.prepare_split import load_split_csv
-from data.split_unknown_to_test import load_split_test
 from utils.node_coverage_summary import save_coverage_log
 from utils.feature_utils import remove_all_zero_features, remove_top_common_features
 from subgraph_selector.subgraph import CoreSubgraphExtractor
@@ -74,12 +73,6 @@ def parse_args():
     # repeat settings
     parser.add_argument("--repeat_start", type=int, default=0, help="Start repeat id (inclusive)")
     parser.add_argument("--repeat_end", type=int, default=9, help="End repeat id (inclusive)")
-
-    # 是否固定 train/valid mask
-    parser.add_argument("--fix_train_valid", action="store_true", help="If set, use fixed train/valid masks, only test mask varies by repeat_id.")
-
-    # 使用的 split_id
-    parser.add_argument("--split_id", type=int, default=0, help="Split ID to use for fixed train/valid masks (default: 0)")
 
     # 第一次訓練時，不能用 fix_train_valid。用fix_train_valid時，記得run_mode加 split 0
     return parser.parse_args()
@@ -141,59 +134,29 @@ if __name__ == "__main__":
     data.edge_index = edge_index
     data.edge_weight = edge_weight
 
-    # 如果固定 train/valid mask 在loop外面先載入
-    if args.fix_train_valid:
-        print("\nLoading fixed train/valid masks...")
-        # 固定取 repeat_id = 0 的 train/valid mask
-        train_mask, val_mask, _, unknown_mask = load_split_csv(args.dataset, args.split_id, DEVICE)
-        num_orig_nodes = train_mask.shape[0]
-        num_total_nodes = data.x.shape[0]
-
-        # 如果有 feature_to_node 也一樣要 pad
-        if args.feature_to_node and num_total_nodes > num_orig_nodes:
-            pad_len = num_total_nodes - num_orig_nodes
-            print(f"Padding fixed masks with {pad_len} additional nodes for feature nodes...")
-
-            train_mask = pad_mask(train_mask)
-            val_mask = pad_mask(val_mask)
-            unknown_mask = pad_mask(unknown_mask)
-
-        data.train_mask = train_mask
-        data.val_mask = val_mask
-        data.unknown_mask = unknown_mask
 
     # 每次repeat 挑選的節點都不一樣，分別找子圖與訓練模型
     for repeat_id in range(args.repeat_start, args.repeat_end + 1):
         print(f"\n===== [Repeat {repeat_id}] =====")
 
-        if args.fix_train_valid: # 只 load test_mask
-            print("fix train, Loading test_mask only...")
-            test_mask = load_split_test(args.dataset, args.split_id, repeat_id, DEVICE)
+        train_mask, val_mask, test_mask, unknown_mask = load_split_csv(args.dataset, repeat_id, DEVICE) # 這裏的mask是原dataset的長度
+        num_orig_nodes = train_mask.shape[0]
+        num_total_nodes = data.x.shape[0]
 
-            if args.feature_to_node and num_total_nodes > num_orig_nodes:
-                test_mask = pad_mask(test_mask)
+        # add padding to feature node (mask會補滿，但y不會)
+        if args.feature_to_node and num_total_nodes > num_orig_nodes:
+            pad_len = num_total_nodes - num_orig_nodes
+            print(f"Padding masks with {pad_len} additional nodes for feature nodes...")
 
-            data.test_mask = test_mask
+            train_mask = pad_mask(train_mask)
+            val_mask = pad_mask(val_mask)
+            test_mask = pad_mask(test_mask)
+            unknown_mask = pad_mask(unknown_mask) 
 
-        else: # Load the split mask
-            train_mask, val_mask, test_mask, unknown_mask = load_split_csv(args.dataset, repeat_id, DEVICE) # 這裏的mask是原dataset的長度
-            num_orig_nodes = train_mask.shape[0]
-            num_total_nodes = data.x.shape[0]
-
-            # add padding to feature node (mask會補滿，但y不會)
-            if args.feature_to_node and num_total_nodes > num_orig_nodes:
-                pad_len = num_total_nodes - num_orig_nodes
-                print(f"Padding masks with {pad_len} additional nodes for feature nodes...")
-
-                train_mask = pad_mask(train_mask)
-                val_mask = pad_mask(val_mask)
-                test_mask = pad_mask(test_mask)
-                unknown_mask = pad_mask(unknown_mask) 
-
-            data.train_mask = train_mask
-            data.val_mask = val_mask
-            data.test_mask = test_mask
-            data.unknown_mask = unknown_mask
+        data.train_mask = train_mask
+        data.val_mask = val_mask
+        data.test_mask = test_mask
+        data.unknown_mask = unknown_mask
 
 
         # pick node: 挑選所有的訓練節點作為起點 (all_train) or 部分的訓練節點 (by random, Degree, PageRank, Betweenness, Closeness)
@@ -206,11 +169,8 @@ if __name__ == "__main__":
             selected_nodes = picker.pick_nodes()
             coverage_stats = picker.compute_coverage()  # 獲取 coverage 統計
 
-            # 如果 train/valid/test 重抽，每次都要存
-            # 如果是固定的 train/valid，則只在第一次存
-            if not args.fix_train_valid or repeat_id == args.repeat_start:
-                save_coverage_log(args, coverage_stats, repeat_id, selected_nodes=selected_nodes, save_dir="saved/node_coverage")
 
+            save_coverage_log(args, coverage_stats, repeat_id, selected_nodes=selected_nodes, save_dir="saved/node_coverage")
 
 
         # Select subgraph
@@ -224,7 +184,6 @@ if __name__ == "__main__":
                 top_k_percent_feat=args.fraction_feat,
                 feature_to_node=args.feature_to_node
             )
-            # 改 select_edge
             selected_edges = selector.select_edges(num_ori_edges)#  # 必須傳入以正確區分 node-node 和 node-feature 邊)
 
             # 特徵的選擇器（如果有指定 fraction_feat）
@@ -306,19 +265,23 @@ if __name__ == "__main__":
                     fraction_feat=args.fraction_feat
                 ) # 把most common features 都變成0
 
+        save_dir = os.path.join(args.run_mode, f"split_{repeat_id}")
+        logger = ExperimentLogger(file_name=args.filename, note=args.note, copy_old=True, run_mode=save_dir)
+        trial_number = logger.get_next_trial_number(args.dataset + "_remaining_graph")
+
         # Build core subgraph mask
         # 匯出核心子圖 mask
         extractor = CoreSubgraphExtractor(
             ori_data=ori_data,
             remaining_graph=remaining_graph,
-            run_mode=args.run_mode,
+            save_dir=save_dir,
             dataset=args.dataset,
-            repeat_id=repeat_id,
-            is_undirected=True # 你原本的 GNN 通常是 undirected
+            is_undirected=True, # 原本的 GNN 通常是 undirected
+            trial_number=trial_number
         )
         extractor.compute_masks()
+        extractor.summary()  # 印出移除的特徵和邊的統計
         extractor.save()
-
 
 
         # 移除特徵全為0的欄位 (只在移除相同特徵時使用)
@@ -333,29 +296,16 @@ if __name__ == "__main__":
         print("\nTraining GNN on the remaining graph after removing subgraph...")
         print("Final data imput to model:", remaining_graph)
 
-        logger = ExperimentLogger(file_name=args.filename, note=args.note, copy_old=True, run_mode=args.run_mode)
-        trial_number = logger.get_next_trial_number(args.dataset + "_remaining_graph")
         print(f"Training Classification Model - Trial {trial_number}")
         trainer = GNNClassifierTrainer(dataset_name=args.dataset, data=remaining_graph, 
                                     num_features=num_features, num_classes=num_classes, 
                                     model_class=GCN2Classifier if args.model == "GCN2" else GCN3Classifier,
                                     trial_number=trial_number, device=DEVICE,
                                     epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
-                                    run_mode=args.run_mode)
+                                    run_mode=save_dir)
 
 
-        if args.fix_train_valid: # 因目的是檢測不同的 test，所以固定模型
-            # 因為這時的 run_mode 後面會+split_0，所以要去掉
-            model_dir = os.path.join("saved", args.run_mode.replace(f"_split{args.split_id}", ""), "model", args.dataset)
-            model_name = f"{args.split_id}_{trainer.model_name}.pth"  # 你的 save_model_path 是這個 pattern
-            path_to_model = os.path.join(model_dir, model_name)
-            print(f"Loading fixed model from {path_to_model}")
-            trainer.load_model(path_to_model)
-            # test 用固定模型
-            result = trainer.test()
-
-        else:
-            result = trainer.run()
+        result = trainer.run()
 
 
         # Save experiment results

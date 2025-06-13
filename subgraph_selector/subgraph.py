@@ -2,30 +2,27 @@ import os
 import numpy as np
 
 class CoreSubgraphExtractor:
-    def __init__(self, ori_data, remaining_graph, run_mode, dataset, repeat_id, is_undirected=True):
+    def __init__(self, ori_data, remaining_graph, save_dir, dataset, is_undirected=True, trial_number=None):
         self.ori_data = ori_data
         self.remaining_graph = remaining_graph
-        self.run_mode = run_mode
+        self.save_dir = save_dir
         self.dataset = dataset
-        self.repeat_id = repeat_id
         self.is_undirected = is_undirected
+        self.trial_number = trial_number
 
-        self.feature_keep_mask = None
         self.feature_removed_mask = None
-        self.edge_keep_mask = None
         self.edge_removed_mask = None
 
-    def compute_masks(self):
-        print("[CoreSubgraphExtractor] Computing feature and edge masks...")
+    def compute_removed_masks(self):
+        print("[CoreSubgraphExtractor] Computing removed feature and edge masks...")
 
-        # Feature 部分
+        # === Feature mask ===
         ori_x_np = self.ori_data.x.cpu().numpy()
         remain_x_np = self.remaining_graph.x.cpu().numpy()
 
-        self.feature_keep_mask = (remain_x_np != 0).astype(np.int32)
         self.feature_removed_mask = ((ori_x_np != 0) & (remain_x_np == 0)).astype(np.int32)
 
-        # Edge 部分
+        # === Edge mask ===
         ori_edge_index_np = self.ori_data.edge_index.cpu().numpy()
         remain_edge_index_np = self.remaining_graph.edge_index.cpu().numpy()
 
@@ -39,17 +36,12 @@ class CoreSubgraphExtractor:
             ori_edge_map[edge] = i
 
         num_ori_edges = ori_edge_index_np.shape[1]
-        self.edge_keep_mask = np.zeros((1, num_ori_edges), dtype=np.int32)
-        for edge in remain_edges_set:
-            if edge in ori_edge_map:
-                self.edge_keep_mask[0, ori_edge_map[edge]] = 1
-
         self.edge_removed_mask = np.zeros((1, num_ori_edges), dtype=np.int32)
         for edge in ori_edges_set - remain_edges_set:
             if edge in ori_edge_map:
                 self.edge_removed_mask[0, ori_edge_map[edge]] = 1
 
-        print("[CoreSubgraphExtractor] Masks computed.")
+        print("[CoreSubgraphExtractor] Removed masks computed.")
 
     def _edge_set(self, edge_index_np):
         edges = set()
@@ -62,29 +54,54 @@ class CoreSubgraphExtractor:
             edges.add(edge)
         return edges
 
-    def save(self):
-        print("[CoreSubgraphExtractor] Saving masks...")
 
-        save_dir = os.path.join("saved", "core_subgraph_mask", self.run_mode, self.dataset)
+    def summary(self):
+        print("\n=== [CoreSubgraphExtractor Summary] ===")
+
+        # Feature
+        num_nodes, num_features = self.feature_removed_mask.shape
+        num_removed_features = self.feature_removed_mask.sum()
+        total_features = num_nodes * num_features
+        feature_removal_ratio = num_removed_features / total_features * 100
+
+        print(f"Removed features: {num_removed_features} / {total_features} ({feature_removal_ratio:.2f}%)")
+
+        # Edge
+        num_edges = self.edge_removed_mask.shape[1]
+        num_removed_edges = self.edge_removed_mask.sum()
+        edge_removal_ratio = num_removed_edges / num_edges * 100
+
+        print(f"Removed edges: {num_removed_edges} / {num_edges} ({edge_removal_ratio:.2f}%)")
+
+        print("========================================\n")
+
+
+    def save(self):
+        if self.trial_number is None:
+            raise ValueError("trial_number is None! Please set trial_number before calling save/load().")
+
+        print("[CoreSubgraphExtractor] Saving removed masks...")
+
+        save_dir = os.path.join("saved", "core_subgraph_mask", self.save_dir, self.dataset)
         os.makedirs(save_dir, exist_ok=True)
 
-        np.save(os.path.join(save_dir, f"repeat{self.repeat_id}_feature_keep_mask.npy"), self.feature_keep_mask)
-        np.save(os.path.join(save_dir, f"repeat{self.repeat_id}_feature_removed_mask.npy"), self.feature_removed_mask)
-        np.save(os.path.join(save_dir, f"repeat{self.repeat_id}_edge_keep_mask.npy"), self.edge_keep_mask)
-        np.save(os.path.join(save_dir, f"repeat{self.repeat_id}_edge_removed_mask.npy"), self.edge_removed_mask)
+        np.save(os.path.join(save_dir, f"{self.trial_number}_feature_mask.npy"), self.feature_removed_mask)
+        np.save(os.path.join(save_dir, f"{self.trial_number}_edge_mask.npy"), self.edge_removed_mask)
+        # 要對照 result 看這個 trial 的子圖做了哪些事情
 
-        print(f"[CoreSubgraphExtractor] Masks saved to {save_dir}.")
+        print(f"[CoreSubgraphExtractor] Removed masks saved to {save_dir}.")
 
     def load(self):
-        print("[CoreSubgraphExtractor] Loading masks...")
+        if self.trial_number is None:
+            raise ValueError("trial_number is None! Please set trial_number before calling save/load().")
 
-        load_dir = os.path.join("saved", "core_subgraph_mask", self.run_mode, self.dataset)
+        print("[CoreSubgraphExtractor] Loading removed masks...")
 
-        self.feature_keep_mask = np.load(os.path.join(load_dir, f"repeat{self.repeat_id}_feature_keep_mask.npy"))
-        self.feature_removed_mask = np.load(os.path.join(load_dir, f"repeat{self.repeat_id}_feature_removed_mask.npy"))
-        self.edge_keep_mask = np.load(os.path.join(load_dir, f"repeat{self.repeat_id}_edge_keep_mask.npy"))
-        self.edge_removed_mask = np.load(os.path.join(load_dir, f"repeat{self.repeat_id}_edge_removed_mask.npy"))
+        load_dir = os.path.join("saved", "core_subgraph_mask", self.save_dir, self.dataset)
 
-        print(f"[CoreSubgraphExtractor] Masks loaded from {load_dir}.")
+        self.feature_removed_mask = np.load(os.path.join(load_dir, f"{self.trial_number}_feature_mask.npy"))
+        self.edge_removed_mask = np.load(os.path.join(load_dir, f"{self.trial_number}_edge_mask.npy"))
 
-        return self.feature_keep_mask, self.feature_removed_mask, self.edge_keep_mask, self.edge_removed_mask
+        print(f"[CoreSubgraphExtractor] Removed masks loaded from {load_dir}.")
+
+        return self.feature_removed_mask, self.edge_removed_mask
