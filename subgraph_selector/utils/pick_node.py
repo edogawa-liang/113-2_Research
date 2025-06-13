@@ -86,10 +86,23 @@ class NodePicker:
             selected_nodes = self._select_stratified_by_degree(df['node'].tolist(), N_final)
 
         else:
-            assert self.node_choose in ["Degree", "PageRank", "Betweenness", "Closeness"], "Unknown node_choose!"
-            selected_nodes = df.sort_values(by=self.node_choose, ascending=False)['node'].tolist()[:N_final]
+            # Mapping node_choose to real column name
+            node_choose_to_column = {
+                "degree": "degree_norm",
+                "pagerank": "pagerank_norm",
+                "betweenness": "betweenness_norm",
+                "closeness": "closeness_norm"
+            }
+
+            assert self.node_choose in node_choose_to_column, f"Unknown node_choose! Must be one of {list(node_choose_to_column.keys())}"
+            column_name = node_choose_to_column[self.node_choose]
+
+            assert column_name in df.columns, f"Column {column_name} not found in df.columns!"
+
+            selected_nodes = df.sort_values(by=column_name, ascending=False)['node'].tolist()[:N_final]
 
         return selected_nodes
+
 
 
 

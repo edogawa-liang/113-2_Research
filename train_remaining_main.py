@@ -46,7 +46,7 @@ def parse_args():
     # explainer
     parser.add_argument("--base_dir", type=str, default="saved/stage2_node_ratio_0.01", help="Base directory for explainer results")
     parser.add_argument("--explainer_name", type=str, default="GNNExplainer", choices=["GNNExplainer", "PGExplainer", "DummyExplainer", "CFExplainer"], help="Name of the explainer model")
-    parser.add_argument("--node_choose", type=str, default="random", choices=["random", "high_degree", "top_pagerank", "manual", "high_betweenness", "stratified_by_degree", "all"],  help="Name of the experiment folder") # both for explainer and random walk
+    parser.add_argument("--node_choose", type=str, default="random", choices=["all_train", "random", "stratified_by_degree", "degree", "pagerank", "betweenness", "closeness"],  help="Name of the experiment folder") # both for explainer and random walk
     # random walk
     parser.add_argument("--walk_length", type=int, default=10, help="Number of steps per random walk")
     parser.add_argument("--num_walks", type=int, default=5, help="Number of walks per selected node")

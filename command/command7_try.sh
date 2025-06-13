@@ -59,9 +59,31 @@ python data/split_unknown_to_test.py --dataset Cora --use_id 0 --num_repeat 10
 
 python training_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --run_mode try_original_split0 --note original_split0 --fix_train_valid --split_id 0
 
+# ======================
+
 # Stage 3: 訓練移除解釋子圖後模型
-先沒有fix_train_valid 一次 repeat_start 0 repeat_end 0 
-再 fix_train_valid repeat_start 0 repeat_end 9
+# 1. 移除結構
+## (1) Original Graph (edge mask)
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --selector_type explainer --fraction 0.1 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose Page --run_mode remove_from_GNNExplainer_samefeat
+
+--run_mode remove_from_GNNExplainer_samefeat --note true_y_GNNExplainer_node_mask --selector_type explainer --fraction 0.2 --base_dir saved/stage2_y_edge_0.3 --explainer_name GNNExplainer --node_choose random --fraction_feat 0.2  --same_feat True
+
+## (2) Only Structure
+
+# 2. 移除特徵
+## (1) Original Graph (node mask)
+## (2) feature to Node (含節點邊 & 特徵邊)
+## (3) feature to Node (只有特徵邊)
+
+# 3. 移除結構+特徵 (特徵相同)
+## (1) Original Graph
+## (2) feature to Node (含節點邊 & 特徵邊)
+## (3) Only Structure + Feature to Node (只有特徵邊) 
+
+# 4. 移除結構+特徵 (特徵不同)
+## (1) Original Graph
+## (2) feature to Node (含節點邊 & 特徵邊)
+## (3) Only Structure + Feature to Node (只有特徵邊)
 
 
 
