@@ -23,6 +23,7 @@ from data.prepare_split import load_split_csv
 from data.split_unknown_to_test import load_split_test
 from utils.node_coverage_summary import save_coverage_log
 from utils.feature_utils import remove_all_zero_features, remove_top_common_features
+from subgraph_selector.subgraph import CoreSubgraphExtractor
 
 
 # 核心子圖包含整個節點
@@ -81,7 +82,6 @@ def parse_args():
     parser.add_argument("--split_id", type=int, default=0, help="Split ID to use for fixed train/valid masks (default: 0)")
 
     # 第一次訓練時，不能用 fix_train_valid。用fix_train_valid時，記得run_mode加 split 0
-
     return parser.parse_args()
 
 
@@ -273,11 +273,9 @@ if __name__ == "__main__":
         elif args.selector_type == "random_walk":
             print("Using Random Walk Selector")
             # 改成直接傳入node
-            selector = RandomWalkEdgeSelector(data ,fraction=args.fraction, selected_nodes=selected_nodes,
+            selector = RandomWalkEdgeSelector(data, fraction=args.fraction, selected_nodes=selected_nodes,
                                             walk_length=args.walk_length, num_walks=args.num_walks, feature_type=feature_type, 
                                             device=DEVICE, top_k_percent_feat=args.fraction_feat)
-            node_start_ratio = selector.get_final_node_ratio()
-            edge_neighbor_ratio = selector.get_neighbor_edge_ratio()
             selected_edges, selected_feat_ids, ori_edge_visit_ratio, feat_edge_visit_ratio = selector.select_edges()
 
         # Remove subgraph from the original graph
@@ -288,7 +286,7 @@ if __name__ == "__main__":
             num_node = remaining_graph_constructor.get_node_count()
             num_edge = remaining_graph_constructor.get_edge_count()
         else:
-            remaining_graph_constructor = RemainingGraphConstructor(data, selected_edges, selected_feat_mask=selected_feat, device=DEVICE)
+            remaining_graph_constructor = RemainingGraphConstructor(data, selected_edges, selected_feat_mask=selected_feat, device=DEVICE) # selected_feat 沒有經過 feature_to_node 才會有
             remaining_graph = remaining_graph_constructor.get_remaining_graph()
 
 
@@ -306,7 +304,22 @@ if __name__ == "__main__":
                     x=ori_data.x, # 放入的是原始的data
                     selected_feat_ids=selected_feat_ids,
                     fraction_feat=args.fraction_feat
-                )
+                ) # 把most common features 都變成0
+
+        # Build core subgraph mask
+        # 匯出核心子圖 mask
+        extractor = CoreSubgraphExtractor(
+            ori_data=ori_data,
+            remaining_graph=remaining_graph,
+            run_mode=args.run_mode,
+            dataset=args.dataset,
+            repeat_id=repeat_id,
+            is_undirected=True # 你原本的 GNN 通常是 undirected
+        )
+        extractor.compute_masks()
+        extractor.save()
+
+
 
         # 移除特徵全為0的欄位 (只在移除相同特徵時使用)
         if args.same_feat:
