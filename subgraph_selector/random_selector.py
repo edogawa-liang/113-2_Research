@@ -35,6 +35,7 @@ class RandomFeatureSelector:
 
 
 class RandomEdgeSelector:
+    # feature_to_node 有問題 還沒修(但不會使用到)
     def __init__(self, data, fraction=0.1, seed=123, device="cpu", top_k_percent_feat=0.1, feature_to_node=None):
         self.data = data.to(device)
         self.fraction = fraction
