@@ -60,7 +60,7 @@ def filter_unexplained_nodes(train_nodes, save_dir):
     """
     unexplained_nodes = []
     for node_id in train_nodes:
-        save_path = os.path.join(save_dir, f"{node_id}.npz")
+        save_path = os.path.join(save_dir, f"node_{node_id}.npz")
         if not os.path.exists(save_path):
             unexplained_nodes.append(node_id)
 

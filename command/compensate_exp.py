@@ -1,1 +1,0 @@
-# 寫信讀取 113-2_Research/saved/node_imp/GitHub/GitHub_fn_nn.csv
