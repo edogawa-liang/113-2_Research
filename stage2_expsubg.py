@@ -44,7 +44,28 @@ def parse_args():
     parser.add_argument("--repeat_start", type=int, default=0, help="Start repeat id (inclusive)")
     parser.add_argument("--repeat_end", type=int, default=9, help="End repeat id (inclusive)")
 
+    # 補解釋
+    parser.add_argument("--check_unexplained", action="store_true", help="Check which train nodes have not been explained yet.")
+
     return parser.parse_args()
+
+
+
+def filter_unexplained_nodes(train_nodes, save_dir):
+    """
+    Check which train nodes have not been explained yet (no {node_id}.npz in the folder).
+    
+    Returns:
+        unexplained_nodes: list of node_ids not yet explained
+    """
+    unexplained_nodes = []
+    for node_id in train_nodes:
+        save_path = os.path.join(save_dir, f"{node_id}.npz")
+        if not os.path.exists(save_path):
+            unexplained_nodes.append(node_id)
+
+    print(f"[Check] {len(unexplained_nodes)} unexplained nodes out of {len(train_nodes)} total.")
+    return unexplained_nodes
 
 
 if __name__ == "__main__":
@@ -147,6 +168,9 @@ if __name__ == "__main__":
             cf_beta=args.cf_beta,
         )
 
+        if args.check_unexplained:
+            save_dir = os.path.join("saved", args.run_mode, args.explainer_type, args.dataset, f"{repeat_id}_{explainer.model_class.__name__}")
+            train_nodes = filter_unexplained_nodes(train_nodes, save_dir)
 
         # Explain each node
         cf_success_nodes = []
