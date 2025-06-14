@@ -46,10 +46,10 @@ def parse_args():
     # explainer
     parser.add_argument("--base_dir", type=str, default="saved/stage2", help="Base directory for explainer results")
     parser.add_argument("--explainer_name", type=str, default="GNNExplainer", choices=["GNNExplainer", "PGExplainer", "DummyExplainer", "CFExplainer"], help="Name of the explainer model")
-    parser.add_argument("--node_choose", type=str, default="random", choices=["all_train", "random", "stratified_by_degree", "degree", "pagerank", "betweenness", "closeness"],  help="Name of the experiment folder") # both for explainer and random walk
+    parser.add_argument("--node_choose", type=str, default="stratified_by_degree", choices=["all_train", "random", "stratified_by_degree", "degree", "pagerank", "betweenness", "closeness"],  help="Name of the experiment folder") # both for explainer and random walk
     # random walk
     parser.add_argument("--walk_length", type=int, default=10, help="Number of steps per random walk")
-    parser.add_argument("--num_walks", type=int, default=5, help="Number of walks per selected node")
+    parser.add_argument("--num_walks", type=int, default=3, help="Number of walks per selected node")
     parser.add_argument("--node_ratio", type=str, default="auto", help="'auto' for automatic calculation or a numeric value to manually set node selection ratio")
     parser.add_argument("--edge_ratio", type=float, default=0.5, help="Ensures sufficient edges in the subgraph, required only if node_ratio is 'auto'")
 
@@ -311,15 +311,22 @@ if __name__ == "__main__":
 
         # Save experiment results
         if args.selector_type == "random":
-            logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, fraction=args.fraction, fraction_feat=args.fraction_feat, remove_feat=zero_feature_cols)
+            logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, fraction=args.fraction, fraction_feat=args.fraction_feat, remove_feat=zero_feature_cols, 
+                                  only_structure=args.only_structure, feature_to_node=args.feature_to_node, only_feature_node=args.only_feature_node, structure_mode=args.structure_mode, same_feat=args.same_feat)
         
         elif args.selector_type == "explainer":
             logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, explaner=args.explainer_name, node_choose=args.node_choose, 
-                                  fraction=args.fraction, fraction_feat=args.fraction_feat, remove_feat=zero_feature_cols)
+                                  fraction=args.fraction, fraction_feat=args.fraction_feat, remove_feat=zero_feature_cols,
+                                  only_structure=args.only_structure, feature_to_node=args.feature_to_node, only_feature_node=args.only_feature_node, structure_mode=args.structure_mode, same_feat=args.same_feat)
+        
         
         elif args.selector_type == "random_walk":
             logger.log_experiment(args.dataset + "_remaining_graph", result, label_source="Original", selector_type=args.selector_type, 
                                   walk_length=args.walk_length, num_walks=args.num_walks, node_choose=args.node_choose, fraction=args.fraction, fraction_feat=args.fraction_feat, 
-                                  ori_edge_visit_ratio=ori_edge_visit_ratio, feat_edge_visit_ratio=feat_edge_visit_ratio, remove_feat=zero_feature_cols)
+                                  ori_edge_visit_ratio=ori_edge_visit_ratio, feat_edge_visit_ratio=feat_edge_visit_ratio, remove_feat=zero_feature_cols, 
+                                  only_structure=args.only_structure, feature_to_node=args.feature_to_node, only_feature_node=args.only_feature_node, structure_mode=args.structure_mode, same_feat=args.same_feat)
+        
 
         print("Experiment finished and results saved.")
+
+

@@ -62,43 +62,75 @@ python training_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --run_m
 # ======================
 
 # Stage 3: 訓練移除解釋子圖後模型
-# 1. 移除結構
-## (1) Original Graph (edge mask)
-### [1] random select
-### [2] explainer select
-### [3] random walk select
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type explainer --fraction 0.1 --base_dir saved/try_stage2 --explainer_name GNNExplainer --node_choose pagerank --run_mode try_remove_from_GNNExplainer --note split0_original_only_structure
 python train_remaining_main.py --dataset FacebookPagePage --normalize --model GCN2 --epochs 1 --lr 0.01 --selector_type explainer --fraction 0.1 --base_dir saved/try_stage2 --explainer_name GNNExplainer --node_choose stratified_by_degree --run_mode try_remove_from_GNNExplainer
 
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type random --fraction 0.1 --run_mode try_baseline_Result
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type random_walk --walk_length 5 --num_walks 3 --fraction 0.1 --run_mode try_remove_from_RandomWalk
-
-
-## (2) Only Structure
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type explainer --fraction 0.1 --base_dir saved/try_stage2 --explainer_name GNNExplainer --node_choose pagerank --run_mode try_remove_from_GNNExplainer --note split0_original_only_structure --only_structure
 python train_remaining_main.py --dataset FacebookPagePage --normalize --model GCN2 --epochs 1 --lr 0.01 --selector_type random_walk --walk_length 10 --num_walks 5 --fraction 0.1 --node_choose all_train --run_mode try_remove_from_RandomWalk --only_structure
 
 
+# 1. 移除結構
+## (1) Original Graph (edge mask)
+### [1] random select
+### [2] explainer select
+### [3] random walk select
+
+
+## (2) Only Structure
+### [1] random select
+### [2] explainer select
+### [3] random walk select
+
+
 # 2. 移除特徵
 ## (1) Original Graph (node mask)
-python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type random_walk --walk_length 5 --num_walks 3 --fraction 0.1 --run_mode try_remove_from_RandomWalk --fraction_feat 0.1 --node_choose stratified_by_degree
+### [1] random select
+### [2] explainer select
+### [3] random walk select
 
 ## (2) feature to Node (含節點邊 & 特徵邊)
-python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type random_walk --walk_length 1 --num_walks 1 --run_mode try_remove_from_RandomWalk --feature_to_node --structure_mode random+imp --fraction_feat 0.1 --node_choose stratified_by_degree --only_feature_node
+### [1] random select
+### [2] explainer select
+### [3] random walk select
 
 ## (3) feature to Node (只有特徵邊)
-python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type random_walk --walk_length 1 --num_walks 1 --fraction 0.1 --run_mode try_remove_from_RandomWalk --feature_to_node --structure_mode random+imp --fraction_feat 0.1 --same_feat --node_choose stratified_by_degree
-python train_remaining_main.py --dataset  FacebookPagePage --model GCN2 --epochs 1 --lr 0.01 --selector_type random_walk --walk_length 1 --num_walks 1 --fraction 0.1 --run_mode try_remove_from_RandomWalk --feature_to_node --structure_mode random+imp --fraction_feat 0.1 --same_feat --node_choose stratified_by_degree
+### [1] random select
+### [2] explainer select
+### [3] random walk select
 
 # 3. 移除結構+特徵 (特徵相同)
 ## (1) Original Graph
+### [1] random select
+### [2] explainer select
+### [3] random walk select
+
 ## (2) feature to Node (含節點邊 & 特徵邊)
+### [1] random select
+### [2] explainer select
+### [3] random walk select
+
 ## (3) Only Structure + Feature to Node (只有特徵邊) 
+### [1] random select
+### [2] explainer select
+### [3] random walk select
 
 # 4. 移除結構+特徵 (特徵不同)
 ## (1) Original Graph
+### [1] random select
+### [2] explainer select
+### [3] random walk select
+
 ## (2) feature to Node (含節點邊 & 特徵邊)
+### [1] random select
+### [2] explainer select
+### [3] random walk select
+
 ## (3) Only Structure + Feature to Node (只有特徵邊)
+### [1] random select
+### [2] explainer select
+### [3] random walk select
 
 
 
