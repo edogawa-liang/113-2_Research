@@ -25,6 +25,7 @@ import numpy as np
 import pandas as pd
 import argparse
 from data.dataset_loader import GraphDatasetLoader
+import glob
 
 def analyze_feature_removal(args):
     run_mode = args.run_mode
@@ -36,8 +37,8 @@ def analyze_feature_removal(args):
     results = []
 
     # 讀取原始資料集的特徵矩陣 x（0/1）
-    dataset_loader = GraphDatasetLoader(name=dataset)
-    data = dataset_loader.load()[0]
+    loader = GraphDatasetLoader(args.normalize)
+    data, _, _, _, _ = loader.load_dataset(args.dataset)
     x = data.x.cpu().numpy()
 
     total_1 = int(x.sum())
@@ -45,12 +46,9 @@ def analyze_feature_removal(args):
     total_1_ratio = total_1 / x.size
 
     # 讀整份 result 檔案（只有一個 sheet）
-    result_path = f"saved/{run_mode}/split_{split_id}/result/result_0614_2303.xlsx"
-    sheet_name = f"{dataset}_remaining_graph"
-    if not os.path.exists(result_path):
-        print(f"[Error] result file not found: {result_path}")
-        return
+    result_path = glob.glob(f"saved/{run_mode}/split_{split_id}/result/*.xlsx")[0]
 
+    sheet_name = f"{dataset}_remaining_graph"
     df_result_all = pd.read_excel(result_path, sheet_name=sheet_name)
 
     for trial in range(trial_start, trial_end):
@@ -65,15 +63,15 @@ def analyze_feature_removal(args):
             continue
 
         feature_mask = np.load(feature_mask_path)  # shape: same as x
-        edge_mask = np.load(edge_mask_path)        # 目前沒用到，可選
+        edge_mask = np.load(edge_mask_path)        # 目前沒用到
 
-        total_1 = int(x.sum())
-        total_0 = x.size - total_1
-        total_1_ratio = total_1 / x.size
+        # 檢查這兩個 mask 分別是 1 的數量 = 移除1的數量
+        
+        # 檢查這個trial 應該移除的比例 (讀取 saved/remove_from_GNNExplainer_edge/split_0/result/result_0614_2303.xlsx 的fraction, fraction_feat)計算數量
 
-        removed_1 = int((x * feature_mask).sum())
-        removed_total = int(feature_mask.sum())
-        removed_0 = removed_total - removed_1
+        # 對於nodefeature: 應該移除的數量 - mask是1的數量 = 移除是0的數量
+
+
 
         # 找對應 trial 的 fraction_feat
         df_trial = df_result_all[df_result_all["trial"] == trial]

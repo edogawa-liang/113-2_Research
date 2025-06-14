@@ -120,9 +120,17 @@ class ExplainerEdgeSelector:
             elif self.feature_type == "continuous":
                 k_feat = int(num_feat_edges * self.top_k_percent_feat)
                     
-            # 取出 mask 範圍內的 edge importance
-            top_orig = np.argsort(self.edge_aggregated[node_node_mask_np])[-k_orig:]
-            top_feat = np.argsort(self.edge_aggregated[node_feat_mask_np])[-k_feat:]
+            # === 處理 node-node 選擇 === #
+            if k_orig == 0:
+                top_orig = np.array([], dtype=int)
+            else:
+                top_orig = np.argsort(self.edge_aggregated[node_node_mask_np])[-k_orig:]
+
+            # === 處理 node-feature 選擇 === #
+            if k_feat == 0:
+                top_feat = np.array([], dtype=int)
+            else:
+                top_feat = np.argsort(self.edge_aggregated[node_feat_mask_np])[-k_feat:]
             
             # 對應回全域 index
             selected_orig_edge_indices = np.where(node_node_mask_np)[0][top_orig]

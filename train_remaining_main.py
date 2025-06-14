@@ -261,7 +261,7 @@ if __name__ == "__main__":
             remaining_graph = revertor.revert(remaining_graph, ori_data)
             num_features = remaining_graph.x.size(1)
 
-            if args.only_feature_node:
+            if args.only_feature_node: # 只會用在[只移除特徵]
                 # 要加回 node-node 邊，不然還原回原圖會沒有邊
                 remaining_graph.edge_index = ori_data.edge_index.clone()
                 remaining_graph.edge_weight = ori_data.edge_weight.clone() if ori_data.edge_weight is not None else None
