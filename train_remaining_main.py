@@ -248,6 +248,7 @@ if __name__ == "__main__":
             remaining_graph = remaining_graph_constructor.get_remaining_graph()
 
 
+# ===============Revert to Original Graph================ #
         # if use feature to node, revert the feature node to original node (add feature value into original graph)
         if args.feature_to_node:
             print("Reverting feature nodes to original nodes...")
@@ -256,7 +257,7 @@ if __name__ == "__main__":
             num_features = remaining_graph.x.size(1)
 
             if args.only_feature_node:
-                # 加回 node-node 邊
+                # 要加回 node-node 邊，不然還原回原圖會沒有邊
                 remaining_graph.edge_index = ori_data.edge_index.clone()
                 remaining_graph.edge_weight = ori_data.edge_weight.clone() if ori_data.edge_weight is not None else None
 
@@ -269,15 +270,18 @@ if __name__ == "__main__":
                     fraction_feat=args.fraction_feat
                 ) # 把most common features 都變成0
 
+        if args.only_structure:
+            # 如果只透過結構資訊選邊，還原圖做預測時依然要加入原始特徵 (才會是移除只有結構的核心子圖)
+            remaining_graph.x = ori_data.x.clone()
+
+
         # 希望模型跟結果都存在 split_id 資料夾下。但檔名是trial_number開頭
         save_dir = os.path.join(args.run_mode, f"split_{split_id}")
 
         logger = ExperimentLogger(file_name=args.filename, note=args.note, copy_old=True, run_mode=save_dir)
         trial_number = logger.get_next_trial_number(args.dataset + "_remaining_graph")
 
-        # Build core subgraph mask
-        # 匯出核心子圖 mask 
-        # 存在split_id folder下
+        # 匯出核心子圖 mask  (存在 split_id folder 下)
         extractor = CoreSubgraphExtractor(
             ori_data=ori_data,
             remaining_graph=remaining_graph,
