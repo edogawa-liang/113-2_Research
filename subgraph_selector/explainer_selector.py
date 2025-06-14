@@ -102,8 +102,13 @@ class ExplainerEdgeSelector:
         if num_feat_edges == 0 and not self.use_feature_to_node:
             print("No feature edges found. Selecting top-k% from original edges only.")
             k = int(num_ori_edges * self.top_k_percent)
-            top_k_edges = np.argsort(self.edge_aggregated[node_node_mask_np])[-k:]
+            #  -0 在 Python 中等於 0，但 slice 中會被當作 [:] → 取全部！
+            if k == 0:
+                top_k_edges = np.array([], dtype=int)
+            else:
+                top_k_edges = np.argsort(self.edge_aggregated[node_node_mask_np])[-k:]
             selected_orig_edge_indices = np.where(node_node_mask_np)[0][top_k_edges]
+            print(f"Selected {len(selected_orig_edge_indices)} original edges.")
 
             return torch.tensor(selected_orig_edge_indices, dtype=torch.long, device=self.device), []
 

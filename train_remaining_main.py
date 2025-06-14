@@ -236,6 +236,11 @@ if __name__ == "__main__":
                                             device=DEVICE, top_k_percent_feat=args.fraction_feat)
             selected_edges, selected_feat_ids, ori_edge_visit_ratio, feat_edge_visit_ratio = selector.select_edges()
 
+        # check
+        print("Number of Selected edges:", len(selected_edges))
+        print("selected feature mask shape:", selected_feat.shape if selected_feat is not None else "No feature mask")
+
+
         # Remove subgraph from the original graph
         if args.explainer_name == "CFExplainer":
             remaining_graph_constructor = CFSubgraphRemover(data, args.base_dir, args.explainer_name, args.dataset, args.node_choose, device=DEVICE)
@@ -301,6 +306,9 @@ if __name__ == "__main__":
         
         num_features = remaining_graph.x.size(1)
 
+        # 如果 data 沒有邊了，報錯
+        if remaining_graph.edge_index.size(1) == 0:
+            raise ValueError("Remaining graph has no edges after removing the subgraph. Please check the selected edges and feature masks.")
 
         # Train GNN on the remaining graph
         print("\nTraining GNN on the remaining graph after removing subgraph...")
