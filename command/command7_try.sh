@@ -70,6 +70,7 @@ python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type explainer --fraction 0.1 --base_dir saved/try_stage2 --explainer_name GNNExplainer --node_choose pagerank --run_mode try_remove_from_GNNExplainer --note split0_original_only_structure --only_structure
 python train_remaining_main.py --dataset FacebookPagePage --normalize --model GCN2 --epochs 1 --lr 0.01 --selector_type random_walk --walk_length 10 --num_walks 5 --fraction 0.1 --node_choose all_train --run_mode try_remove_from_RandomWalk --only_structure
 
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type random --run_mode try_baseline_Result_difffeat --fraction_feat 0.1 --node_choose stratified_by_degree --only_feature_node --feature_to_node
 
 # 1. 移除結構
 ## (1) Original Graph (edge mask)

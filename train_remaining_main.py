@@ -255,6 +255,11 @@ if __name__ == "__main__":
             remaining_graph = revertor.revert(remaining_graph, ori_data)
             num_features = remaining_graph.x.size(1)
 
+            if args.only_feature_node:
+                # 加回 node-node 邊
+                remaining_graph.edge_index = ori_data.edge_index.clone()
+                remaining_graph.edge_weight = ori_data.edge_weight.clone() if ori_data.edge_weight is not None else None
+
             # 如果設定了要遮蔽相同的特徵，且有 selected_feat_ids，就從 ori_data 上遮蔽
             if args.same_feat and selected_feat_ids is not None and len(selected_feat_ids) > 0 and args.fraction_feat > 0: # 如果沒有使用feat2node, selected_feat_ids會是空的
                 print("改成 remove same features")
