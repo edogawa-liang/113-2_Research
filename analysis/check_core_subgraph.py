@@ -41,8 +41,8 @@ def analyze_feature_removal(args):
     data, _, _, _, _ = loader.load_dataset(args.dataset)
     x = data.x.cpu().numpy()
 
-    total_1 = int(x.sum())
-    total_0 = x.size - total_1
+    total_1 = int(x.sum()) # 原始資料中是 1 的數量
+    total_0 = x.size - total_1 # 原始資料中是 0 的數量
     total_1_ratio = total_1 / x.size
 
     # 讀整份 result 檔案（只有一個 sheet）
@@ -66,10 +66,19 @@ def analyze_feature_removal(args):
         edge_mask = np.load(edge_mask_path)        # 目前沒用到
 
         # 檢查這兩個 mask 分別是 1 的數量 = 移除1的數量
+        # 對於nodefeature: 應該移除的數量 - mask是1的數量 = 移除是0的數量
+        remove_1 = feature_mask.sum() # 只會存下移除1的部分
+
+        # feature to node 是這樣算
+        expected_remove = int(total_1 * fraction_feat) 
+        removed_0 = expected_remove - remove_1
         
+        # 用 node_mask 的方式 0 也可能被選到 (每個節點有同樣數量的重要特徵)
+        expected_remove = int(x.size * fraction_feat)
+        removed_0 = expected_remove - remove_1
+
         # 檢查這個trial 應該移除的比例 (讀取 saved/remove_from_GNNExplainer_edge/split_0/result/result_0614_2303.xlsx 的fraction, fraction_feat)計算數量
 
-        # 對於nodefeature: 應該移除的數量 - mask是1的數量 = 移除是0的數量
 
 
 
