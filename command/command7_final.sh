@@ -583,9 +583,9 @@ python train_remaining_main.py --dataset GitHub --normalize --model GCN2 --epoch
 
 # 補漏掉的解釋
 python stage2_expsubg.py --dataset GitHub --normalize --explainer_type GNNExplainer --run_mode stage2_feature2node_nn_fn --stage1_path saved/original_feature2node_nn_fn --feature_to_node --structure_mode random+imp --repeat_start 0 --repeat_end 0 --check_unexplained 
-
 python stage2_expsubg.py --dataset Amazon --explainer_type GNNExplainer --run_mode stage2_feature2node_fn --stage1_path saved/original_feature2node_fn --feature_to_node --structure_mode random+imp --only_feature_node --repeat_start 0 --repeat_end 0 
-
 python stage2_expsubg.py --dataset GitHub --normalize --explainer_type GNNExplainer --run_mode stage2_feature2node_fn --stage1_path saved/original_feature2node_fn --feature_to_node --structure_mode random+imp --only_feature_node --repeat_start 0 --repeat_end 0 --check_unexplained
+
+# 補漏掉的 stage 3
 # 
 wait

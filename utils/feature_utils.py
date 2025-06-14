@@ -7,7 +7,7 @@ def remove_top_common_features(x: torch.Tensor, selected_feat_ids: List[int], fr
     """
     統計 selected_feat_ids 中出現最多的 feature，移除前 k 個欄位。
     """
-    if not selected_feat_ids:
+    if selected_feat_ids is None or len(selected_feat_ids) == 0:
         print("No selected feature IDs provided; returning original features.")
         return x, []
 
