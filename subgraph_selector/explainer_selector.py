@@ -166,6 +166,11 @@ class ExplainerEdgeSelector:
         is_original_node_np = self.data.is_original_node.cpu().numpy()
         num_ori_nodes = is_original_node_np.sum()
         
+        # 若 k = 0，直接回傳全 0 mask
+        if k == 0:
+            print(f"[Warning] top_k_percent_feat is 0 → no features selected.")
+            return torch.zeros((num_ori_nodes, num_features), dtype=torch.float32, device=self.device)
+
         if same_feat:
             # 所有節點移除相同特徵
             selected_feat = np.argsort(self.feature_scores)[-k:]

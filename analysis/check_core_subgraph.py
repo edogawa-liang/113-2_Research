@@ -67,9 +67,9 @@ def analyze_feature_removal(args):
 
         # 檢查這兩個 mask 分別是 1 的數量 = 移除1的數量
         # 對於nodefeature: 應該移除的數量 - mask是1的數量 = 移除是0的數量
-        remove_1 = feature_mask.sum() # 只會存下移除1的部分
+        remove_1 = feature_mask.sum() # 核心子圖只會存下移除1的部分
 
-        # feature to node 是這樣算
+        # feature to node
         expected_remove = int(total_1 * fraction_feat) 
         removed_0 = expected_remove - remove_1
         
