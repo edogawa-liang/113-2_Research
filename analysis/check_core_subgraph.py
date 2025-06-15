@@ -1,5 +1,9 @@
 # 檢查核心子圖的特性 (Ex: Cora CiteSeer重要的是不是都是1)
 
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import os
 import numpy as np
 import pandas as pd
@@ -49,7 +53,7 @@ def analyze_feature_removal(args):
         removed_1 = int(feature_mask.sum()) # 核心子圖只會存下移除1的部分
 
         # 找對應 trial 的 fraction_feat
-        df_trial = df_result_all[df_result_all["trial"] == trial]
+        df_trial = df_result_all[df_result_all["Trial"] == trial]
         if df_trial.empty:
             print(f"[Skip] Trial {trial} not found in result sheet.")
             continue
@@ -79,6 +83,7 @@ def analyze_feature_removal(args):
             "Removed 1": removed_1,
             "Removed 0": removed_0,
             "Removed total": expected_remove,
+            "Fraction feat": fraction_feat,
             "Removed 1 / removed": round(removed_1 / expected_remove, 4) if expected_remove > 0 else 0,
             "Removed 1 / total 1": round(removed_1 / total_1, 4) if total_1 > 0 else 0,
             "Removed 0 / total 0": round(removed_0 / total_0, 4) if total_0 > 0 else 0,
@@ -93,6 +98,8 @@ def analyze_feature_removal(args):
     df.to_csv(output_path, index=False)
     print(f"\nSaved summary to {output_path}")
     print(df)
+
+# Usage: python analysis/check_core_subgraph.py --run_mode remove_from_GNNExplainer_samefeat --split_id 0 --dataset Cora --trial_start 0 --trial_end 2
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Analyze core subgraph 0/1 feature removal bias")

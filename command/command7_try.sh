@@ -134,6 +134,8 @@ python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 
 ### [3] random walk select
 
 
+# 檢查核心子圖
+
 
 # 表格式資料
 wait

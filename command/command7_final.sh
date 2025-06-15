@@ -588,4 +588,6 @@ python stage2_expsubg.py --dataset GitHub --normalize --explainer_type GNNExplai
 
 # 補漏掉的 stage 3
 # 
+
+# 檢查核心子圖
 wait
