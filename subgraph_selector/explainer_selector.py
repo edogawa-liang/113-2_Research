@@ -63,11 +63,26 @@ class ExplainerEdgeSelector:
                 if node_mask is not None:
                     self.node_masks.append(node_mask)
 
+        # if self.edge_masks:
+        #     edge_masks = np.sum(self.edge_masks, axis=0)
+        #     num_ori_edge = self.data.node_node_mask.sum().item()
+
+        #     is_feat_bidirectional = True
+        #     if is_feat_bidirectional:
+        #         feat_edge_mask = edge_masks[num_ori_edge:]  # 前半部分是 node-node 邊
+        #         feat_avg_edge_mask = (feat_edge_mask[::2] + feat_edge_mask[1::2]) / 2
+        #         self.edge_aggregated = np.concatenate([edge_masks[:num_ori_edge], feat_avg_edge_mask])
+        #     else:
+        #         print("解釋子圖為單向邊")
+        #         self.edge_aggregated = edge_masks
+    
+        # 還是維持雙向邊
         if self.edge_masks:
             # 將同一解釋子圖內不同node的重要度相加，並把不同模型的解釋子圖的重要度也相加
             self.edge_aggregated = np.sum(self.edge_masks, axis=0) 
             print(f"Number of edges picked in the subgraph: {np.count_nonzero(self.edge_aggregated)}")
-        
+
+
         if self.node_masks:
             print("use node_mask for choosing subgraph")
             node_masks = np.stack(self.node_masks).astype(np.float64)
@@ -130,7 +145,17 @@ class ExplainerEdgeSelector:
             if k_feat == 0:
                 top_feat = np.array([], dtype=int)
             else:
-                top_feat = np.argsort(self.edge_aggregated[node_feat_mask_np])[-k_feat:]
+                # 每 2 條是一組雙向邊，先做平均
+                feat_edge_mask = self.edge_aggregated[node_feat_mask_np]
+                num_pairs = num_feat_edges // 2
+                pair_scores = (feat_edge_mask[::2] + feat_edge_mask[1::2]) / 2
+
+                k_feat_pair = int(num_pairs * self.top_k_percent_feat)  # 以「組」為單位
+                top_pair_idx = np.argsort(pair_scores)[-k_feat_pair:]   # 取分數最高的組
+
+                # 還原為雙向邊在 node_feat_mask_np 中的相對 index
+                rel_edge_indices = np.concatenate([top_pair_idx * 2, top_pair_idx * 2 + 1])
+                top_feat = rel_edge_indices
             
             # 對應回全域 index
             selected_orig_edge_indices = np.where(node_node_mask_np)[0][top_orig]

@@ -133,6 +133,8 @@ if __name__ == "__main__":
     data.edge_index = edge_index
     data.edge_weight = edge_weight
 
+    print("After Feature to Node conversion (if exist): ", data)
+
 
     # 每次 repeat 挑選的節點都不一樣，分別找子圖與訓練模型
     for split_id in range(args.split_start, args.split_end + 1):
@@ -252,6 +254,8 @@ if __name__ == "__main__":
             remaining_graph_constructor = RemainingGraphConstructor(data, selected_edges, selected_feat_mask=selected_feat, device=DEVICE) # selected_feat 沒有經過 feature_to_node 才會有
             remaining_graph = remaining_graph_constructor.get_remaining_graph()
 
+
+        print("初步的 remaining graph:", remaining_graph)
 
 # ===============Revert to Original Graph================ #
         # if use feature to node, revert the feature node to original node (add feature value into original graph)

@@ -42,6 +42,21 @@ class FeatureNodeConverter:
         for node_id in range(num_nodes):
             for feat_id in range(num_features):
                 feat_value = data.x[node_id, feat_id].item()
+                feat_node_id = feature_node_offset + feat_id
+
+                # if self.feature_type == "categorical":
+                #     if feat_value == 1:  # 有值的才有邊連過去
+                #         edge_index.append([node_id, feat_node_id])  # 單向：原節點 → 特徵節點
+                #         edge_weight.append(1.0)
+                #         node_node_mask.append(0)
+                #         node_feat_mask.append(1)
+
+                # elif self.feature_type == "continuous":
+                #     edge_index.append([node_id, feat_node_id])  # 單向：原節點 → 特徵節點
+                #     edge_weight.append(feat_value)
+                #     node_node_mask.append(0)
+                #     node_feat_mask.append(1)
+                
                 if self.feature_type == "categorical":
                     if feat_value == 1: # 有值的才有邊連過去
                         edge_index.append([node_id, feature_node_offset + feat_id]) # 原節點-> 特徵節點
@@ -51,8 +66,8 @@ class FeatureNodeConverter:
                         node_feat_mask.extend([1, 1])
 
                 elif self.feature_type == "continuous": # 每個 feature 會連到每個 node
-                    edge_index.append([node_id, feature_node_offset + feat_id]) # 原節點-> 特徵節點
-                    edge_index.append([feature_node_offset + feat_id, node_id]) # 特徵節點-> 原節點
+                    edge_index.append([node_id, feat_node_id]) # 原節點-> 特徵節點
+                    edge_index.append([feat_node_id, node_id]) # 特徵節點-> 原節點
                     edge_weight.extend([feat_value, feat_value])
                     node_node_mask.extend([0, 0])
                     node_feat_mask.extend([1, 1])

@@ -72,6 +72,9 @@ python train_remaining_main.py --dataset FacebookPagePage --normalize --model GC
 
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type random --run_mode try_baseline_Result_difffeat --fraction_feat 0.1 --node_choose stratified_by_degree --only_feature_node --feature_to_node
 
+
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --selector_type explainer --base_dir saved/stage2_feature2node_nn_fn --explainer_name GNNExplainer --node_choose pagerank --run_mode try_remove_from_GNNExplainer_difffeat --note split0_feat2node_difffeat_nn_fn --fraction_feat 0.1 --feature_to_node
+
 # 1. 移除結構
 ## (1) Original Graph (edge mask)
 ### [1] random select

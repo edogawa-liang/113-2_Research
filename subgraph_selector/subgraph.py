@@ -20,7 +20,7 @@ class CoreSubgraphExtractor:
         ori_x_np = self.ori_data.x.cpu().numpy()
         remain_x_np = self.remaining_graph.x.cpu().numpy()
 
-        self.feature_removed_mask = ((ori_x_np != 0) & (remain_x_np == 0)).astype(np.int32)
+        self.feature_removed_mask = ((ori_x_np != 0) & (remain_x_np == 0)).astype(np.int32) # 原本有特徵 vs 現在沒特徵
 
         # === Edge mask ===
         ori_edge_index_np = self.ori_data.edge_index.cpu().numpy()

@@ -5,6 +5,8 @@
 
 import torch
 from torch_geometric.data import Data
+from collections import defaultdict
+
 
 class FeatureNodeReverter:
     def __init__(self, feature_type, device):
@@ -21,37 +23,52 @@ class FeatureNodeReverter:
 
         x_restored = torch.zeros((num_nodes, num_features), device=device)
 
-        for i in range(converted_data.edge_index.size(1)):
-            src, dst = converted_data.edge_index[:, i]
-            weight = converted_data.edge_weight[i]
+        edge_index = converted_data.edge_index
+        src_all = edge_index[0]
+        dst_all = edge_index[1]
 
-            # 邊為 node → feature
-            if src < num_nodes and dst >= num_nodes: 
-                node_id = src.item()
-                feat_id = dst.item() - num_nodes
-            elif dst < num_nodes and src >= num_nodes:  # 雙向邊
-                node_id = dst.item()
-                feat_id = src.item() - num_nodes
-            else:
-                continue  # 不是 node-feature 邊
+        # 兩種 node-feature 邊: src 是 node, dst 是 feat node；或相反
+        mask_src_node = (src_all < num_nodes) & (dst_all >= num_nodes) # node-feature 邊
+        mask_dst_node = (dst_all < num_nodes) & (src_all >= num_nodes) # feature-node 邊
 
-            if 0 <= feat_id < num_features:  # 防呆
-                if self.feature_type == "categorical":
-                    x_restored[node_id, feat_id] = 1.0
-                elif self.feature_type == "continuous":
-                    x_restored[node_id, feat_id] = weight
+        # 總共 node-feature 的邊
+        node_feat_mask = mask_src_node | mask_dst_node # 特徵邊
+
+        # 節點和特徵的對應 index
+        src = src_all[node_feat_mask]
+        dst = dst_all[node_feat_mask]
+
+        node_ids = torch.where(src < num_nodes, src, dst)
+        feat_ids = torch.where(src >= num_nodes, src, dst) - num_nodes
+
+        if self.feature_type == "categorical":
+            x_restored[node_ids, feat_ids] = 1.0
+        elif self.feature_type == "continuous":
+            x_restored[node_ids, feat_ids] = original_data.x[node_ids, feat_ids]
 
         # 保留 node-node 邊
-        mask = (converted_data.edge_index[0] < num_nodes) & (converted_data.edge_index[1] < num_nodes)
-        edge_index = converted_data.edge_index[:, mask]
-        edge_weight = converted_data.edge_weight[mask] if hasattr(converted_data, 'edge_weight') else None
+        nn_mask = (src_all < num_nodes) & (dst_all < num_nodes)
+        edge_index_new = edge_index[:, nn_mask]
+        edge_weight_new = converted_data.edge_weight[nn_mask] if hasattr(converted_data, "edge_weight") else None
 
-        reverted_data = Data(x=x_restored, edge_index=edge_index, edge_weight=edge_weight, y=original_data.y)
+        reverted_data = Data(x=x_restored, edge_index=edge_index_new, edge_weight=edge_weight_new, y=original_data.y)
 
-        # 補上 mask
-        for attr in ["train_mask", "val_mask", "test_mask"]:
+        for attr in ["train_mask", "val_mask", "test_mask", "unknown_mask"]:
             if hasattr(original_data, attr):
                 setattr(reverted_data, attr, getattr(original_data, attr))
+
+
+        # 印出 zero 數量比較
+        num_zero_original = (original_data.x == 0).sum().item()
+        num_zero_restored = (x_restored == 0).sum().item()
+        print(f"[FeatureNodeReverter] Zero count - original_data.x: {num_zero_original}, x_restored: {num_zero_restored}")
+
+        num_one_original = (original_data.x == 1).sum().item()
+        num_one_restored = (x_restored == 1).sum().item()
+        print(f"[FeatureNodeReverter] One count - original_data.x: {num_one_original}, x_restored: {num_one_restored}")
+
+        # original_data 0 的數量應該要比 x_restored 少
+
 
         return reverted_data
 
