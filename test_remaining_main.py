@@ -79,7 +79,6 @@ if __name__ == "__main__":
     remaining_graph=None, # not used for loading
     save_dir=save_dir,
     dataset=args.dataset,
-    is_undirected=True, # 原本的 GNN 通常是 undirected
     trial_number=args.trial_number
     )
     feature_removed_mask, edge_removed_mask = extractor.load()

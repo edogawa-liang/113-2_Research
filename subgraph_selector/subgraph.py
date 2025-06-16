@@ -2,12 +2,11 @@ import os
 import numpy as np
 
 class CoreSubgraphExtractor:
-    def __init__(self, ori_data, remaining_graph, save_dir, dataset, is_undirected=True, trial_number=None):
+    def __init__(self, ori_data, remaining_graph, save_dir, dataset, trial_number=None):
         self.ori_data = ori_data
         self.remaining_graph = remaining_graph
         self.save_dir = save_dir
         self.dataset = dataset
-        self.is_undirected = is_undirected
         self.trial_number = trial_number
 
         self.feature_removed_mask = None

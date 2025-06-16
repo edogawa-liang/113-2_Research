@@ -297,7 +297,6 @@ if __name__ == "__main__":
             remaining_graph=remaining_graph,
             save_dir=save_dir,
             dataset=args.dataset,
-            is_undirected=True, # 原本的 GNN 通常是 undirected
             trial_number=trial_number
         )
         extractor.compute_removed_masks()
