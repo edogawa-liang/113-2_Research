@@ -4,7 +4,9 @@ from torch_cluster import random_walk
 from collections import defaultdict
 
 
-# 目前的random walk 沒有考慮 edge weight
+# 目前的random walk 沒有考慮 edge weight 
+# 加入特徵邊會移除雙向，還沒驗證
+
 class RandomWalkEdgeSelector:
     """
     Selects the top fraction of most frequently visited edges (by random walk) for removal.
@@ -139,32 +141,50 @@ class RandomWalkEdgeSelector:
 
 
         if num_feat_edges > 0:
-            if self.feature_type == "categorical":
-                num_selected_feat = int(num_feat_edges * self.top_k_percent_feat) # 只有有值(1)才會被納入特徵邊候選
-            elif self.feature_type == "continuous":
-                num_selected_feat = int(num_feat_edges * self.top_k_percent_feat)
+            num_feat_pairs = num_feat_edges // 2
+            num_selected_feat_pairs = int(num_feat_pairs * self.top_k_percent_feat)
 
-            print(f"應挑 {num_selected_feat} feature edges (top {self.top_k_percent_feat * 100}%)")
+            print(f"應挑 {num_selected_feat_pairs * 2} feature edges ({self.top_k_percent_feat * 100}% of pairs)")
             print(f"實際走的特徵邊比例: {num_visited_feat_edges / num_feat_edges * 100:.2f}%")
 
-            # 如果選擇的特徵邊數量少於應挑的數量，則從剩餘的特徵邊中補齊
-            if len(selected_feat) < num_selected_feat:
-                print(f"探索到的特徵邊只有 {len(selected_feat)}，少於應挑的 {num_selected_feat}，將從其他特徵邊補齊。")
-                remaining_feat = list(range(num_ori_edges, num_total_edges))
-                remaining_feat = list(set(remaining_feat) - set(selected_feat))
-                needed_feat = num_selected_feat - len(selected_feat)
-                if len(remaining_feat) >= needed_feat:
-                    additional_feat = torch.tensor(remaining_feat, device=self.device)[torch.randperm(len(remaining_feat))[:needed_feat]].tolist()
-                    selected_feat += additional_feat
+            # 特徵邊配對：先將所有已走過的特徵邊轉成 pair index
+            selected_feat = np.array(selected_feat)
+            rel_idx = selected_feat - num_ori_edges
+            pair_idx = rel_idx // 2
+
+            # 統計走過哪些 pair，保留順序且唯一
+            seen_pair_set = set()
+            selected_pair_ordered = []
+            for p in pair_idx:
+                if p not in seen_pair_set:
+                    seen_pair_set.add(p)
+                    selected_pair_ordered.append(p)
+
+            if len(selected_pair_ordered) < num_selected_feat_pairs:
+                print(f"探索到的特徵邊組只有 {len(selected_pair_ordered)}，少於應挑的 {num_selected_feat_pairs} 組，將從其他組補齊。")
+                all_pair_idx = np.arange(num_feat_pairs)
+                remaining_pairs = list(set(all_pair_idx) - set(seen_pair_set))
+                needed = num_selected_feat_pairs - len(selected_pair_ordered)
+                if len(remaining_pairs) >= needed:
+                    sampled_extra = np.random.choice(remaining_pairs, needed, replace=False).tolist()
+                    selected_pair_ordered += sampled_extra
                 else:
-                    print(f"可補充的特徵邊不足，只補上 {len(remaining_feat)} 條。")
-                    selected_feat += remaining_feat
+                    print(f"可補充的特徵邊組不足，只補上 {len(remaining_pairs)} 組。")
+                    selected_pair_ordered += remaining_pairs
             else:
-                selected_feat = selected_feat[:num_selected_feat]
+                selected_pair_ordered = selected_pair_ordered[:num_selected_feat_pairs]
+
+            # 還原雙向邊 index
+            selected_feat = []
+            for p in selected_pair_ordered:
+                edge1 = num_ori_edges + 2 * p
+                edge2 = edge1 + 1
+                selected_feat += [edge1, edge2]
 
         else:
             selected_feat = []
             print("No feature edges found.")
+
 
         selected_indices = selected_ori + selected_feat
         selected_tensor = torch.tensor(selected_indices, dtype=torch.long, device=self.device)
