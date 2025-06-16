@@ -144,6 +144,12 @@ if __name__ == "__main__":
         num_orig_nodes = train_mask.shape[0]
         num_total_nodes = data.x.shape[0]
 
+        # ori_data 也要更新 mask
+        ori_data.train_mask = train_mask
+        ori_data.val_mask = val_mask
+        ori_data.test_mask = test_mask
+        ori_data.unknown_mask = unknown_mask
+
         # add padding to feature node (mask會補滿，但y不會)
         if args.feature_to_node and num_total_nodes > num_orig_nodes:
             pad_len = num_total_nodes - num_orig_nodes
@@ -158,7 +164,6 @@ if __name__ == "__main__":
         data.val_mask = val_mask
         data.test_mask = test_mask
         data.unknown_mask = unknown_mask
-
 
         # pick node: 挑選所有的訓練節點作為起點 (all_train) or 部分的訓練節點 (by random, Degree, PageRank, Betweenness, Closeness)
         if args.selector_type == "explainer" or args.selector_type == "random_walk":

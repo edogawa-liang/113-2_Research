@@ -76,6 +76,7 @@ python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --selector_type explainer --base_dir saved/stage2_feature2node_nn_fn --explainer_name GNNExplainer --node_choose pagerank --run_mode try_remove_from_GNNExplainer_difffeat --note split0_feat2node_difffeat_nn_fn --fraction_feat 0.1 --feature_to_node
 
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type explainer --base_dir saved/stage2_feature2node_fn --explainer_name GNNExplainer --node_choose pagerank --run_mode try_remove_from_GNNExplainer_samefeat --note split0_feat2node_samefeat_fn --fraction_feat 0.1 --same_feat --feature_to_node --only_feature_node
+python train_remaining_main.py --dataset Amazon --model GCN2 --epochs 1 --lr 0.01 --selector_type explainer --base_dir saved/stage2_feature2node_nn_fn --explainer_name GNNExplainer --node_choose pagerank --run_mode try_remove_from_GNNExplainer_difffeat --note split0_feat2node_difffeat_nn_fn --fraction_feat 0.1 --feature_to_node
 
 
 # 1. 移除結構
