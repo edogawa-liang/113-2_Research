@@ -581,13 +581,12 @@ python train_remaining_main.py --dataset GitHub --normalize --model GCN2 --epoch
 ### [2] explainer select
 ### [3] random walk select
 
-# 補漏掉的解釋
-python stage2_expsubg.py --dataset GitHub --normalize --explainer_type GNNExplainer --run_mode stage2_feature2node_nn_fn --stage1_path saved/original_feature2node_nn_fn --feature_to_node --structure_mode random+imp --repeat_start 0 --repeat_end 0 --check_unexplained 
-python stage2_expsubg.py --dataset Amazon --explainer_type GNNExplainer --run_mode stage2_feature2node_fn --stage1_path saved/original_feature2node_fn --feature_to_node --structure_mode random+imp --only_feature_node --repeat_start 0 --repeat_end 0 
-python stage2_expsubg.py --dataset GitHub --normalize --explainer_type GNNExplainer --run_mode stage2_feature2node_fn --stage1_path saved/original_feature2node_fn --feature_to_node --structure_mode random+imp --only_feature_node --repeat_start 0 --repeat_end 0 --check_unexplained
-
-# 補漏掉的 stage 3
-# 
 
 # 檢查核心子圖
+python analysis/check_core_subgraph.py --run_mode remove_from_GNNExplainer_difffeat --split_id 0 --dataset Cora --trial_start 0 --trial_end 8
+python analysis/check_core_subgraph.py --run_mode remove_from_GNNExplainer_difffeat --split_id 0 --dataset CiteSeer --trial_start 0 --trial_end 8
+python analysis/check_core_subgraph.py --run_mode remove_from_GNNExplainer_difffeat --split_id 0 --dataset Amazon --trial_start 0 --trial_end 8
+
+
+
 wait

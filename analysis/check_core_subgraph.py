@@ -35,7 +35,7 @@ def analyze_feature_removal(args):
     sheet_name = f"{dataset}_remaining_graph"
     df_result_all = pd.read_excel(result_path, sheet_name=sheet_name)
 
-    for trial in range(trial_start, trial_end):
+    for trial in range(trial_start, trial_end+1):
         print(f"Processing Trial {trial}...")
 
         base_path = f"saved/core_subgraph_mask/{run_mode}/split_{split_id}/{dataset}"
@@ -99,7 +99,7 @@ def analyze_feature_removal(args):
     print(f"\nSaved summary to {output_path}")
     print(df)
 
-# Usage: python analysis/check_core_subgraph.py --run_mode remove_from_GNNExplainer_samefeat --split_id 0 --dataset Cora --trial_start 0 --trial_end 2
+# python analysis/check_core_subgraph.py --run_mode remove_from_GNNExplainer_samefeat --split_id 0 --dataset Cora --trial_start 0 --trial_end 2
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Analyze core subgraph 0/1 feature removal bias")
