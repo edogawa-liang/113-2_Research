@@ -216,7 +216,8 @@ if __name__ == "__main__":
                     feature_type=feature_type,
                     device=DEVICE,
                     top_k_percent_feat=args.fraction_feat,
-                    use_feature_to_node=args.feature_to_node # 若要使用特徵，分成直接使用(node_mask)還是將特徵轉為結構使用(edge_mask)
+                    use_feature_to_node=args.feature_to_node, # 若要使用特徵，分成直接使用(node_mask)還是將特徵轉為結構使用(edge_mask)
+                    only_feature_node = args.only_feature_node
                 )            
                 selector.load_data(split_id)
                 selector.plot_edge_distribution()
