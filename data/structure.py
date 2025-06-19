@@ -31,6 +31,7 @@ def l1_normalize_rowwise(tensor):
     tensor_np = tensor_np / row_norm
     return torch.tensor(tensor_np, device=tensor.device, dtype=torch.float)
 
+# 如果改成所有特徵連到每個節點，每個節點對應了相同數量的特徵 (雖然 weight 可能不同)，但好像就不需要把+了一樣多特徵的節點們+特徵後一起算重要度，直接用原始結構的重要度就好
 
 class StructureFeatureBuilder:
     def __init__(self, data, device, dataset_name: str,
@@ -54,15 +55,16 @@ class StructureFeatureBuilder:
         self.num_nodes = data.num_nodes
 
         # Node importance CSV path
-        if self.feature_to_node:
-            if self.only_feature_node:
-                suffix = f"{self.dataset_name}_fn.csv"
-            else:
-                suffix = f"{self.dataset_name}_fn_nn.csv"
+        # if self.feature_to_node:
+        #     if self.only_feature_node:
+        #         suffix = f"{self.dataset_name}_fn.csv"
+        #     else:
+        #         suffix = f"{self.dataset_name}_fn_nn.csv"
         
-        else: # only_structure
-            suffix = f"{self.dataset_name}_ori.csv"
+        # else: # only_structure
+        #     suffix = f"{self.dataset_name}_ori.csv"
 
+        suffix = f"{self.dataset_name}_ori.csv"
         self.imp_csv_path = os.path.join(self.save_dir, self.dataset_name, suffix)
 
         # Embedding layer if using random+imp

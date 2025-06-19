@@ -23,6 +23,8 @@ import igraph as ig # 計算betweenness時用到
 #     return (arr - vmin) / (vmax - vmin)
 
 
+# 目前的結果是用舊做法 (類別型: 1 才有邊相連算出來的 imp), feature 轉成 edge weight 前有做 L1, abs, MinMax 後沒有做 L1
+
 class NodeImportanceCalculator:
     """
     Compute and save normalized Degree, PageRank, and Betweenness for each node in a PyG Data object.

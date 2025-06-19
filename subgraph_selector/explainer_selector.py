@@ -151,10 +151,12 @@ class ExplainerEdgeSelector:
                 # 每 2 條是一組雙向邊，先做平均
                 if self.only_feature_node:
                     # 只保留特徵邊（假設 edge_aggregated 結尾就是特徵邊）
-                    num_feat_edges = self.data.node_feat_mask.sum().item()
-                    feat_edge_mask = self.edge_aggregated[-num_feat_edges:]
+                    # num_feat_edges = self.data.node_feat_mask.sum().item()
+                    # feat_edge_mask = self.edge_aggregated[-num_feat_edges:] 
+                    feat_edge_mask = self.edge_aggregated # 這時只有可能使用到特徵邊 # 節點邊已經在生成解釋前刪掉ㄌ
                 else:
-                    feat_edge_mask = self.edge_aggregated[node_feat_mask_np]
+                    feat_edge_mask = self.edge_aggregated[node_feat_mask_np] # 邊含節點邊和特徵邊時 # 已經只剩特徵邊，index 是重排過的！
+                
                 num_pairs = num_feat_edges // 2
                 pair_scores = (feat_edge_mask[::2] + feat_edge_mask[1::2]) / 2
 
@@ -167,7 +169,13 @@ class ExplainerEdgeSelector:
             
             # 對應回全域 index
             selected_orig_edge_indices = np.where(node_node_mask_np)[0][top_orig]
-            selected_feat_edge_indices = np.where(node_feat_mask_np)[0][top_feat]
+            # selected_feat_edge_indices = np.where(node_feat_mask_np)[0][top_feat]
+            if self.only_feature_node:
+                # 已經是重排過的特徵邊索引 → 不需要對應回去
+                selected_feat_edge_indices = top_feat
+            else:
+                # 仍然要從原始邊的 index 去對應回 global index
+                selected_feat_edge_indices = np.where(node_feat_mask_np)[0][top_feat]
 
             selected_idx = np.concatenate([selected_orig_edge_indices, selected_feat_edge_indices])
             selected_idx_tensor = torch.tensor(selected_idx, dtype=torch.long, device=self.device)

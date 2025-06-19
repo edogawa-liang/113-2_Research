@@ -49,6 +49,9 @@ def analyze_feature_removal(args):
         feature_mask = np.load(feature_mask_path)  # shape: same as x
         edge_mask = np.load(edge_mask_path)        # 目前沒用到
 
+        # 移除邊的數量
+        removed_edge = int(edge_mask.sum()) if edge_mask is not None else 0
+
         # 移除的1的數量
         removed_1 = int(feature_mask.sum()) # 核心子圖只會存下移除1的部分
 
@@ -76,7 +79,9 @@ def analyze_feature_removal(args):
         removed_0 = expected_remove - removed_1
 
         results.append({
+            "Dataset": dataset,
             "Trial": trial,
+            "removed_edge": removed_edge,
             "Total 0": total_0,
             "Total 1": total_1,
             "1 ratio": round(total_1_ratio, 4),

@@ -587,6 +587,7 @@ python analysis/check_core_subgraph.py --run_mode remove_from_GNNExplainer_difff
 python analysis/check_core_subgraph.py --run_mode remove_from_GNNExplainer_difffeat --split_id 0 --dataset CiteSeer --trial_start 0 --trial_end 8
 python analysis/check_core_subgraph.py --run_mode remove_from_GNNExplainer_difffeat --split_id 0 --dataset Amazon --trial_start 0 --trial_end 8
 
+python analysis/check_core_subgraph.py --run_mode try_remove_from_GNNExplainer_difffeat --split_id 0 --dataset Cora --trial_start 0 --trial_end 0
 
 
 wait

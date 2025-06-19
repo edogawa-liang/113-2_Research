@@ -23,7 +23,7 @@ class FeatureNodeReverter:
 
         x_restored = torch.zeros((num_nodes, num_features), device=device)
 
-        edge_index = converted_data.edge_index
+        edge_index = converted_data.edge_index # 這些邊理論上特徵都是1 (包含特徵邊和節點邊)
         src_all = edge_index[0]
         dst_all = edge_index[1]
 
@@ -41,6 +41,11 @@ class FeatureNodeReverter:
         node_ids = torch.where(src < num_nodes, src, dst)
         feat_ids = torch.where(src >= num_nodes, src, dst) - num_nodes
 
+        # =============
+
+        # =============
+
+        # 剩下的都是還存在的邊 要轉換回原始節點的特徵
         if self.feature_type == "categorical":
             x_restored[node_ids, feat_ids] = 1.0
         elif self.feature_type == "continuous":
