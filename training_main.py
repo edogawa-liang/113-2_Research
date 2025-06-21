@@ -42,7 +42,7 @@ def parse_args():
     parser.add_argument("--only_feature_node", action="store_true", help="Use only feature-node edges, no node-node edges.")
     
     # Structure Mode
-    parser.add_argument("--structure_mode", type=str, default="random+imp", choices=["one+imp", "random+imp"], help="Mode for structure features: 'one' or 'random+imp'")
+    parser.add_argument("--structure_mode", type=str, default=None, choices=["one+imp", "random+imp"], help="Mode for structure features: 'one' or 'random+imp'")
 
     # structure mode 是 "random+imp" 時，要不要使用 learnable embedding
     parser.add_argument("--learn_embedding", action="store_true", help="Use learnable random embedding")
