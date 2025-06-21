@@ -97,19 +97,6 @@ if __name__ == "__main__":
 
         num_features = remaining_graph.x.size(1)
 
-
-        # Inference GNN on the remaining graph
-        print(f"Training Classification Model - Trial {args.trial_number}")
-        trainer = GNNClassifierTrainer(dataset_name=args.dataset, data=remaining_graph, 
-                                    num_features=num_features, num_classes=num_classes, 
-                                    model_class=GCN2Classifier if args.model == "GCN2" else GCN3Classifier,
-                                    trial_number=args.trial_number, device=DEVICE,)
-
-        model_dir = os.path.join("saved", args.run_mode, "model", args.dataset)
-        model_name = f"{args.split_id}_{trainer.model_name}.pth"
-        model_path = os.path.join(model_dir, model_name)
-        print(f"Loading fixed model from {model_path}")
-        trainer.load_model(model_path)
     
         # 每次repeat 挑選的節點都不一樣，分別找子圖與訓練模型
         for repeat_id in range(args.repeat_start, args.repeat_end + 1):
@@ -117,10 +104,27 @@ if __name__ == "__main__":
             test_mask = load_split_test(args.dataset, args.split_id, repeat_id, DEVICE)
             remaining_graph.test_mask = test_mask
 
-            # logger = ExperimentLogger(file_name=args.filename, note=args.note, copy_old=True, run_mode=save_dir)
-            # trial_number = logger.get_next_trial_number(args.dataset)
+            # # 如果有移除特徵，應該在測試節點保留完整特徵，
+            print("Restoring full features for test nodes...")
+            test_node_idx = torch.where(test_mask)[0]
+            remaining_graph.x[test_node_idx] = ori_data.x[test_node_idx]
 
+            # Inference GNN on the remaining graph
+            print(f"Training Classification Model - Trial {trial_id}")
+            trainer = GNNClassifierTrainer(dataset_name=args.dataset, data=remaining_graph, 
+                                        num_features=num_features, num_classes=num_classes, 
+                                        model_class=GCN2Classifier if args.model == "GCN2" else GCN3Classifier,
+                                        trial_number=trial_id, device=DEVICE,)
+
+            model_dir = os.path.join("saved", args.run_mode, "model", args.dataset)
+            model_name = f"{args.split_id}_{trainer.model_name}.pth"
+            model_path = os.path.join(model_dir, model_name)
+            print(f"Loading fixed model from {model_path}")
+            trainer.load_model(model_path)
+            
             result = trainer.test()
+            result["repeat_id"] = repeat_id 
+            result["trial_id"] = trial_id  
 
             # Save results
             save_dir = os.path.join("saved", args.run_mode, f"split_{args.split_id}", "repeat_result", args.dataset)
