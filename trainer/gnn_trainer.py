@@ -11,7 +11,7 @@ class GNNClassifierTrainer:
     A trainer class for training, calling for evaluating, and saving a GNN model.
     """
 
-    def __init__(self, dataset_name, data, num_features, num_classes, model_class, trial_number, device=None, 
+    def __init__(self, dataset_name, data, num_features, num_classes, model_class, trial_number=None, device=None, 
                  lr=0.01, weight_decay=1e-4, epochs=1000, run_mode="try", threshold=0.5, extra_params=None):
         # model setting
         self.device = device 

@@ -9,7 +9,6 @@ from data.dataset_loader import GraphDatasetLoader
 
 from models.basic_GCN import GCN2Classifier, GCN3Classifier
 from trainer.gnn_trainer import GNNClassifierTrainer
-from utils.save_result import ExperimentLogger
 
 from data.prepare_split import load_split_csv
 from data.split_unknown_to_test import load_split_test
@@ -39,8 +38,9 @@ def parse_args():
     # 使用的 split_id (第幾次的triain/valid/test)
     parser.add_argument("--split_id", type=int, default=0, help="Split ID to use for fixed train/valid masks (default: 0)")
 
-    # trial number (要對應好)
-    parser.add_argument("--trial_number", type=int, default=0, help="Trial number for logging Model")
+    # 挑選想要 test 10 次的模型 (trial)
+    parser.add_argument("--trial_start", type=int, default=0, help="Start trial ID (inclusive)")
+    parser.add_argument("--trial_end", type=int, default=0, help="End trial ID (exclusive)")
 
     return parser.parse_args()
 
@@ -132,11 +132,12 @@ if __name__ == "__main__":
         test_mask = load_split_test(args.dataset, args.split_id, repeat_id, DEVICE)
         remaining_graph.test_mask = test_mask
 
-        logger = ExperimentLogger(file_name=args.filename, note=args.note, copy_old=True, run_mode=save_dir)
-        trial_number = logger.get_next_trial_number(args.dataset + "_remaining_graph")
+        # logger = ExperimentLogger(file_name=args.filename, note=args.note, copy_old=True, run_mode=save_dir)
+        # trial_number = logger.get_next_trial_number(args.dataset)
 
         result = trainer.test()
 
-        logger.log_experiment(args.dataset + "_remaining_graph", result, label_source = "Original", repeat_id=repeat_id, model_name=model_name)
-
+        # Save results
+        result_path = os.path.join(save_dir, f"{args.dataset}_remaining_graph_{repeat_id}.xlsx")
+        
         print("Experiment finished and results saved.")
