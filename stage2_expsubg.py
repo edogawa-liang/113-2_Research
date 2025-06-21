@@ -11,7 +11,7 @@ from data.feature2node import FeatureNodeConverter
 from data.prepare_split import load_split_csv
 from data.structure import StructureFeatureBuilder, extract_edges
 
-# 看repeat_id多少，抓那次的模型, 並讀取那10次的split檔，聚集10次training node，一起生成解釋子圖，
+# 看split_id多少，抓那次的模型, 並讀取那10次的split檔，聚集10次training node，一起生成解釋子圖，
 def parse_args():
     """
     Parses command-line arguments.
@@ -40,9 +40,9 @@ def parse_args():
     # Structure Mode
     parser.add_argument("--structure_mode", type=str, default="random+imp", choices=["one", "random+imp"], help="Mode for structure features: 'one' or 'random+imp'")
 
-    # repeat settings
-    parser.add_argument("--repeat_start", type=int, default=0, help="Start repeat id (inclusive)")
-    parser.add_argument("--repeat_end", type=int, default=9, help="End repeat id (inclusive)")
+    # split settings
+    parser.add_argument("--split_start", type=int, default=0, help="Start split id (inclusive)")
+    parser.add_argument("--split_end", type=int, default=9, help="End split id (inclusive)")
 
     # 補解釋
     parser.add_argument("--check_unexplained", action="store_true", help="Check which train nodes have not been explained yet.")
@@ -98,9 +98,9 @@ if __name__ == "__main__":
     model_class = model_mapping[f"{args.model}Classifier"]
 
     # Select nodes to explain 
-    for repeat_id in range(args.repeat_start, args.repeat_end + 1):
+    for split_id in range(args.split_start, args.split_end + 1):
         # Load the split mask
-        train_mask, _, _, _ = load_split_csv(args.dataset, repeat_id, DEVICE) # 這裏的mask是原dataset的長度
+        train_mask, _, _, _ = load_split_csv(args.dataset, split_id, DEVICE) # 這裏的mask是原dataset的長度
         train_nodes = train_mask.nonzero(as_tuple=True)[0].cpu().tolist() # 原始節點的編號
         
         # # try only one node
@@ -111,8 +111,8 @@ if __name__ == "__main__":
         if (args.feature_to_node or args.only_structure):
             if args.structure_mode == "random+imp":
                 embedding_save_dir = os.path.join(args.stage1_path, "embedding", args.dataset)
-                embedding_save_path = os.path.join(embedding_save_dir, f"{repeat_id}_embedding.npy")
-                print(f"[Repeat {repeat_id}] Loading embedding from {embedding_save_path}")
+                embedding_save_path = os.path.join(embedding_save_dir, f"{split_id}_embedding.npy")
+                print(f"[Split {split_id}] Loading embedding from {embedding_save_path}")
 
                 embedding_np = np.load(embedding_save_path)
                 print(f"loaded embedding from {embedding_save_path}, shape: {embedding_np.shape}")
@@ -130,7 +130,7 @@ if __name__ == "__main__":
                     external_embedding=embedding_tensor
                 )
             else: # "one" mode
-                print(f"[Repeat {repeat_id}] Using StructureFeatureBuilder with mode={args.structure_mode} (no external embedding)")
+                print(f"[Split {split_id}] Using StructureFeatureBuilder with mode={args.structure_mode} (no external embedding)")
                 builder = StructureFeatureBuilder(
                     data=data, device=DEVICE, dataset_name=args.dataset,
                     feature_to_node=args.feature_to_node,
@@ -146,11 +146,11 @@ if __name__ == "__main__":
             data.x = structure_x
 
         else:
-            print(f"[Repeat {repeat_id}] Using original data.x (no StructureFeatureBuilder rebuild).")
+            print(f"[Split {split_id}] Using original data.x (no StructureFeatureBuilder rebuild).")
 
 
         # model path
-        model_path = os.path.join(args.stage1_path, "model", args.dataset, f"{repeat_id}_{model_class.__name__}.pth")
+        model_path = os.path.join(args.stage1_path, "model", args.dataset, f"{split_id}_{model_class.__name__}.pth")
         print(f"Loading model from {model_path}")
     
         # Initialize explainer
@@ -164,12 +164,12 @@ if __name__ == "__main__":
             epoch=args.epoch,
             lr=args.lr,
             run_mode=args.run_mode,
-            trial_name=repeat_id,
+            trial_name=split_id,
             cf_beta=args.cf_beta,
         )
 
         if args.check_unexplained:
-            save_dir = os.path.join("saved", args.run_mode, args.explainer_type, args.dataset, f"{repeat_id}_{explainer.model_class.__name__}")
+            save_dir = os.path.join("saved", args.run_mode, args.explainer_type, args.dataset, f"{split_id}_{explainer.model_class.__name__}")
             train_nodes = filter_unexplained_nodes(train_nodes, save_dir)
 
         # Explain each node
@@ -203,7 +203,7 @@ if __name__ == "__main__":
                 "success_nodes": cf_success_nodes,
                 "fail_nodes": cf_fail_nodes
             }
-            save_dir = os.path.join("saved", args.run_mode, args.explainer_type, args.dataset, f"{repeat_id}_{explainer.model_class.__name__}")
+            save_dir = os.path.join("saved", args.run_mode, args.explainer_type, args.dataset, f"{split_id}_{explainer.model_class.__name__}")
             os.makedirs(save_dir, exist_ok=True)
             
             save_path = os.path.join(save_dir, "cf_summary.pkl")

@@ -23,6 +23,10 @@ class GNNClassifierTrainer:
         self.weight_decay = weight_decay
         self.epochs = epochs
         self.threshold = threshold
+        self.model_name = model_class.__name__
+        self.run_mode = run_mode
+        self.trial_number = trial_number
+        self.dataset_name = dataset_name
         
         # 決定 optimizer param list
         param_list = list(self.model.parameters())
@@ -40,27 +44,6 @@ class GNNClassifierTrainer:
             for idx, p in enumerate(extra_params):
                 print(f"  extra_param[{idx}]: requires_grad={p.requires_grad}, shape={p.shape}")
 
-        
-
-
-        # use run_mode to determine the base directory
-        base_dir = os.path.join("saved", run_mode)
-        # create directories
-        model_dir = os.path.join(base_dir, "model", dataset_name)
-        plot_dir = os.path.join(base_dir, "plot", dataset_name)
-
-        os.makedirs(model_dir, exist_ok=True)
-        os.makedirs(plot_dir, exist_ok=True)
-
-        self.model_name = model_class.__name__  
-        self.save_model_dir = model_dir  
-        self.save_plot_dir = plot_dir  
-
-        # create save paths
-        self.save_model_path = os.path.join(self.save_model_dir, f"{trial_number}_{self.model_name}.pth")
-        self.save_config_path = os.path.join(self.save_model_dir, f"{trial_number}_{self.model_name}_config.pth")
-        self.save_plot_path = os.path.join(self.save_plot_dir, f"{trial_number}_{self.model_name}.png")
-
         # results
         self.best_val_acc = 0
         self.best_test_acc = 0
@@ -68,8 +51,6 @@ class GNNClassifierTrainer:
         self.best_loss = float("inf")
         self.best_metrics = {}
 
-        # Initialize Plotter
-        self.metric_plotter = ClassificationPlotter(save_dir=self.save_plot_path)
 
         # Initialize metric storage
         self.metrics = {
@@ -80,6 +61,25 @@ class GNNClassifierTrainer:
             "val_f1": [], "test_f1": [],
             "val_cm": [], "test_cm": []
         }
+
+    def _prepare_save_paths(self, dataset_name, model_class, run_mode, trial_number):
+        base_dir = os.path.join("saved", run_mode)
+        model_dir = os.path.join(base_dir, "model", dataset_name)
+        plot_dir = os.path.join(base_dir, "plot", dataset_name)
+
+        os.makedirs(model_dir, exist_ok=True)
+        os.makedirs(plot_dir, exist_ok=True)
+
+        self.model_name = model_class.__name__
+        self.save_model_dir = model_dir
+        self.save_plot_dir = plot_dir
+
+        self.save_model_path = os.path.join(model_dir, f"{trial_number}_{self.model_name}.pth")
+        self.save_config_path = os.path.join(model_dir, f"{trial_number}_{self.model_name}_config.pth")
+        self.save_plot_path = os.path.join(plot_dir, f"{trial_number}_{self.model_name}.png")
+
+        self.metric_plotter = ClassificationPlotter(save_dir=self.save_plot_path)
+
 
     def train(self):
         """Trains the model for one epoch."""
@@ -125,6 +125,15 @@ class GNNClassifierTrainer:
     def run(self):
         """Runs the training process, evaluates metrics, and saves the best model."""
         print(f"Training GNN on {self.device} for {self.epochs} epochs...")
+        # 如果沒有建立過儲存路徑就建
+        if not hasattr(self, "save_model_path"):
+            self._prepare_save_paths(
+                dataset_name=self.data.name if hasattr(self.data, "name") else "unknown",
+                model_class=self.model.__class__,
+                run_mode=self.run_mode,
+                trial_number=self.trial_number if hasattr(self, "trial_number") else "default"
+            )
+
 
         for epoch in range(1, self.epochs + 1):
             loss = self.train()

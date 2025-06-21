@@ -178,11 +178,11 @@ if __name__ == "__main__":
                     model_class=GCN2Classifier if args.model == "GCN2" else GCN3Classifier,
                     device=DEVICE,
                     run_mode=args.run_mode,
-                    extra_params=[builder.embedding.weight] if hasattr(builder, "embedding") and builder.embedding is not None else None
+                    extra_params=None
                 )
 
             # Load fixed model
-            model_dir = os.path.join("saved", args.run_mode, f"split_{args.split_id}", "model")
+            model_dir = os.path.join("saved", args.run_mode, f"split_{args.split_id}", "model", args.dataset)
             model_name = f"{trial_id}_{trainer.model_name}.pth"
             path_to_model = os.path.join(model_dir, model_name)
             print(f"Loading fixed model from {path_to_model}")

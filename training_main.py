@@ -108,11 +108,11 @@ if __name__ == "__main__":
     data.edge_weight = edge_weight
 
 
-    # Repeat 10 time selecting different splits
+    # Split 10 time selecting different splits
     # 在 train/valid/test 情況下是 load 不同種組合
     for split_id in range(args.split_start, args.split_end + 1):
 
-        print(f"\n===== [Repeat {split_id}] =====")
+        print(f"\n===== [Split {split_id}] =====")
 
         # Load the split mask
         train_mask, val_mask, test_mask, unknown_mask = load_split_csv(args.dataset, split_id, DEVICE) # 這裏的mask是原dataset的長度
@@ -179,7 +179,7 @@ if __name__ == "__main__":
                 embedding_save_path = os.path.join(embedding_save_dir, f"embedding.npy")
                 learned_embedding = builder.embedding.weight.detach().cpu().numpy()
                 np.save(embedding_save_path, learned_embedding)
-                print(f"[Repeat {split_id}] Saved embedding to {embedding_save_path}")
+                print(f"[Split {split_id}] Saved embedding to {embedding_save_path}")
                 
         except ValueError as e:
             raise
