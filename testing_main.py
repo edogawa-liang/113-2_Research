@@ -196,9 +196,10 @@ if __name__ == "__main__":
             result['repeat_id'] = repeat_id
 
             # Save results
-            save_dir = os.path.join("saved", args.run_mode, f"split_{args.split_id}")
+            save_dir = os.path.join("saved", args.run_mode, f"split_{args.split_id}", "repeat_result")
             os.makedirs(save_dir, exist_ok=True)
             save_path = os.path.join(save_dir, f"{trial_id}_{trainer.model_name}.csv")
+
 
             df = pd.DataFrame([result])
             if os.path.exists(save_path):

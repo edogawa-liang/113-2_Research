@@ -71,7 +71,6 @@ if __name__ == "__main__":
         return torch.cat([mask, torch.zeros(pad_len, dtype=torch.bool, device=mask.device)], dim=0)
 
 
-
     # 1. Feature to node conversion
     if args.feature_to_node:
         print("Converting node features into feature-nodes...")
