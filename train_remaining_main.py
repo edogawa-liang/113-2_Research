@@ -133,7 +133,7 @@ if __name__ == "__main__":
     data.edge_index = edge_index
     data.edge_weight = edge_weight
 
-    print("After Feature to Node conversion (if exist): ", data)
+    print("\nAfter Feature to Node conversion (if exist):\n", data)
 
 
     # 每次 repeat 挑選的節點都不一樣，分別找子圖與訓練模型
@@ -178,10 +178,10 @@ if __name__ == "__main__":
 
             save_coverage_log(args, split_id, coverage_stats, selected_nodes=selected_nodes, save_dir="saved/node_coverage")
 
+        print(f"======= Using {args.selector_type} Selector =======")
 
         # Select subgraph
         if args.selector_type == "random": # 使用時不要加feature_to_node
-            print("Using Random Selector")
             selector = RandomEdgeSelector(
                 data=data,
                 fraction=args.fraction,
@@ -195,7 +195,6 @@ if __name__ == "__main__":
             # 特徵的選擇器（如果有指定 fraction_feat）
             # 可指定要不要選擇相同的特徵
             if args.fraction_feat > 0 and not args.feature_to_node:
-                print("Using Random Feature Selector")
                 feat_selector = RandomFeatureSelector(
                     num_nodes=data.num_nodes,
                     num_features=num_features,
@@ -209,7 +208,6 @@ if __name__ == "__main__":
         
         elif args.selector_type == "explainer": # 處理PyG支援的可解釋方法
             if args.explainer_name != "CFExplainer": # CF另外處理
-                print("Using Explainer Selector")
                 
                 selector = ExplainerEdgeSelector(
                     data=data,
@@ -237,7 +235,6 @@ if __name__ == "__main__":
 
 
         elif args.selector_type == "random_walk":
-            print("Using Random Walk Selector")
             # 改成直接傳入node
             selector = RandomWalkEdgeSelector(data, fraction=args.fraction, selected_nodes=selected_nodes,
                                             walk_length=args.walk_length, num_walks=args.num_walks, feature_type=feature_type, 
@@ -261,7 +258,7 @@ if __name__ == "__main__":
             remaining_graph = remaining_graph_constructor.get_remaining_graph()
 
 
-        print("初步的 remaining graph:", remaining_graph)
+        print("\nRemaining graph before reverting feature nodes:\n", remaining_graph)
 
 # ===============Revert to Original Graph================ #
         # if use feature to node, revert the feature node to original node (add feature value into original graph)
@@ -294,7 +291,7 @@ if __name__ == "__main__":
         save_dir = os.path.join(args.run_mode, f"split_{split_id}")
 
         logger = ExperimentLogger(file_name=args.filename, note=args.note, copy_old=True, run_mode=save_dir)
-        trial_number = logger.get_next_trial_number(args.dataset + "_remaining_graph")
+        trial_number = logger.get_next_trial_number(args.dataset)
 
         # 匯出核心子圖 mask  (存在 split_id folder 下)
         extractor = CoreSubgraphExtractor(
@@ -318,6 +315,13 @@ if __name__ == "__main__":
         # 如果 data 沒有邊了，報錯
         if remaining_graph.edge_index.size(1) == 0:
             raise ValueError("Remaining graph has no edges after removing the subgraph. Please check the selected edges and feature masks.")
+
+        # 如果有移除特徵，應該在測試節點保留完整特徵，
+        if args.fraction_feat > 0:
+            print("Restoring full features for test nodes...")
+            test_node_idx = torch.where(test_mask)[0]
+            remaining_graph.x[test_node_idx] = ori_data.x[test_node_idx]
+
 
         # Train GNN on the remaining graph
         print("\nTraining GNN on the remaining graph after removing subgraph...")

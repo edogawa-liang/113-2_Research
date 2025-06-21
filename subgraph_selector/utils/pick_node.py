@@ -30,7 +30,7 @@ class NodePicker:
 
         # 原始 node 數量 N
         self.num_ori_nodes = len(self.original_node_indices)
-        print(f"Original nodes: {self.num_ori_nodes}, Original edges: {self.num_ori_edges}")
+        # print(f"Original nodes: {self.num_ori_nodes}, Original edges: {self.num_ori_edges}")
 
     def load_importance(self):
         if self.feature_to_node:
@@ -71,7 +71,7 @@ class NodePicker:
         )
         
         N = int(self.num_ori_nodes * target_ratio)
-        print(f"Picking {N} nodes ({target_ratio * 100:.1f}%)")
+        # print(f"Picking {N} nodes ({target_ratio * 100:.1f}%)")
         max_available = len(df['node'])
         N_final = min(N, max_available)
         if N > max_available:
@@ -191,10 +191,10 @@ class NodePicker:
         edge_2hop_ratio_current = num_2hop_edges / self.data.edge_index.shape[1]
 
         # 印出 summary
-        print(f"Selected {num_selected_nodes} nodes")
-        print(f"Node ratio: ori={node_ratio_ori:.4f}, current={node_ratio_current:.4f}")
-        print(f"2-hop node ratio: ori={node_2hop_ratio_ori:.4f}, current={node_2hop_ratio_current:.4f}")
-        print(f"2-hop edge ratio: ori={edge_2hop_ratio_ori:.4f}, current={edge_2hop_ratio_current:.4f}")
+        # print(f"Selected {num_selected_nodes} nodes")
+        # print(f"Node ratio: ori={node_ratio_ori:.4f}, current={node_ratio_current:.4f}")
+        # print(f"2-hop node ratio: ori={node_2hop_ratio_ori:.4f}, current={node_2hop_ratio_current:.4f}")
+        # print(f"2-hop edge ratio: ori={edge_2hop_ratio_ori:.4f}, current={edge_2hop_ratio_current:.4f}")
 
         return (
             num_selected_nodes,

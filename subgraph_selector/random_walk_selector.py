@@ -1,200 +1,169 @@
+# 目前的random walk 沒有考慮 edge weight 
+# 加入特徵邊會移除雙向，還沒驗證
+# 還沒加入 self.only_feature_node 的情況
+# 因為之後類別型也要全連接，feature value 要當作edge weight 但目前的版本是沒有考慮包含weight的random walk
+
 import torch
 import numpy as np
 from torch_cluster import random_walk
 from collections import defaultdict
 
+# 還沒檢查 但程式跑起來沒問題
 
-# 目前的random walk 沒有考慮 edge weight 
-# 加入特徵邊會移除雙向，還沒驗證
+import torch
+import numpy as np
+from collections import defaultdict
+
 
 class RandomWalkEdgeSelector:
-    """
-    Selects the top fraction of most frequently visited edges (by random walk) for removal.
-    """
-
-    def __init__(self, data, fraction, selected_nodes, walk_length=10, num_walks=5, 
-                 feature_type="categorical", device="cpu", manual_nodes=None, top_k_percent_feat=0.1):
-        """
-        :param data: PyG graph data
-        :param fraction: Fraction of most frequently visited edges to remove (0.1 → top 10%)
-        :param walk_length: Number of steps per random walk
-        :param num_walks: Number of random walks per starting node
-        :param node_choose: Strategy for selecting starting nodes ("random", "high_degree", "top_pagerank", "manual")
-        :param device: Device to use (e.g., 'cpu' or 'cuda')
-        :param manual_nodes: Manually specified nodes if node_choose is "manual"
-        """
+    def __init__(self, data, fraction, selected_nodes, walk_length=10, num_walks=5,
+                 feature_type="categorical", device="cpu", manual_nodes=None,
+                 top_k_percent_feat=0.1, only_feature_node=False):
         self.data = data
         self.fraction = fraction
         self.walk_length = walk_length
         self.num_walks = num_walks
-        self.feature_type = feature_type  # 用於選擇特徵邊
+        self.feature_type = feature_type
         self.device = device
         self.manual_nodes = manual_nodes
         self.top_k_percent_feat = top_k_percent_feat
+        self.only_feature_node = only_feature_node
         self.start_nodes = torch.tensor(selected_nodes, dtype=torch.long, device=self.device)
 
-
-       
-    def select_edges(self):
-        """
-        1. Perform random walks using PyG's `random_walk()`.
-        2. Count how many times each edge is visited.
-        3. Remove the top `self.fraction` fraction of edges (by frequency).
-        4. Return indices of these edges in the original `edge_index`.
-        """
+    def run_weighted_random_walk(self):
         edge_index = self.data.edge_index.to(self.device)
+        edge_weight = getattr(self.data, 'edge_weight', torch.ones(edge_index.size(1), device=self.device))
 
-        # 檢查圖是否為無向圖
-        is_undirected = self.data.is_undirected()
-        print(f"Graph is {'Undirected' if is_undirected else 'Directed'}.")
+        # 預先建立鄰接表與邊權重映射
+        row, col = edge_index
+        adj_dict = defaultdict(list)
+        weight_dict = defaultdict(list)
 
-        # 執行 random_walk
-        walks = random_walk(
-            edge_index[0], 
-            edge_index[1], 
-            start=self.start_nodes.repeat_interleave(self.num_walks), 
-            walk_length=self.walk_length
-        )
-        print(f"Shape of walks: {walks.shape}")
+        for i in range(edge_index.size(1)):
+            adj_dict[row[i].item()].append(col[i].item())
+            weight_dict[row[i].item()].append(edge_weight[i].item())
 
-        # 統計每條邊被訪問的次數
+        walks = []
+        for node in self.start_nodes.repeat_interleave(self.num_walks):
+            walk = [node.item()]
+            current = node.item()
+            for _ in range(self.walk_length):
+                neighbors = adj_dict[current]
+                if not neighbors:
+                    break
+                weights = weight_dict[current]
+                probs = np.array(weights) / np.sum(weights)
+                current = np.random.choice(neighbors, p=probs)
+                walk.append(current)
+            walks.append(torch.tensor(walk, device=self.device))
+
+        print(f"Generated {len(walks)} weighted walks of length {self.walk_length}")
+        return walks
+
+    def get_edge_index_map(self):
+        edge_index = self.data.edge_index.to(self.device)
+        return {tuple(edge.tolist()): idx for idx, edge in enumerate(edge_index.t())}
+
+    def expand_bidirectional_edges(self, selected_indices, edge_map):
+        reverse_edge_map = { (dst, src): idx for (src, dst), idx in edge_map.items() }
+        expanded = set(selected_indices)
+        for edge, idx in edge_map.items():
+            if idx in selected_indices and (edge[1], edge[0]) in reverse_edge_map:
+                expanded.add(reverse_edge_map[(edge[1], edge[0])])
+        return list(expanded)
+
+    def select_edges(self):
+        walks = self.run_weighted_random_walk()
         visited_edge_count = defaultdict(int)
 
-        # 走訪結果可能是 2D tensor (num_walks_total, walk_length+1)
         for walk in walks:
-            # walk 可能是 1D
-            # 先確保它是 list or 1D
-            if walk.dim() == 0:
-                # 單個 scalar，無法形成路徑
-                continue
-            # walk 是 1D tensor，表示一條完整的 random walk
             for i in range(len(walk) - 1):
                 src = walk[i].item()
-                dst = walk[i+1].item()
-                if src != dst:  # 避免 self-loop
-                    if is_undirected:
-                        edge = (min(src, dst), max(src, dst))
-                    else:
-                        edge = (src, dst)
+                dst = walk[i + 1].item()
+                if src != dst:
+                    edge = (min(src, dst), max(src, dst)) if self.data.is_undirected() else (src, dst)
                     visited_edge_count[edge] += 1
 
-
-        # 根據出現次數排序，取前 self.fraction 比例
-        all_edges = list(visited_edge_count.items())  # [(edge, freq), ...]
+        all_edges = list(visited_edge_count.items())
         all_edges.sort(key=lambda x: x[1], reverse=True)
 
-        # Edge masks
         node_node_mask_np = self.data.node_node_mask.cpu().numpy()
         node_feat_mask_np = self.data.node_feat_mask.cpu().numpy()
-        
-        num_ori_edges = node_node_mask_np.sum()  # 幾條 node-node edge
-        num_feat_edges = node_feat_mask_np.sum() # 幾條 node-feature edge
-        num_total_edges = len(node_node_mask_np)
-        ori_num_features = self.data.is_feature_node.sum().item()  # 原始特徵節點數量
 
+        num_ori_edges = node_node_mask_np.sum() if not self.only_feature_node else 0
+        num_feat_edges = node_feat_mask_np.sum()
+        ori_num_features = self.data.is_feature_node.sum().item()
 
-        # 建立 (src, dst) → edge_index 映射
-        edge_map = {
-            tuple(edge.tolist()): idx for idx, edge in enumerate(edge_index.t())
-        }
+        edge_map = self.get_edge_index_map()
 
-        selected_ori = []
-        selected_feat = []
-
+        selected_ori, selected_feat = [], []
         for edge, _ in all_edges:
             if edge in edge_map:
                 idx = edge_map[edge]
-                if node_node_mask_np[idx]:
+                if not self.only_feature_node and node_node_mask_np[idx]:
                     selected_ori.append(idx)
                 elif node_feat_mask_np[idx]:
                     selected_feat.append(idx)
-                else:
-                    print(f"[Warning] Edge idx={idx} 不在 node_node_mask 或 node_feat_mask 裡！")
 
-
-        num_visited_ori_edges = len(selected_ori)
-        num_visited_feat_edges = len(selected_feat)
-
-        print(f"走過的原始邊數量: {num_visited_ori_edges}")
-        print(f"走過的特徵邊數量: {num_visited_feat_edges}")
-        
-        # 按比例選擇
-        num_selected_ori = int(num_ori_edges * self.fraction)
-        # selected_ori = selected_ori[:num_selected_ori]
-        print(f"應挑 {num_selected_ori} original edges (fraction {self.fraction})")
-        print(f"實際走的原始邊比例: {num_visited_ori_edges / num_ori_edges * 100:.2f}%")
-        
-        # 如果選擇的原始邊數量少於應挑的數量，則從剩餘的原始邊中補齊
-        if len(selected_ori) < num_selected_ori:
-            print(f" 探索到的原始邊只有 {len(selected_ori)}，少於應挑的 {num_selected_ori}，將從其他原始邊補齊。")
-            # 找出還沒被走過的原始邊 index
-            remaining_ori = list(set(range(num_ori_edges)) - set(selected_ori))
-            needed_ori = num_selected_ori - len(selected_ori)
-            if len(remaining_ori) >= needed_ori:
-                additional_ori = torch.tensor(remaining_ori, device=self.device)[torch.randperm(len(remaining_ori))[:needed_ori]].tolist()
-                selected_ori += additional_ori
+        if not self.only_feature_node:
+            num_selected_ori = int(num_ori_edges * self.fraction)
+            selected_ori = self.expand_bidirectional_edges(selected_ori, edge_map)
+            if len(selected_ori) < num_selected_ori:
+                remaining_ori = list(set(range(num_ori_edges)) - set(selected_ori))
+                needed = num_selected_ori - len(selected_ori)
+                extra = torch.tensor(remaining_ori, device=self.device)[torch.randperm(len(remaining_ori))[:needed]].tolist()
+                selected_ori += extra
             else:
-                print(f"可補充的原始邊不足，只補上 {len(remaining_ori)} 條。")
-                selected_ori += remaining_ori
+                selected_ori = selected_ori[:num_selected_ori]
         else:
-            selected_ori = selected_ori[:num_selected_ori]
-
+            selected_ori = []
 
         if num_feat_edges > 0:
             num_feat_pairs = num_feat_edges // 2
             num_selected_feat_pairs = int(num_feat_pairs * self.top_k_percent_feat)
 
-            print(f"應挑 {num_selected_feat_pairs * 2} feature edges ({self.top_k_percent_feat * 100}% of pairs)")
-            print(f"實際走的特徵邊比例: {num_visited_feat_edges / num_feat_edges * 100:.2f}%")
-
-            # 特徵邊配對：先將所有已走過的特徵邊轉成 pair index
+            feat_edge_base = 0 if self.only_feature_node else num_ori_edges
             selected_feat = np.array(selected_feat)
-            rel_idx = selected_feat - num_ori_edges
+            rel_idx = selected_feat - feat_edge_base
             pair_idx = rel_idx // 2
 
-            # 統計走過哪些 pair，保留順序且唯一
-            seen_pair_set = set()
-            selected_pair_ordered = []
+            seen_pair_set, selected_pair_ordered = set(), []
             for p in pair_idx:
                 if p not in seen_pair_set:
                     seen_pair_set.add(p)
                     selected_pair_ordered.append(p)
 
             if len(selected_pair_ordered) < num_selected_feat_pairs:
-                print(f"探索到的特徵邊組只有 {len(selected_pair_ordered)}，少於應挑的 {num_selected_feat_pairs} 組，將從其他組補齊。")
                 all_pair_idx = np.arange(num_feat_pairs)
                 remaining_pairs = list(set(all_pair_idx) - set(seen_pair_set))
                 needed = num_selected_feat_pairs - len(selected_pair_ordered)
-                if len(remaining_pairs) >= needed:
-                    sampled_extra = np.random.choice(remaining_pairs, needed, replace=False).tolist()
-                    selected_pair_ordered += sampled_extra
-                else:
-                    print(f"可補充的特徵邊組不足，只補上 {len(remaining_pairs)} 組。")
-                    selected_pair_ordered += remaining_pairs
+                extra = np.random.choice(remaining_pairs, needed, replace=False).tolist()
+                selected_pair_ordered += extra
             else:
                 selected_pair_ordered = selected_pair_ordered[:num_selected_feat_pairs]
 
-            # 還原雙向邊 index
             selected_feat = []
             for p in selected_pair_ordered:
-                edge1 = num_ori_edges + 2 * p
+                edge1 = feat_edge_base + 2 * p
                 edge2 = edge1 + 1
                 selected_feat += [edge1, edge2]
-
         else:
             selected_feat = []
-            print("No feature edges found.")
-
 
         selected_indices = selected_ori + selected_feat
         selected_tensor = torch.tensor(selected_indices, dtype=torch.long, device=self.device)
 
-        ori_edge_visit_ratio = num_visited_ori_edges / num_ori_edges if num_ori_edges > 0 else 0
-        feat_edge_visit_ratio = num_visited_feat_edges / num_feat_edges if num_feat_edges > 0 else 0
-
-        selected_feat = np.array(selected_feat)
-        rel_idx = selected_feat - num_ori_edges
+        rel_idx = np.array(selected_feat) - (0 if self.only_feature_node else num_ori_edges)
         pair_idx = rel_idx // 2
         selected_feat_ids = (pair_idx % ori_num_features).tolist()
+
+        ori_edge_visit_ratio = len(selected_ori) / num_ori_edges if num_ori_edges > 0 else 0
+        feat_edge_visit_ratio = len(selected_feat) / num_feat_edges if num_feat_edges > 0 else 0
+
+        print(f"[RandomWalkEdgeSelector] Selected {len(selected_ori)} node-node edges and {len(selected_feat)} feature edges.")
+        print(f"[RandomWalkEdgeSelector] Edge visit ratio - Node edges: {ori_edge_visit_ratio:.3f}, Feature edges: {feat_edge_visit_ratio:.3f}")
+
+        return selected_tensor, selected_feat_ids, ori_edge_visit_ratio, feat_edge_visit_ratio
+
 
         return selected_tensor, selected_feat_ids, ori_edge_visit_ratio, feat_edge_visit_ratio

@@ -83,6 +83,14 @@ python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --selector_type explainer --base_dir saved/stage2_feature2node_fn --explainer_name GNNExplainer --node_choose pagerank --run_mode try_remove_from_GNNExplainer_difffeat --note split0_feat2node_difffeat_fn --fraction_feat 0.1 --feature_to_node --only_feature_node
 
 
+# 檢查 random walk
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --run_mode try_remove_from_RandomWalk_edge --note random_RandomWalk_edge --selector_type random_walk --walk_length 2  --fraction 0.1  --node_choose pagerank --node_ratio auto --edge_ratio 0.3 --feature_to_node
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --run_mode try_remove_from_RandomWalk_difffeat --note random_RandomWalk_difffeat --selector_type random_walk --walk_length 2  --node_choose pagerank --node_ratio auto --edge_ratio 0.3 --feature_to_node --fraction_feat 0.1
+python train_remaining_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --run_mode try_remove_from_RandomWalk_difffeat_edge --note random_RandomWalk_difffeat_edge --selector_type random_walk --walk_length 2 --fraction 0.1 --node_choose pagerank --node_ratio auto --edge_ratio 0.3 --feature_to_node --fraction_feat 0.1
+
+python analysis/check_core_subgraph.py --run_mode try_remove_from_RandomWalk_edge --split_id 0 --dataset Cora --trial_start 1 --trial_end 1
+
+
 # 1. 移除結構
 ## (1) Original Graph (edge mask)
 ### [1] random select

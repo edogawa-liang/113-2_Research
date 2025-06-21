@@ -13,7 +13,7 @@ class CoreSubgraphExtractor:
         self.edge_removed_mask = None
 
     def compute_removed_masks(self):
-        print("[CoreSubgraphExtractor] Computing removed feature and edge masks...")
+        # print("[CoreSubgraphExtractor] Computing removed feature and edge masks...")
 
         # === Feature mask ===
         ori_x_np = self.ori_data.x.cpu().numpy()
@@ -25,15 +25,15 @@ class CoreSubgraphExtractor:
         ori_edge_index_np = self.ori_data.edge_index.cpu().numpy()
         remain_edge_index_np = self.remaining_graph.edge_index.cpu().numpy()
 
-        print(f"[CoreSubgraphExtractor] ori_edge_index edges: {ori_edge_index_np.shape[1]}")
-        print(f"[CoreSubgraphExtractor] remain_edge_index edges: {remain_edge_index_np.shape[1]}")
+        # print(f"[CoreSubgraphExtractor] ori_edge_index edges: {ori_edge_index_np.shape[1]}")
+        # print(f"[CoreSubgraphExtractor] remain_edge_index edges: {remain_edge_index_np.shape[1]}")
 
         # 先建 set
         ori_edges_set = self._edge_set(ori_edge_index_np)
         remain_edges_set = self._edge_set(remain_edge_index_np)
 
-        print(f"[CoreSubgraphExtractor] ori_edges_set size: {len(ori_edges_set)}")
-        print(f"[CoreSubgraphExtractor] remain_edges_set size: {len(remain_edges_set)}")
+        # print(f"[CoreSubgraphExtractor] ori_edges_set size: {len(ori_edges_set)}")
+        # print(f"[CoreSubgraphExtractor] remain_edges_set size: {len(remain_edges_set)}")
 
         # 建 map: (src,dst) -> index
         ori_edge_map = {}
@@ -46,14 +46,14 @@ class CoreSubgraphExtractor:
         self.edge_removed_mask = np.zeros((1, num_ori_edges), dtype=np.int32)
 
         removed_edges = ori_edges_set - remain_edges_set
-        print(f"[CoreSubgraphExtractor] removed_edges size: {len(removed_edges)}")
+        # print(f"[CoreSubgraphExtractor] removed_edges size: {len(removed_edges)}")
 
         for edge in removed_edges:
             if edge in ori_edge_map:
                 idx = ori_edge_map[edge]
                 self.edge_removed_mask[0, idx] = 1
 
-        print("[CoreSubgraphExtractor] Removed masks computed.")
+        # print("[CoreSubgraphExtractor] Removed masks computed.")
 
     def _edge_set(self, edge_index_np):
         edges = set()
