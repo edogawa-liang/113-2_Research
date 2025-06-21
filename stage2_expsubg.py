@@ -91,11 +91,9 @@ if __name__ == "__main__":
     data.edge_weight = edge_weight
 
 
-    # Model mapping
-    model_mapping = {"GCN2Classifier": GCN2Classifier, "GCN3Classifier": GCN3Classifier}
-    
     # model class
-    model_class = model_mapping[f"{args.model}Classifier"]
+    model_mapping = {"GCN2": GCN2Classifier, "GCN3": GCN3Classifier}
+    model_class = model_mapping[args.model]
 
     # Select nodes to explain 
     for split_id in range(args.split_start, args.split_end + 1):
@@ -149,7 +147,7 @@ if __name__ == "__main__":
 
 
         # model path
-        model_path = os.path.join(args.stage1_path, f"split_{split_id}", "model", f"{split_id}_{model_class.__name__}.pth")
+        model_path = os.path.join(args.stage1_path, f"split_{split_id}", "model", f"{trial_name}_{model_class.__name__}.pth")
         print(f"Loading model from {model_path}")
     
         # Initialize explainer
@@ -164,12 +162,12 @@ if __name__ == "__main__":
             lr=args.lr,
             run_mode=args.run_mode,
             trial_name=args.trial_name,
-            split_id_name=split_id,
+            split_id=split_id,
             cf_beta=args.cf_beta,
         )
 
         if args.check_unexplained:
-            save_dir = os.path.join("saved", args.run_mode, f"split_{split_id}", args.explainer_type, args.dataset, f"{explainer.model_class.__name__}")
+            save_dir = os.path.join("saved", args.run_mode, f"split_{split_id}", args.explainer_type, args.dataset, f"{args.trial_name}_{explainer.model_class.__name__}")
             train_nodes = filter_unexplained_nodes(train_nodes, save_dir)
 
         # Explain each node
