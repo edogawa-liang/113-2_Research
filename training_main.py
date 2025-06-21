@@ -172,6 +172,7 @@ if __name__ == "__main__":
 
             # Save embedding
             # 即使不是 learn_embedding 也要保存 embedding。Inference 階段不需要存
+            # 提供給 Stage 2 解釋子圖使用 (但 Stage 3 重新訓練時不需要存，因為用的是資料原始的feature)
             if (args.feature_to_node or args.only_structure) and args.structure_mode == "random+imp": 
                 embedding_save_dir = os.path.join("saved", save_dir, "embedding", args.dataset)
                 os.makedirs(embedding_save_dir, exist_ok=True)

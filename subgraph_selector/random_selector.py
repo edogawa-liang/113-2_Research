@@ -5,7 +5,7 @@ import numpy as np
 
 # 會用 feature selector 的都是沒有 feature to node 的
 class RandomFeatureSelector:
-    def __init__(self, num_nodes, num_features, top_k_percent_feat=0.1, same_feat=True, seed=123, device="cpu"):
+    def __init__(self, num_nodes, num_features, top_k_percent_feat=0.1, same_feat=True, seed=42, device="cpu"):
         self.num_nodes = num_nodes
         self.num_features = num_features
         self.top_k_percent_feat = top_k_percent_feat
