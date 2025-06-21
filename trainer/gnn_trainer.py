@@ -128,7 +128,7 @@ class GNNClassifierTrainer:
         # 如果沒有建立過儲存路徑就建
         if not hasattr(self, "save_model_path"):
             self._prepare_save_paths(
-                dataset_name=self.data.name if hasattr(self.data, "name") else "unknown",
+                dataset_name=self.dataset_name,
                 model_class=self.model.__class__,
                 run_mode=self.run_mode,
                 trial_number=self.trial_number if hasattr(self, "trial_number") else "default"
@@ -204,15 +204,11 @@ class GNNClassifierTrainer:
         # Return results for external logging
         return {
             "Model": self.model_name,
-            'LR': self.lr,
-            "Epochs": self.epochs,
-            "Loss": None,  # Test 不需要 loss
             "Acc": metrics.get("Test_Acc", 0),
             "Auc": metrics.get("Test_AUC", 0),
             "Precision": metrics.get("Test_Pr", 0),
             "Recall": metrics.get("Test_Re", 0),
             "F1": metrics.get("Test_F1", 0),
             "CM": metrics.get("CM", []),
-            "Threshold": metrics.get("Threshold", None),
         }
 

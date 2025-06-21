@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument("--lr", type=float, default=0.01, help="Learning rate for explainer")
     parser.add_argument("--run_mode", type=str, default="stage2_edge_0.5", help="Run mode") # 如果生成test的解釋子圖, run_mode前改成 "test_stage2_edge_0.5"
     parser.add_argument("--stage1_path", type=str, default="saved/stage1", help="Directory for stage1 results")
-    
+    parser.add_argument("--trial_name", type=int, default=0, help="Trial name for saving results")
     # cf_explainer
     parser.add_argument("--cf_beta", type=float, default=0.5, help="Tradeoff for dist loss")
     
@@ -110,8 +110,7 @@ if __name__ == "__main__":
         # Build feature X
         if (args.feature_to_node or args.only_structure):
             if args.structure_mode == "random+imp":
-                embedding_save_dir = os.path.join(args.stage1_path, "embedding", args.dataset)
-                embedding_save_path = os.path.join(embedding_save_dir, f"{split_id}_embedding.npy")
+                embedding_save_path = os.path.join(args.stage1_path, f"split_{split_id}", "embedding", args.dataset, "embedding.npy")
                 print(f"[Split {split_id}] Loading embedding from {embedding_save_path}")
 
                 embedding_np = np.load(embedding_save_path)
@@ -150,7 +149,7 @@ if __name__ == "__main__":
 
 
         # model path
-        model_path = os.path.join(args.stage1_path, "model", args.dataset, f"{split_id}_{model_class.__name__}.pth")
+        model_path = os.path.join(args.stage1_path, f"split_{split_id}", "model", f"{split_id}_{model_class.__name__}.pth")
         print(f"Loading model from {model_path}")
     
         # Initialize explainer
@@ -164,12 +163,13 @@ if __name__ == "__main__":
             epoch=args.epoch,
             lr=args.lr,
             run_mode=args.run_mode,
-            trial_name=split_id,
+            trial_name=args.trial_name,
+            split_id_name=split_id,
             cf_beta=args.cf_beta,
         )
 
         if args.check_unexplained:
-            save_dir = os.path.join("saved", args.run_mode, args.explainer_type, args.dataset, f"{split_id}_{explainer.model_class.__name__}")
+            save_dir = os.path.join("saved", args.run_mode, f"split_{split_id}", args.explainer_type, args.dataset, f"{explainer.model_class.__name__}")
             train_nodes = filter_unexplained_nodes(train_nodes, save_dir)
 
         # Explain each node
@@ -203,7 +203,7 @@ if __name__ == "__main__":
                 "success_nodes": cf_success_nodes,
                 "fail_nodes": cf_fail_nodes
             }
-            save_dir = os.path.join("saved", args.run_mode, args.explainer_type, args.dataset, f"{split_id}_{explainer.model_class.__name__}")
+            save_dir = os.path.join("saved", args.run_mode, f"split_{split_id}", args.explainer_type, args.dataset, f"{explainer.model_class.__name__}")
             os.makedirs(save_dir, exist_ok=True)
             
             save_path = os.path.join(save_dir, "cf_summary.pkl")

@@ -155,14 +155,14 @@ if __name__ == "__main__":
                                     model_class= MLPClassifier, 
                                     trial_number=trial_number, device=DEVICE,
                                     epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
-                                    run_mode=args.run_mode, threshold=args.threshold)
+                                    run_mode=save_dir, threshold=args.threshold)
             else: # GNN
                 trainer = GNNClassifierTrainer(dataset_name=args.dataset, data=data, 
                                             num_features=num_features, num_classes=num_classes,  
                                             model_class=GCN2Classifier if args.model == "GCN2" else GCN3Classifier,
                                             trial_number=trial_number, device=DEVICE,
                                             epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay, 
-                                            run_mode=args.run_mode, threshold=args.threshold,
+                                            run_mode=save_dir, threshold=args.threshold,
                                             extra_params=[builder.embedding.weight] if (args.feature_to_node or args.only_structure) and args.structure_mode == "random+imp" and args.learn_embedding else None)
             
             result = trainer.run()

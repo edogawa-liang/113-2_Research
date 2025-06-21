@@ -15,7 +15,7 @@ class SubgraphExplainer:
     A flexible GNN explainer for node regression, supporting multiple algorithms (GNNExplainer, PGExplainer, DummyExplainer, CFExplainer).
     """
 
-    def __init__(self, model_class, dataset, data, model_path, trial_name, 
+    def __init__(self, model_class, dataset, data, model_path, trial_name, split_id,
                  explainer_type="GNNExplainer", hop=2, epoch=100, lr=0.01,
                  run_mode="stage2", cf_beta=0.5):
         """
@@ -40,6 +40,7 @@ class SubgraphExplainer:
         self.model_path = model_path
         self.model_class = model_class
         self.trial_name = trial_name
+        self.split_id = split_id  # 用於分組的 split_id
         self.run_mode = run_mode
         self.cf_beta = cf_beta
         self.explainer_type = explainer_type
@@ -183,7 +184,7 @@ class SubgraphExplainer:
         """
 
         # Define save directory based on run mode, dataset, and explainer type
-        save_exp_dir = os.path.join("saved", self.run_mode, explainer_type, self.dataset,  f"{self.trial_name}_{self.model_class.__name__}")
+        save_exp_dir = os.path.join("saved", self.run_mode, f"split_{self.split_id}", explainer_type, self.dataset,  f"{self.trial_name}_{self.model_class.__name__}")
         os.makedirs(save_exp_dir, exist_ok=True)
 
         # Define file path for saving explanations
