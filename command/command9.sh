@@ -50,11 +50,10 @@ python testing_main.py --dataset Amazon --model MLP  --run_mode stage1_mlp --spl
 python testing_main.py --dataset FacebookPagePage --normalize --model MLP  --run_mode stage1_mlp --split_id 0  --trial_start 0 --trial_end 0
 python testing_main.py --dataset GitHub --normalize --model MLP  --run_mode stage1_mlp --split_id 0  --trial_start 0 --trial_end 0
 
+# =================== 重新生成經過 feature to node 的解釋子圖 =========================
 
 
-# ============================================
 
-# + 重跑 10 次
 # ============================================
 # 
 wait
