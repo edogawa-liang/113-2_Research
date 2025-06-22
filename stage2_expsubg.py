@@ -42,7 +42,7 @@ def parse_args():
 
     # split settings
     parser.add_argument("--split_start", type=int, default=0, help="Start split id (inclusive)")
-    parser.add_argument("--split_end", type=int, default=9, help="End split id (inclusive)")
+    parser.add_argument("--split_end", type=int, default=0, help="End split id (inclusive)")
 
     # 補解釋
     parser.add_argument("--check_unexplained", action="store_true", help="Check which train nodes have not been explained yet.")
