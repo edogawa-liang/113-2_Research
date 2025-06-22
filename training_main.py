@@ -124,10 +124,10 @@ if __name__ == "__main__":
             pad_len = num_total_nodes - num_orig_nodes
             print(f"Padding masks with {pad_len} additional nodes for feature nodes...")
 
-            train_mask = pad_mask(train_mask)
-            val_mask = pad_mask(val_mask)
-            test_mask = pad_mask(test_mask)
-            unknown_mask = pad_mask(unknown_mask) 
+            train_mask = pad_mask(train_mask, pad_len)
+            val_mask = pad_mask(val_mask, pad_len)
+            test_mask = pad_mask(test_mask, pad_len)
+            unknown_mask = pad_mask(unknown_mask, pad_len) 
 
         data.train_mask = train_mask
         data.val_mask = val_mask
