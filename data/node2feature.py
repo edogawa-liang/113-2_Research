@@ -43,10 +43,13 @@ class FeatureNodeReverter:
         # =============
 
         # 剩下的都是還存在的邊 要轉換回原始節點的特徵
-        if self.feature_type == "categorical":
-            x_restored[node_ids, feat_ids] = 1.0
-        elif self.feature_type == "continuous":
-            x_restored[node_ids, feat_ids] = original_data.x[node_ids, feat_ids]
+        # if self.feature_type == "categorical":
+        #     x_restored[node_ids, feat_ids] = 1.0
+        # elif self.feature_type == "continuous":
+        #     x_restored[node_ids, feat_ids] = original_data.x[node_ids, feat_ids]
+
+        # 已將類別型的 feature2node 也改成和連續型相同的方式
+        x_restored[node_ids, feat_ids] = original_data.x[node_ids, feat_ids]
 
         # 保留 node-node 邊
         nn_mask = (src_all < num_nodes) & (dst_all < num_nodes)
