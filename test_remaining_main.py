@@ -104,7 +104,7 @@ if __name__ == "__main__":
             test_mask = load_split_test(args.dataset, args.split_id, repeat_id, DEVICE)
             remaining_graph.test_mask = test_mask
 
-            # # 如果有移除特徵，應該在測試節點保留完整特徵，
+            # 如果有移除特徵，應該在測試節點保留完整特徵，
             print("Restoring full features for test nodes...")
             test_node_idx = torch.where(test_mask)[0]
             remaining_graph.x[test_node_idx] = ori_data.x[test_node_idx]
