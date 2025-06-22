@@ -1,0 +1,114 @@
+# if variable is category: add feature to node
+# if variable is continuous: add feature's node, feature value to edge weight
+
+import torch
+import numpy as np
+from torch_geometric.data import Data
+
+# 類別型和連續型都將 feature 轉為 edge_weight
+
+class FeatureNodeConverter:
+    def __init__(self, feature_type, device):
+        """
+        :param is_categorical: True 表示特徵是類別型（0/1），False 表示連續型（浮點）
+        """
+        self.feature_type = feature_type
+        self.device = device
+        print("dataset has", self.feature_type, "features")
+
+    def convert(self, data: Data) -> Data:
+        num_nodes = data.num_nodes
+        num_features = data.x.size(1)
+        feature_node_offset = num_nodes # 特徵節點的排序是原節點後
+
+        edge_index = []
+        edge_weight = []
+        node_node_mask = []
+        node_feat_mask = []
+
+        # 原始邊與邊權
+        if not hasattr(data, 'edge_weight') or data.edge_weight is None:
+            original_edge_weight = torch.ones(data.edge_index.size(1), device=self.device)
+        else:
+            original_edge_weight = data.edge_weight
+
+        # 加入原始邊
+        edge_index_orig = data.edge_index
+        edge_index.extend(edge_index_orig.t().tolist())
+        edge_weight.extend(original_edge_weight.tolist())
+        node_node_mask.extend([1] * edge_index_orig.size(1)) # 原來的邊
+        node_feat_mask.extend([0] * edge_index_orig.size(1))
+
+        # 預取特徵矩陣
+        feat_matrix = data.x.abs().clone().cpu().numpy()  # abs 處理
+        feat_matrix = np.clip(feat_matrix, a_min=0.0, a_max=None)
+
+        # column-wise Min-Max normalize (with lower bound 0.05)
+        col_min = feat_matrix.min(axis=0, keepdims=True)
+        col_max = feat_matrix.max(axis=0, keepdims=True)
+        norm_feat = (feat_matrix - col_min) / (col_max - col_min + 1e-6)
+        norm_feat = np.clip(norm_feat, 0.05, 1.0)
+
+        # row-wise L1 normalize
+        row_sum = norm_feat.sum(axis=1, keepdims=True) + 1e-8
+        norm_feat = norm_feat / row_sum
+
+        # 乘上 k（平均 degree）
+        avg_degree = data.edge_index.size(1) / num_nodes
+        norm_feat *= avg_degree
+
+
+        # 新增 feature node 的邊
+        for node_id in range(num_nodes):
+            for feat_id in range(num_features):
+                
+                # 類別型和連續型都相同作法
+                feat_value = norm_feat[node_id, feat_id]
+                if feat_value > 0:
+                    feat_node_id = feature_node_offset + feat_id
+                    edge_index.append([node_id, feat_node_id])
+                    edge_index.append([feat_node_id, node_id])
+                    edge_weight.extend([feat_value, feat_value])
+                    node_node_mask.extend([0, 0])
+                    node_feat_mask.extend([1, 1])
+
+        edge_index = torch.tensor(edge_index, dtype=torch.long, device=self.device).t().contiguous()
+        edge_weight = torch.tensor(edge_weight, dtype=torch.float, device=self.device)
+        node_node_mask = torch.tensor(node_node_mask, dtype=torch.bool, device=self.device)
+        node_feat_mask = torch.tensor(node_feat_mask, dtype=torch.bool, device=self.device)
+
+        # 標記原始節點及特徵節點
+        is_feature_node = torch.zeros(num_nodes + num_features, dtype=torch.bool, device=self.device)
+        is_feature_node[num_nodes:] = True
+        is_original_node = torch.ones(num_nodes + num_features, dtype=torch.bool, device=self.device)
+        is_original_node[num_nodes:] = False
+
+
+        # 節點特徵設為 1（原始 + feature node）(暫時)
+        # x = torch.ones((num_nodes + num_features, 1), device=self.device)
+
+        
+        new_data = Data(
+            x=None,
+            edge_index=edge_index,
+            edge_weight=edge_weight,
+            y=data.y,
+            node_node_mask=node_node_mask,
+            node_feat_mask=node_feat_mask,
+            is_feature_node=is_feature_node,
+            is_original_node=is_original_node
+        )
+
+        return new_data
+
+        # # 延伸 mask
+        # for attr in ["train_mask", "val_mask", "test_mask", "unknown_mask"]:
+        #     if hasattr(data, attr):
+        #         old_mask = getattr(data, attr)
+        #         if old_mask is not None and old_mask.shape[0] == num_nodes:
+        #             pad = torch.zeros(num_features, dtype=torch.bool, device=old_mask.device)
+        #             new_mask = torch.cat([old_mask, pad], dim=0)
+        #             setattr(new_data, attr, new_mask)
+
+        # print(f"Converted graph: {new_data}")
+        # return new_data
