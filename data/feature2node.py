@@ -85,11 +85,11 @@ class FeatureNodeConverter:
 
 
         # 節點特徵設為 1（原始 + feature node）(暫時)
-        # x = torch.ones((num_nodes + num_features, 1), device=self.device)
+        x = torch.ones((num_nodes + num_features, 1), device=self.device)
 
         
         new_data = Data(
-            x=None,
+            x=x,
             edge_index=edge_index,
             edge_weight=edge_weight,
             y=data.y,
