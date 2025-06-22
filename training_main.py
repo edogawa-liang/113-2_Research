@@ -46,6 +46,7 @@ def parse_args():
 
     # structure mode 是 "random+imp" 時，要不要使用 learnable embedding
     parser.add_argument("--learn_embedding", action="store_true", help="Use learnable random embedding")
+    parser.add_argument("--emb_dim", type=int, default=16, help="Dimension of the embedding if using random+imp mode")
 
     # split settings
     parser.add_argument("--split_start", type=int, default=0, help="Start split id (inclusive)")
@@ -88,7 +89,7 @@ if __name__ == "__main__":
             only_feature_node=args.only_feature_node,
             only_structure=args.only_structure,
             mode=args.structure_mode,
-            emb_dim=32,
+            emb_dim=args.emb_dim if args.structure_mode == "random+imp" else 0, # 如果是 one+imp 就不需要 embedding
             normalize_type="row_l1",
             learn_embedding=args.learn_embedding, # 在訓練階段時是 True, Inference 階段是 False
             external_embedding=None # 只有inference時才會有

@@ -87,6 +87,10 @@ class FeatureNodeConverter:
         # 節點特徵設為 1（原始 + feature node）(暫時)
         x = torch.ones((num_nodes + num_features, 1), device=self.device)
 
+        # 印出 edgeweight 統計資訊
+        print("Edge weight statistics:")
+        print(f"  New edge weight: {edge_weight.min().item()} - {edge_weight.max().item()} (mean: {edge_weight.mean().item()})")
+
         
         new_data = Data(
             x=x,
