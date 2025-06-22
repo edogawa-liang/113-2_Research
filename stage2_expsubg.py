@@ -147,7 +147,7 @@ if __name__ == "__main__":
 
 
         # model path
-        model_path = os.path.join(args.stage1_path, f"split_{split_id}", "model", f"{trial_name}_{model_class.__name__}.pth")
+        model_path = os.path.join(args.stage1_path, f"split_{split_id}", "model", args.dataset, f"{args.trial_name}_{model_class.__name__}.pth")
         print(f"Loading model from {model_path}")
     
         # Initialize explainer
