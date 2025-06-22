@@ -1,91 +1,57 @@
-# 計算 10 次 repeat 的結果 & 標準差
-# result_summary.py
 import argparse
 import pandas as pd
-import glob
 import os
 
-# python tools/result_summary.py --run_mode try_original_structure
+# python tools/result_summary.py --run_mode stage3_GNNExplainer_edge --split_id 0 --dataset Cora --trial_start 0 --trial_end 9
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Analyze result Acc per group")
+    parser = argparse.ArgumentParser(description="Analyze GNN repeat results.")
     parser.add_argument("--run_mode", type=str, required=True, help="Run mode (folder name)")
+    parser.add_argument("--split_id", type=int, default=0, help="Split ID")
+    parser.add_argument("--dataset", type=str, required=True, help="Dataset name")
+    parser.add_argument("--trial_start", type=int, default=0, help="Start trial ID (inclusive)")
+    parser.add_argument("--trial_end", type=int, default=0, help="End trial ID (inclusive)")
     return parser.parse_args()
 
 if __name__ == "__main__":
     args = parse_args()
 
-    # 搜尋檔案
-    path = f"saved/{args.run_mode}/result/"
-    result_files = glob.glob(f"{path}*.xlsx")
-    print(f"Found {len(result_files)} result files.")
+    base_dir = f"saved/{args.run_mode}/split_{args.split_id}/repeat_result/{args.dataset}"
 
-    for file_path in result_files:
-        print(f"\n=== Processing file: {file_path} ===")
+    for trial_id in range(args.trial_start, args.trial_end + 1):
+        file_name = f"{trial_id}_GCN2Classifier.csv"
+        file_path = os.path.join(base_dir, file_name)
 
-        # 讀取所有 sheets
-        xls = pd.ExcelFile(file_path)
-        sheet_names = xls.sheet_names
-        print(f"Found sheets: {sheet_names}")
+        if not os.path.exists(file_path):
+            print(f"[Trial {trial_id}]  File not found: {file_path}")
+            continue
 
-        for sheet_name in sheet_names:
-            print(f"\n-- Processing sheet: {sheet_name} --")
-            df = xls.parse(sheet_name)
+        df = pd.read_csv(file_path)
+        if "Acc" not in df.columns or "repeat_id" not in df.columns:
+            print(f"[Trial {trial_id}] Missing 'Acc' or 'repeat_id' columns.")
+            continue
 
-            # 確認 repeat_id 存在
-            if 'repeat_id' not in df.columns:
-                print(f"Sheet {sheet_name} missing repeat_id column, skipping.")
-                continue
+        df = df[df["repeat_id"].isin(range(10))]
 
-            # Group by repeat_id → 希望是「0-9 一組」，但可能有很多組 → 要分組
-            # 方法：假設一組 repeat_id=0~9 出現一次，下一組再出現一遍0~9
-            # 我用 group_counter 記錄 → 這樣可以拆多組
-            repeat_id_counts = df['repeat_id'].value_counts().to_dict()
+        acc_mean = df["Acc"].mean()
+        acc_std = df["Acc"].std()
+        print(f"\n[Trial {trial_id}] Acc mean = {acc_mean:.4f}, std = {acc_std:.4f}")
 
-            # 先找到 0 出現幾次 → 就是幾組
-            num_groups = repeat_id_counts.get(0, 0)
+        # === 額外欄位統計 ===
+        exclude_columns = ["Model", "LR", "Epochs", "Best Epoch", "Loss", "Acc", "Auc", "Precision", "Recall", "F1", "CM", "Threshold"]
+        remaining_columns = [col for col in df.columns if col not in exclude_columns]
 
-            print(f"Detected {num_groups} group(s) of repeat_id 0-9.")
+        if len(remaining_columns) > 0:
+            print("Other columns:")
+            nunique_series = df[remaining_columns].nunique()
+            varying_columns = nunique_series[nunique_series > 1].index.tolist()
+            constant_columns = nunique_series[nunique_series == 1].index.tolist()
 
-            for group_idx in range(num_groups):
-                # 篩一組 → repeat_id = 0~9，每個取第 group_idx 筆
-                group_rows = []
-                for rid in range(10):
-                    rows_rid = df[df['repeat_id'] == rid]
-                    if len(rows_rid) <= group_idx:
-                        print(f"Warning: repeat_id={rid} does not have enough rows for group {group_idx}. Skipping this group.")
-                        break
-                    row = rows_rid.iloc[group_idx]
-                    group_rows.append(row)
-                else:
-                    # 如果完整收集到一組 0~9
-                    group_df = pd.DataFrame(group_rows)
+            for col in varying_columns:
+                unique_values = df[col].unique()
+                unique_values_str = ", ".join(map(str, unique_values))
+                print(f"  {col} = {unique_values_str}")
 
-                    acc_mean = group_df['Acc'].mean()
-                    acc_std = group_df['Acc'].std()
-
-                    print(f"\n[Sheet: {sheet_name}] [Group {group_idx}] Acc mean: {acc_mean:.4f}, std: {acc_std:.4f}")
-
-                    # 排除要排除的欄位
-                    exclude_columns = ["Model", "LR", "Epochs", "Best Epoch", "Loss", "Acc", "Auc", "Precision", "Recall", "F1", "CM", "Threshold"]
-
-                    remaining_columns = [col for col in df.columns if col not in exclude_columns]
-
-                    if len(remaining_columns) > 0:
-                        print("Other columns:")
-                        
-                        nunique_series = group_df[remaining_columns].nunique()
-                        varying_columns = nunique_series[nunique_series > 1].index.tolist()
-                        constant_columns = nunique_series[nunique_series == 1].index.tolist()
-
-                        # 處理有變化的欄位 → 收集所有值
-                        for col in varying_columns:
-                            unique_values = group_df[col].unique()
-                            unique_values_str = ", ".join(map(str, unique_values))
-                            print(f"{col}={unique_values_str},")   # 每一行換行
-
-                        # 處理不變的欄位 → 取第一個值
-                        for col in constant_columns:
-                            value = group_df[col].iloc[0]
-                            print(f"{col}={value},")   # 每一行換行
-
+            for col in constant_columns:
+                value = df[col].iloc[0]
+                print(f"  {col} = {value}")
