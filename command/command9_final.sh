@@ -98,6 +98,30 @@ python testing_main.py --dataset Amazon --model MLP  --run_mode stage1_mlp --spl
 python testing_main.py --dataset FacebookPagePage --normalize --model MLP  --run_mode stage1_mlp --split_id 0  --trial_start 0 --trial_end 0
 python testing_main.py --dataset GitHub --normalize --model MLP  --run_mode stage1_mlp --split_id 0  --trial_start 0 --trial_end 0
 
+# 3. Summary Test 10 times
+# ------------------------------------------------------------
+## Original GNN
+python tools/result_summary.py --run_mode stage1 --split_id 0 --dataset Cora --trial_start 0 --trial_end 0
+python tools/result_summary.py --run_mode stage1 --split_id 0 --dataset CiteSeer --trial_start 0 --trial_end 0
+python tools/result_summary.py --run_mode stage1 --split_id 0 --dataset Amazon --trial_start 0 --trial_end 0
+python tools/result_summary.py --run_mode stage1 --split_id 0 --dataset FacebookPagePage --trial_start 0 --trial_end 0
+python tools/result_summary.py --run_mode stage1 --split_id 0 --dataset GitHub --trial_start 0 --trial_end 0  
+
+## GNN Only Look at Structure
+python tools/result_summary.py --run_mode stage1_structure --split_id 0 --dataset Cora --trial_start 0 --trial_end 0
+python tools/result_summary.py --run_mode stage1_structure --split_id 0 --dataset CiteSeer --trial_start 0 --trial_end 0
+python tools/result_summary.py --run_mode stage1_structure --split_id 0 --dataset Amazon --trial_start 0 --trial_end 0
+python tools/result_summary.py --run_mode stage1_structure --split_id 0 --dataset FacebookPagePage --trial_start 0 --trial_end 0
+python tools/result_summary.py --run_mode stage1_structure --split_id 0 --dataset GitHub --trial_start 0 --trial_end 0
+
+## MLP
+python tools/result_summary.py --run_mode stage1_mlp --split_id 0 --dataset Cora --trial_start 0 --trial_end 0
+python tools/result_summary.py --run_mode stage1_mlp --split_id 0 --dataset CiteSeer --trial_start 0 --trial_end 0
+python tools/result_summary.py --run_mode stage1_mlp --split_id 0 --dataset Amazon --trial_start 0 --trial_end 0
+python tools/result_summary.py --run_mode stage1_mlp --split_id 0 --dataset FacebookPagePage --trial_start 0 --trial_end 0
+python tools/result_summary.py --run_mode stage1_mlp --split_id 0 --dataset GitHub --trial_start 0 --trial_end 0 
+
+
 
 # =================== 重新生成經過 feature to node 的解釋子圖 =========================
 # 1. train base model

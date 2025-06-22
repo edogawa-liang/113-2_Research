@@ -21,6 +21,9 @@ if __name__ == "__main__":
     for trial_id in range(args.trial_start, args.trial_end + 1):
         file_name = f"{trial_id}_GCN2Classifier.csv"
         file_path = os.path.join(base_dir, file_name)
+        if not os.path.exists(file_path):
+            file_name = f"{trial_id}_MLPClassifier.csv"
+            file_path = os.path.join(base_dir, file_name)
 
         if not os.path.exists(file_path):
             print(f"[Trial {trial_id}]  File not found: {file_path}")
