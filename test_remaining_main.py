@@ -26,11 +26,7 @@ def parse_args():
     parser.add_argument("--normalize", action="store_true", help="Whether to normalize the dataset.")
     parser.add_argument("--model", type=str, default="GCN2", choices=["GCN2", "GCN3"], help="Model type")
 
-    # explainer
     parser.add_argument("--run_mode", type=str, default="try", help="Run mode") 
-    parser.add_argument("--filename", type=str, default="result", help="File name for saving results")
-    parser.add_argument("--note", type=str, default="", help="Note for the experiment")
-
     
     # repeat settings (for testing different group)
     parser.add_argument("--repeat_start", type=int, default=0, help="Start repeat id (inclusive)")
@@ -77,7 +73,7 @@ if __name__ == "__main__":
         print(f"\n=== [Trial {trial_id}] ===")
 
         # Load core subgraph mask
-        save_mask_dir = os.path.join("saved", "core_subgraph_mask", f"split_{args.split_id}", args.run_mode, args.dataset)
+        save_mask_dir = os.path.join(args.run_mode, f"split_{args.split_id}")
         extractor = CoreSubgraphExtractor(ori_data, None, save_mask_dir, args.dataset, trial_id)
         feature_removed_mask, edge_removed_mask = extractor.load()
 
@@ -116,8 +112,8 @@ if __name__ == "__main__":
                                         model_class=GCN2Classifier if args.model == "GCN2" else GCN3Classifier,
                                         trial_number=trial_id, device=DEVICE,)
 
-            model_dir = os.path.join("saved", args.run_mode, "model", args.dataset)
-            model_name = f"{args.split_id}_{trainer.model_name}.pth"
+            model_dir = os.path.join("saved", args.run_mode, f"split_{args.split_id}", "model", args.dataset)
+            model_name = f"{trial_id}_{trainer.model_name}.pth"
             model_path = os.path.join(model_dir, model_name)
             print(f"Loading fixed model from {model_path}")
             trainer.load_model(model_path)
