@@ -1,5 +1,6 @@
 # if variable is category: add feature to node
 # if variable is continuous: add feature's node, feature value to edge weight
+# 可使用於單一類別型 或 連續型資料 (混合資料要另外設定)
 
 import torch
 import numpy as np
@@ -32,6 +33,7 @@ class FeatureNodeConverter:
         else:
             original_edge_weight = data.edge_weight
 
+
         # 加入原始邊
         edge_index_orig = data.edge_index
         edge_index.extend(edge_index_orig.t().tolist())
@@ -43,34 +45,54 @@ class FeatureNodeConverter:
         feat_matrix = data.x.abs().clone().cpu().numpy()  # abs 處理
         feat_matrix = np.clip(feat_matrix, a_min=0.0, a_max=None)
 
-        # column-wise Min-Max normalize (with lower bound 0.05)
-        col_min = feat_matrix.min(axis=0, keepdims=True)
-        col_max = feat_matrix.max(axis=0, keepdims=True)
-        norm_feat = (feat_matrix - col_min) / (col_max - col_min + 1e-6)
-        norm_feat = np.clip(norm_feat, 0.05, 1.0)
-
-        # row-wise L1 normalize
-        row_sum = norm_feat.sum(axis=1, keepdims=True) + 1e-8
-        norm_feat = norm_feat / row_sum
-
-        # 乘上 k（平均 degree）
+        # 計算平均度數 (用於邊權計算)
         avg_degree = data.edge_index.size(1) / num_nodes
-        norm_feat *= avg_degree
 
+        if self.feature_type == "categorical":
+            for node_id in range(num_nodes):
+                node_ones = np.sum(feat_matrix[node_id, :] == 1)
+                if node_ones > 0:
+                    edge_w = avg_degree / node_ones
+                else:
+                    edge_w = 1.0  # 沒有特徵為 1，邊權不會用到
 
-        # 新增 feature node 的邊
-        for node_id in range(num_nodes):
-            for feat_id in range(num_features):
-                
-                # 類別型和連續型都相同作法
-                feat_value = norm_feat[node_id, feat_id]
-                if feat_value > 0:
-                    feat_node_id = feature_node_offset + feat_id
-                    edge_index.append([node_id, feat_node_id])
-                    edge_index.append([feat_node_id, node_id])
-                    edge_weight.extend([feat_value, feat_value])
-                    node_node_mask.extend([0, 0])
-                    node_feat_mask.extend([1, 1])
+                for feat_id in range(num_features):
+                    if feat_matrix[node_id, feat_id] == 1:
+                        feat_node_id = feature_node_offset + feat_id
+                        edge_index.append([node_id, feat_node_id])
+                        edge_index.append([feat_node_id, node_id])
+                        edge_weight.extend([edge_w, edge_w])
+                        node_node_mask.extend([0, 0])
+                        node_feat_mask.extend([1, 1])
+
+        elif self.feature_type == "continuous":
+
+            # column-wise min-max normalize (加下界0.05防止過小邊權)
+            col_min = feat_matrix.min(axis=0, keepdims=True)
+            col_max = feat_matrix.max(axis=0, keepdims=True)
+            norm_feat = (feat_matrix - col_min) / (col_max - col_min + 1e-6)
+            norm_feat = np.clip(norm_feat, 0.05, 1.0)
+
+            # row-wise L1 normalize
+            row_sum = norm_feat.sum(axis=1, keepdims=True) + 1e-8
+            norm_feat = norm_feat / row_sum
+
+            # 乘上平均degree (暫時設定讓對於同一個節點，結構和特徵對其的影響差不多重要)
+            norm_feat *= avg_degree
+
+            # 新增 feature node 的邊
+            for node_id in range(num_nodes):
+                for feat_id in range(num_features):
+                    
+                    # 類別型和連續型都相同作法
+                    feat_value = norm_feat[node_id, feat_id]
+                    if feat_value > 0:
+                        feat_node_id = feature_node_offset + feat_id
+                        edge_index.append([node_id, feat_node_id])
+                        edge_index.append([feat_node_id, node_id])
+                        edge_weight.extend([feat_value, feat_value])
+                        node_node_mask.extend([0, 0])
+                        node_feat_mask.extend([1, 1])
 
         edge_index = torch.tensor(edge_index, dtype=torch.long, device=self.device).t().contiguous()
         edge_weight = torch.tensor(edge_weight, dtype=torch.float, device=self.device)
