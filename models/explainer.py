@@ -128,6 +128,8 @@ class SubgraphExplainer:
             y_value = data.y[node_idx].item()  # 取得節點的回歸目標數值
             if save:
                 self._save_explanation(node_idx=node_idx, explanation=explanation, explainer_type=self.explainer.algorithm.__class__.__name__)#, y_value=y_value)
+            
+            torch.cuda.empty_cache()
             return explanation.node_mask, explanation.edge_mask
 
 
@@ -184,6 +186,7 @@ class SubgraphExplainer:
         
         print("cf_explanation:", cf_explanation)
 
+        torch.cuda.empty_cache()
         return cf_explanation
 
 
