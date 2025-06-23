@@ -9,12 +9,13 @@ from torch_geometric.data import Data
 # 類別型和連續型都將 feature 轉為 edge_weight
 
 class FeatureNodeConverter:
-    def __init__(self, feature_type, device):
+    def __init__(self, feature_type, device, feature_importance=1.0):
         """
         :param is_categorical: True 表示特徵是類別型（0/1），False 表示連續型（浮點）
         """
         self.feature_type = feature_type
         self.device = device
+        self.feature_importance = feature_importance # >1 強化特徵邊，<1 削弱特徵邊
         print("dataset has", self.feature_type, "features")
 
     def convert(self, data: Data) -> Data:
@@ -46,15 +47,20 @@ class FeatureNodeConverter:
         feat_matrix = np.clip(feat_matrix, a_min=0.0, a_max=None)
 
         # 計算平均度數 (用於邊權計算)
-        avg_degree = data.edge_index.size(1) / num_nodes
+        # avg_degree = data.edge_index.size(1) / num_nodes    
 
+        # 計算每個節點 degree
+        degree_count = torch.bincount(data.edge_index[0], minlength=num_nodes).cpu().numpy()
+
+        # 希望每個節點公平看待結構和特徵
         if self.feature_type == "categorical":
             for node_id in range(num_nodes):
+                node_degree = degree_count[node_id] + 1e-6  # 防止除零
                 node_ones = np.sum(feat_matrix[node_id, :] == 1)
                 if node_ones > 0:
-                    edge_w = avg_degree / node_ones
+                    edge_w = (node_degree / node_ones) * self.feature_importance
                 else:
-                    edge_w = 1.0  # 沒有特徵為 1，邊權不會用到
+                    edge_w = 1.0  # 沒有特徵為 1，邊權不使用
 
                 for feat_id in range(num_features):
                     if feat_matrix[node_id, feat_id] == 1:
@@ -78,15 +84,16 @@ class FeatureNodeConverter:
             norm_feat = norm_feat / row_sum
 
             # 乘上平均degree (暫時設定讓對於同一個節點，結構和特徵對其的影響差不多重要)
-            norm_feat *= avg_degree
+            # norm_feat *= avg_degree
 
             # 新增 feature node 的邊
             for node_id in range(num_nodes):
+                node_degree = degree_count[node_id] + 1e-6
+
                 for feat_id in range(num_features):
-                    
-                    # 類別型和連續型都相同作法
                     feat_value = norm_feat[node_id, feat_id]
                     if feat_value > 0:
+                        feat_value = feat_value * node_degree * self.feature_importance
                         feat_node_id = feature_node_offset + feat_id
                         edge_index.append([node_id, feat_node_id])
                         edge_index.append([feat_node_id, node_id])
