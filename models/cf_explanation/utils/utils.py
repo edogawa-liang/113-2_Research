@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 from torch_geometric.utils import k_hop_subgraph, dense_to_sparse, to_dense_adj, subgraph
 from torch_geometric.utils import to_undirected, is_undirected
-from utils.device import DEVICE
 
 
 
@@ -53,6 +52,7 @@ def get_neighbourhood(node_idx, edge_index, n_hops, features, labels):
     """
     取得子圖，並根據原圖是否為 undirected，自動決定是否將子圖轉為 undirected。
     """
+
     # 先判斷原圖是不是 undirected
     original_is_undirected = is_undirected(edge_index)
 
@@ -65,6 +65,7 @@ def get_neighbourhood(node_idx, edge_index, n_hops, features, labels):
 
     sub_feat = features[subset]
     sub_labels = labels[subset]
+    # subset = subset.cpu()  # 先搬回 CPU
     node_dict = {int(orig): i for i, orig in enumerate(subset.tolist())}
 
     return sub_edge_index, sub_feat, sub_labels, node_dict

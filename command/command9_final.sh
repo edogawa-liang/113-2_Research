@@ -156,6 +156,7 @@ python stage2_expsubg.py --dataset Amazon --explainer_type GNNExplainer --run_mo
 python stage2_expsubg.py --dataset FacebookPagePage --normalize --explainer_type GNNExplainer --run_mode stage2_feature2node_fn --stage1_path saved/stage1_feature2node_fn --feature_to_node --structure_mode random+imp --only_feature_node 
 python stage2_expsubg.py --dataset GitHub --normalize --explainer_type GNNExplainer --run_mode stage2_feature2node_fn --stage1_path saved/stage1_feature2node_fn --feature_to_node --structure_mode random+imp --only_feature_node 
 
+# command9-2, command9-3還沒跑完
 
 # ==================== Stage 3 移除解釋子圖後========================
 # 
@@ -165,8 +166,17 @@ python stage2_expsubg.py --dataset GitHub --normalize --explainer_type GNNExplai
 
 
 
+# ==================== CF 生成解釋 ========================
+CUDA_LAUNCH_BLOCKING=1 python stage2_expsubg.py --dataset Cora --explainer_type CFExplainer --run_mode try_stage2 --stage1_path saved/stage1 --epoch 5
+CUDA_LAUNCH_BLOCKING=1 python stage2_expsubg.py --dataset Cora --explainer_type CFExplainer --run_mode try_stage2_feature2node_nn_fn --stage1_path saved/stage1_feature2node_nn_fn --feature_to_node --structure_mode random+imp  --epoch 5
+
+CUDA_LAUNCH_BLOCKING=1 python stage2_expsubg.py --dataset FacebookPagePage --explainer_type CFExplainer --run_mode try_stage2 --stage1_path saved/stage1 --epoch 5
+CUDA_LAUNCH_BLOCKING=1 python stage2_expsubg.py --dataset FacebookPagePage --explainer_type CFExplainer --run_mode try_stage2_feature2node_nn_fn --stage1_path saved/stage1_feature2node_nn_fn --feature_to_node --structure_mode random+imp  --epoch 5
 
 
+## 原始 Graph (只有節點邊)
+## Feature to Node (含節點邊 & 特徵邊)
+## Feature to Node (只有特徵邊)
 
 # 
 wait

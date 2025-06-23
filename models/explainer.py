@@ -137,6 +137,15 @@ class SubgraphExplainer:
         features = self.data.x
         labels = self.data.y
 
+        # 若有 feature to node，labels 需要補滿
+        total_num_nodes = features.shape[0]  # 包含原始節點 + feature 節點（若轉成node）
+        if labels.shape[0] < total_num_nodes:
+            # 補成全圖大小，未標記部分設為 -1（或其他特別標記）
+            all_labels = torch.full((total_num_nodes,), -1, dtype=labels.dtype, device=labels.device)
+            all_labels[:labels.shape[0]] = labels  # 假設labels前面是原始節點
+            labels = all_labels
+
+
         sub_edge_index, sub_feat, sub_labels, node_dict = get_neighbourhood(int(node_idx), edge_index, self.hop, features, labels)
         sub_edge_index = sub_edge_index.to(self.device)
         sub_feat = sub_feat.to(self.device)
