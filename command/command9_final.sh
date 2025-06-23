@@ -2,9 +2,16 @@
 set -e
 set -x 
 
+# ============================================
+
+# 正在跑: command9-2, 
+# 還沒跑: command9-7, command9-8, command9-9
+
+# ============================================
+
 # 把 stage2 和 stage2_structure 從 saved_0621 直接移過來 (command 7 已跑過) 
 # 但之後不小心誤刪 saved_0621.....
-
+# 有 feature to node 記得都不要+normalize
 
 # ============================================
 # 1. 誤刪了: core_subgraph.... 重跑 GNNExplainer 和 Random 移除邊的實驗
@@ -157,8 +164,6 @@ python stage2_expsubg.py --dataset Amazon --explainer_type GNNExplainer --run_mo
 python stage2_expsubg.py --dataset FacebookPagePage--explainer_type GNNExplainer --run_mode stage2_feature2node_fn --stage1_path saved/stage1_feature2node_fn --feature_to_node --structure_mode random+imp --only_feature_node 
 python stage2_expsubg.py --dataset GitHub --explainer_type GNNExplainer --run_mode stage2_feature2node_fn --stage1_path saved/stage1_feature2node_fn --feature_to_node --structure_mode random+imp --only_feature_node 
 
-# command9-2, 
-# command9-3還沒跑完 已開始
 
 # ==================== Stage 3 移除解釋子圖後========================
 # 
@@ -176,8 +181,8 @@ python stage2_expsubg.py --dataset GitHub --explainer_type GNNExplainer --run_mo
 python stage2_expsubg.py --dataset Cora --explainer_type CFExplainer --run_mode stage2 --stage1_path saved/stage1
 python stage2_expsubg.py --dataset CiteSeer --explainer_type CFExplainer --run_mode stage2 --stage1_path saved/stage1
 python stage2_expsubg.py --dataset Amazon --explainer_type CFExplainer --run_mode stage2 --stage1_path saved/stage1
-python stage2_expsubg.py --dataset FacebookPagePage --explainer_type CFExplainer --run_mode stage2 --stage1_path saved/stage1
-python stage2_expsubg.py --dataset GitHub --explainer_type CFExplainer --run_mode stage2 --stage1_path saved/stage1
+python stage2_expsubg.py --dataset FacebookPagePage  --normalize --explainer_type CFExplainer --run_mode stage2 --stage1_path saved/stage1
+python stage2_expsubg.py --dataset GitHub  --normalize --explainer_type CFExplainer --run_mode stage2 --stage1_path saved/stage1
 
 ## Feature to Node (含節點邊 & 特徵邊)
 ## Feature to Node (只有特徵邊)

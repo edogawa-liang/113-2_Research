@@ -9,8 +9,8 @@ set -x
 python stage2_expsubg.py --dataset Cora --explainer_type CFExplainer --run_mode stage2 --stage1_path saved/stage1
 python stage2_expsubg.py --dataset CiteSeer --explainer_type CFExplainer --run_mode stage2 --stage1_path saved/stage1
 python stage2_expsubg.py --dataset Amazon --explainer_type CFExplainer --run_mode stage2 --stage1_path saved/stage1
-python stage2_expsubg.py --dataset FacebookPagePage --explainer_type CFExplainer --run_mode stage2 --stage1_path saved/stage1
-python stage2_expsubg.py --dataset GitHub --explainer_type CFExplainer --run_mode stage2 --stage1_path saved/stage1
+python stage2_expsubg.py --dataset FacebookPagePage  --normalize --explainer_type CFExplainer --run_mode stage2 --stage1_path saved/stage1
+python stage2_expsubg.py --dataset GitHub  --normalize --explainer_type CFExplainer --run_mode stage2 --stage1_path saved/stage1
 
 ## Feature to Node (含節點邊 & 特徵邊)
 ## Feature to Node (只有特徵邊)
