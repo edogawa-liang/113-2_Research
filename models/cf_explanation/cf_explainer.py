@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 import numpy as np
+import os
 import torch.optim as optim
 from torch.nn.utils import clip_grad_norm_
 from .basic_GCN_perturb import GCNPerturb
@@ -154,6 +155,11 @@ class CFExplainer:
             print("No loss recorded.")
             return
 
+        # 確保 loss_plot 資料夾存在
+        save_dir = os.path.join(os.path.dirname(save_path), "loss_plot")
+        os.makedirs(save_dir, exist_ok=True)
+        full_save_path = os.path.join(save_dir, os.path.basename(save_path))    
+        
         plt.figure(figsize=(6, 4))
         plt.plot(self.loss_total_list, linestyle='-')
         plt.xlabel("Epoch")
@@ -161,6 +167,6 @@ class CFExplainer:
         plt.title("Loss over Epochs")
         plt.grid(True)
         plt.tight_layout()
-        plt.savefig(save_path)
+        plt.savefig(full_save_path)
         plt.close()
-        print(f"Loss plot saved to {save_path}")
+        print(f"Loss plot saved to {full_save_path}")
