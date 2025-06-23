@@ -82,7 +82,7 @@ class GCNPerturb(nn.Module):
 		return self.model(x, edge_index_bin, edge_weight_bin), adj_bin
 
 
-	def loss(self, output, y_pred_orig, y_pred_new_actual, adj_bin, P_used, alpha=10):
+	def loss(self, output, y_pred_orig, y_pred_new_actual, adj_bin, P_used, alpha=30):
 		# output 是 forward 的結果, y_pred_new_actual 是 forward_prediction 的結果
 		pred_same = (y_pred_new_actual == y_pred_orig).float()
 
