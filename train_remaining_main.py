@@ -89,9 +89,8 @@ if __name__ == "__main__":
 
     # Load dataset
     loader = GraphDatasetLoader(args.normalize)
-    data, num_features, num_classes, feature_type, num_ori_edges = loader.load_dataset(args.dataset)
-    data = data.to(DEVICE)
-    ori_data = data.clone() # 備份原始資料
+    ori_data, num_features, num_classes, feature_type, num_ori_edges = loader.load_dataset(args.dataset)
+    ori_data = ori_data.to(DEVICE)
 
     # define pad_mask function
     def pad_mask(mask, pad_len):

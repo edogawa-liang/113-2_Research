@@ -4,6 +4,7 @@ import torch
 import pandas as pd
 from torch_geometric.data import Data
 
+# 還沒+ feature_to_node 的情況
 
 class CFSubgraphRemover:
     """
