@@ -51,14 +51,16 @@ class CFExplainer:
             self.cf_optimizer = optim.Adadelta(self.cf_model.parameters(), lr=lr)
 
         best_loss = np.inf
+        P_used_best = None
 
         for epoch in range(num_epochs):
             print("Epoch: ", epoch)
-            loss_total, flipped, cf_adj_bin = self.train()
+            loss_total, flipped, cf_adj_bin, P_used = self.train()
             self.loss_total_list.append(loss_total)
 
             if flipped and loss_total < best_loss:
                 self.best_cf_adj = cf_adj_bin.detach().clone()
+                P_used_best = P_used.detach().clone()
                 best_loss = loss_total
 		
         if self.best_cf_adj is None:
@@ -66,12 +68,21 @@ class CFExplainer:
             return None
         
         # 產生 removed edges
-        removed_edges_global = self.get_removed_edges_from_original_index(node_dict)
+        removed_edges_global, removed_edge_pairs_sub = self.get_removed_edges_from_original_index(node_dict)
+
+        # 取得邊的重要度
+        edge_importance = self.get_removed_edges_importance(P_used_best, removed_edge_pairs_sub)
+
+        # 確保 removed_edges_global, edge_importance 長度一致
+        assert removed_edges_global.shape[1] == edge_importance.shape[0], f"邊的數量與重要度數量不一致，邊數: {removed_edges_global.shape[1]}, 重要度數量: {edge_importance.shape[0]}"
+
+            
 
         # 回傳結果
         cf_info = {
             "node_idx": node_idx,
-            "cf_explanation": removed_edges_global.cpu()
+            "cf_explanation": removed_edges_global.cpu(),
+            "edge_importance": edge_importance.cpu(),
         }
 
         return cf_info
@@ -84,6 +95,7 @@ class CFExplainer:
         output_actual, self.cf_adj = self.cf_model.forward_prediction(self.sub_feat)
         
 		# Differentiable forward (soft mask)
+        # P_used 邊被保留下來的機率 (<0.5 的就是解釋)
         output, P_used = self.cf_model.forward(self.sub_feat)
         print("output:", output[self.new_idx])
 
@@ -102,7 +114,7 @@ class CFExplainer:
         
         print("loss_total:", loss_total.item(), "num_changed:", num_changed.item())
         
-        return loss_total.item(), flipped, self.cf_adj
+        return loss_total.item(), flipped, self.cf_adj, P_used
 
 
     def get_removed_edges_from_original_index(self, node_dict):
@@ -111,15 +123,28 @@ class CFExplainer:
         """
         reverse_node_dict = {v: k for k, v in node_dict.items()}
         edge_mask = (self.sub_adj - self.best_cf_adj.to(self.sub_adj.device)) > 0
-        removed_edge_indices = edge_mask.nonzero(as_tuple=False)
+        removed_edge_pairs_sub = edge_mask.nonzero(as_tuple=False)  # [num_removed_edges, 2]
 
         removed_edges_global = torch.tensor([
             [reverse_node_dict[i.item()], reverse_node_dict[j.item()]]
-            for i, j in removed_edge_indices
+            for i, j in removed_edge_pairs_sub
         ], device=self.device).T  # [2, num_edges]
 
-        return removed_edges_global
+        return removed_edges_global, removed_edge_pairs_sub
     
+
+    def get_removed_edges_importance(self, P_used, removed_edge_pairs_sub):
+        importance_matrix = 1.0 - P_used
+        removed_importance = torch.tensor([
+            importance_matrix[i.item(), j.item()]
+            for i, j in removed_edge_pairs_sub
+        ], device=self.device)
+
+        print("Removed importance:", removed_importance)
+        
+        return removed_importance
+
+
 
     def plot_loss(self, save_path):
         """
