@@ -75,7 +75,7 @@ if __name__ == "__main__":
     # 1. Feature to node conversion
     if args.feature_to_node:
         print("Converting node features into feature-nodes...")
-        converter = FeatureNodeConverter(feature_type=feature_type, device=DEVICE)
+        converter = FeatureNodeConverter(feature_type=feature_type, num_nodes=data.num_nodes, device=DEVICE)
         # FeatureNodeConverter 提供feature連到node後的所有邊，並多了 node_node_mask, node_feat_mask (後續要記得處理!)
         data = converter.convert(data)
 
@@ -171,16 +171,13 @@ if __name__ == "__main__":
 
             logger.log_experiment(args.dataset + "_cls", result, label_source, split_id=split_id)
 
-            # Save embedding
-            # 即使不是 learn_embedding 也要保存 embedding。Inference 階段不需要存
-            # 提供給 Stage 2 解釋子圖使用 (但 Stage 3 重新訓練時不需要存，因為用的是資料原始的feature)
-            if (args.feature_to_node or args.only_structure) and args.structure_mode == "random+imp": 
-                embedding_save_dir = os.path.join("saved", save_dir, "embedding", args.dataset)
-                os.makedirs(embedding_save_dir, exist_ok=True)
-                embedding_save_path = os.path.join(embedding_save_dir, f"embedding.npy")
-                learned_embedding = builder.embedding.weight.detach().cpu().numpy()
-                np.save(embedding_save_path, learned_embedding)
-                print(f"[Split {split_id}] Saved embedding to {embedding_save_path}")
-                
+
+            if args.feature_to_node:
+                output_dir = os.path.join("saved", save_dir, "feat2node_graph", args.dataset)
+                os.makedirs(output_dir, exist_ok=True)
+                torch.save(data, os.path.join(output_dir, "converted_data.pt"))
+                torch.save(converter.node_feature_vs_structure.data.cpu(), os.path.join(output_dir, "node_feature_vs_structure_imp.pt"))
+                print(f"Saved converted graph and importance to {output_dir}")
+
         except ValueError as e:
             raise

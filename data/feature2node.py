@@ -1,6 +1,7 @@
 # if variable is category: add feature to node
 # if variable is continuous: add feature's node, feature value to edge weight
 # 可使用於單一類別型 或 連續型資料 (混合資料要另外設定)
+# 讓模型自己學這個節點更看結構還是特徵
 
 import torch
 import numpy as np
@@ -8,19 +9,23 @@ from torch_geometric.data import Data
 
 # 類別型和連續型都將 feature 轉為 edge_weight
 
-class FeatureNodeConverter:
-    def __init__(self, feature_type, device, feature_importance=1.0):
+class FeatureNodeConverter(torch.nn.Module):
+    def __init__(self, feature_type, num_nodes, device):
         """
         :param is_categorical: True 表示特徵是類別型（0/1），False 表示連續型（浮點）
         """
+        super().__init__()
         self.feature_type = feature_type
         self.device = device
-        self.feature_importance = feature_importance # >1 強化特徵邊，<1 削弱特徵邊
+        # self.feature_importance = feature_importance # >1 強化特徵邊，<1 削弱特徵邊
+        self.node_feature_vs_structure = torch.nn.Parameter(torch.ones(num_nodes, device=device))
+
         print("dataset has", self.feature_type, "features")
 
     def convert(self, data: Data) -> Data:
         num_nodes = data.num_nodes
         num_features = data.x.size(1)
+
         feature_node_offset = num_nodes # 特徵節點的排序是原節點後
 
         edge_index = []
@@ -58,7 +63,10 @@ class FeatureNodeConverter:
                 node_degree = degree_count[node_id] + 1e-6  # 防止除零
                 node_ones = np.sum(feat_matrix[node_id, :] == 1)
                 if node_ones > 0:
-                    edge_w = (node_degree / node_ones) * self.feature_importance
+                    # edge_w = (node_degree / node_ones) * self.feature_importance
+                    # edge_w = (node_degree / node_ones) * self.node_feature_vs_structure[node_id]
+                    edge_w = (node_degree / node_ones) * torch.clamp(self.node_feature_vs_structure[node_id], min=0.0)
+                    edge_w = edge_w.item()
                 else:
                     edge_w = 1.0  # 沒有特徵為 1，邊權不使用
 
@@ -93,7 +101,11 @@ class FeatureNodeConverter:
                 for feat_id in range(num_features):
                     feat_value = norm_feat[node_id, feat_id]
                     if feat_value > 0:
-                        feat_value = feat_value * node_degree * self.feature_importance
+                        # feat_value = feat_value * node_degree * self.feature_importance
+                        # feat_value = feat_value * node_degree * self.node_feature_vs_structure[node_id]
+                        feat_value = feat_value * node_degree * torch.clamp(self.node_feature_vs_structure[node_id], min=0.0)
+                        feat_value = feat_value.item()
+
                         feat_node_id = feature_node_offset + feat_id
                         edge_index.append([node_id, feat_node_id])
                         edge_index.append([feat_node_id, node_id])

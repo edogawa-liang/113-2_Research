@@ -55,16 +55,16 @@ class StructureFeatureBuilder:
         self.num_nodes = data.num_nodes
 
         # Node importance CSV path
-        # if self.feature_to_node:
-        #     if self.only_feature_node:
-        #         suffix = f"{self.dataset_name}_fn.csv"
-        #     else:
-        #         suffix = f"{self.dataset_name}_fn_nn.csv"
+        if self.feature_to_node:
+            if self.only_feature_node:
+                suffix = f"{self.dataset_name}_fn.csv"
+            else:
+                suffix = f"{self.dataset_name}_fn_nn.csv"
         
-        # else: # only_structure
-        #     suffix = f"{self.dataset_name}_ori.csv"
+        else: # only_structure
+            suffix = f"{self.dataset_name}_ori.csv"
 
-        suffix = f"{self.dataset_name}_ori.csv"
+        # suffix = f"{self.dataset_name}_ori.csv"
         self.imp_csv_path = os.path.join(self.save_dir, self.dataset_name, suffix)
 
         # Embedding layer if using random+imp

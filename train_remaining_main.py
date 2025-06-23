@@ -16,14 +16,13 @@ from models.basic_GCN import GCN2Classifier, GCN3Classifier
 from trainer.gnn_trainer import GNNClassifierTrainer
 from utils.save_result import ExperimentLogger
 
-from data.structure import StructureFeatureBuilder, extract_edges
-from data.feature2node import FeatureNodeConverter
 from data.node2feature import FeatureNodeReverter
 from data.prepare_split import load_split_csv
 from utils.node_coverage_summary import save_coverage_log
 from utils.feature_utils import remove_all_zero_features, remove_top_common_features
 from subgraph_selector.subgraph import CoreSubgraphExtractor
 
+# 還沒試跑
 
 # 核心子圖包含整個節點
 # 移除部分邊後的節點分類結果
@@ -98,57 +97,28 @@ if __name__ == "__main__":
     def pad_mask(mask, pad_len):
         return torch.cat([mask, torch.zeros(pad_len, dtype=torch.bool, device=mask.device)], dim=0)
 
-    # 1. Feature to node conversion
-    if args.feature_to_node:
-        print("Converting node features into feature-nodes...")
-        converter = FeatureNodeConverter(feature_type=feature_type, device=DEVICE)
-        # FeatureNodeConverter 提供feature連到node後的所有邊，並多了 node_node_mask, node_feat_mask (後續要記得處理!)
-        data = converter.convert(data)
-
-    # 2. Structure feature building (node features)
-    if args.feature_to_node or args.only_structure:
-        print("Using StructureFeatureBuilder...")
-        # 將 Feature 改成新的算法 (random (32 dim)+ [PageRank, Betweenness, Degree, Closeness])
-        builder = StructureFeatureBuilder(
-            data=data, device=DEVICE, dataset_name=args.dataset,
-            feature_to_node=args.feature_to_node,
-            only_feature_node=args.only_feature_node,
-            only_structure=args.only_structure,
-            mode=args.structure_mode,
-            emb_dim=32,
-            normalize_type="row_l1",
-            learn_embedding=True,  # init random embedding
-        )
-        structure_x = builder.build()
-        num_features = structure_x.shape[1]
-        data.x = structure_x
-
-    # 3. Use original node features
-    else:
-        print("Using original graph and node features.")
-        num_features = data.x.shape[1]
-
-    # 統一更新 edge_index, edge_weight (不論原 graph 或 feature to node 都可以用 extract_edges)
-    edge_index, edge_weight = extract_edges(data, args.feature_to_node, args.only_feature_node)
-    data.edge_index = edge_index
-    data.edge_weight = edge_weight
-
-    print("\nAfter Feature to Node conversion (if exist):\n", data)
 
 
     # 每次 repeat 挑選的節點都不一樣，分別找子圖與訓練模型
     for split_id in range(args.split_start, args.split_end + 1):
-        print(f"\n===== [Repeat {split_id}] =====")
+        print(f"\n===== [Split {split_id}] =====")
+
+        graph_path = os.path.join("saved", "stage1", f"split_{split_id}", "feat2node_graph", args.dataset, "converted_data.pt")
+        if not os.path.exists(graph_path):
+            raise FileNotFoundError(f"Converted graph not found: {graph_path}")
+
+        print(f"Loading converted graph from {graph_path}")
+        data = torch.load(graph_path, map_location=DEVICE)
+        data = data.to(DEVICE)
 
         train_mask, val_mask, test_mask, unknown_mask = load_split_csv(args.dataset, split_id, DEVICE) # 這裏的mask是原dataset的長度
+        
+        # ori_data 也要更新 mask
+        ori_data.train_mask, ori_data.val_mask, ori_data.test_mask, ori_data.unknown_mask = train_mask, val_mask, test_mask, unknown_mask
+
         num_orig_nodes = train_mask.shape[0]
         num_total_nodes = data.x.shape[0]
 
-        # ori_data 也要更新 mask
-        ori_data.train_mask = train_mask
-        ori_data.val_mask = val_mask
-        ori_data.test_mask = test_mask
-        ori_data.unknown_mask = unknown_mask
 
         # add padding to feature node (mask會補滿，但y不會)
         if args.feature_to_node and num_total_nodes > num_orig_nodes:
@@ -160,10 +130,8 @@ if __name__ == "__main__":
             test_mask = pad_mask(test_mask, pad_len)
             unknown_mask = pad_mask(unknown_mask, pad_len) 
 
-        data.train_mask = train_mask
-        data.val_mask = val_mask
-        data.test_mask = test_mask
-        data.unknown_mask = unknown_mask
+        data.train_mask, data.val_mask, data.test_mask, data.unknown_mask = train_mask, val_mask, test_mask, unknown_mask
+
 
         # pick node: 挑選所有的訓練節點作為起點 (all_train) or 部分的訓練節點 (by random, Degree, PageRank, Betweenness, Closeness)
         if args.selector_type == "explainer" or args.selector_type == "random_walk":
