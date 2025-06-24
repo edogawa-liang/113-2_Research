@@ -63,6 +63,8 @@ class CFExplainer:
                 self.best_cf_adj = cf_adj_bin.detach().clone()
                 P_used_best = P_used.detach().clone()
                 best_loss = loss_total
+        
+        print("Best probability adj:", P_used_best)
 		
         if self.best_cf_adj is None:
             print("No counterfactual example found.")

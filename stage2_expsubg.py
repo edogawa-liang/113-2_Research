@@ -35,22 +35,29 @@ def parse_args():
     return parser.parse_args()
 
 
-
 def filter_unexplained_nodes(train_nodes, save_dir):
     """
-    Check which train nodes have not been explained yet (no {node_id}.npz in the folder).
-    
-    Returns:
-        unexplained_nodes: list of node_ids not yet explained
+    從目前已生成的結果中，找出最大 node_id，從該節點之後開始。
+    如果都沒生成，從頭開始。
     """
-    unexplained_nodes = []
-    for node_id in train_nodes:
-        save_path = os.path.join(save_dir, f"node_{node_id}.npz")
-        if not os.path.exists(save_path):
-            unexplained_nodes.append(node_id)
+    existing_nodes = []
+    for filename in os.listdir(save_dir):
+        if filename.startswith("node_") and filename.endswith(".npz"):
+            node_id = int(filename.replace("node_", "").replace(".npz", ""))
+            existing_nodes.append(node_id)
 
-    print(f"[Check] {len(unexplained_nodes)} unexplained nodes out of {len(train_nodes)} total.")
+    if not existing_nodes:
+        print("[Check] No existing explanations found. Start from the beginning.")
+        return train_nodes
+
+    max_existing = max(existing_nodes)
+    unexplained_nodes = [n for n in train_nodes if n > max_existing]
+
+    print(f"[Check] Found {len(existing_nodes)} explained nodes, max id: {max_existing}")
+    print(f"[Check] {len(unexplained_nodes)} unexplained nodes remain.")
+
     return unexplained_nodes
+
 
 
 if __name__ == "__main__":
@@ -103,44 +110,9 @@ if __name__ == "__main__":
             save_dir = os.path.join("saved", args.run_mode, f"split_{split_id}", args.explainer_type, args.dataset, f"{args.trial_name}_{explainer.model_class.__name__}")
             train_nodes = filter_unexplained_nodes(train_nodes, save_dir)
 
-        # Explain each node
-        cf_success_nodes = []
-        cf_fail_nodes = []
-
         for node_idx in train_nodes:
             print(f"\nExplaining node {node_idx}.")
             result = explainer.explain_node(node_idx, data, save=True)
 
-            # 只有CF要計算
-            if args.explainer_type == "CFExplainer":
-                if result is not None:
-                    cf_success_nodes.append(node_idx)
-                else:
-                    cf_fail_nodes.append(node_idx)
 
-        if args.explainer_type == "CFExplainer":
-            # Print summary
-            print("\n========== CF Explanation Summary ==========")
-            print(f"Total nodes selected: {len(train_nodes)}")
-            print(f"Nodes with counterfactual explanation: {len(cf_success_nodes)}")
-            print(f"Nodes without counterfactual explanation: {len(cf_fail_nodes)}")
-            if cf_fail_nodes:
-                print(f"Nodes without explanation: {cf_fail_nodes}")
-            print("============================================\n")
-
-
-            # Save to pickle
-            cf_summary = {
-                "success_nodes": cf_success_nodes,
-                "fail_nodes": cf_fail_nodes
-            }
-            save_dir = os.path.join("saved", args.run_mode, f"split_{split_id}", args.explainer_type, args.dataset, f"{explainer.model_class.__name__}")
-            os.makedirs(save_dir, exist_ok=True)
-            
-            save_path = os.path.join(save_dir, "cf_summary.pkl")
-            with open(save_path, "wb") as f:
-                pickle.dump(cf_summary, f)
-
-            print(f"Saved CF explanation summary to {save_path}")
-
-            print("Node explanations completed and saved.")
+        print(f"\n[Split {split_id}] Explanation completed.")

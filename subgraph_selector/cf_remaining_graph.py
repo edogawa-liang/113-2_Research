@@ -4,8 +4,7 @@ import torch
 import pandas as pd
 from torch_geometric.data import Data
 
-# 還沒+ feature_to_node 的情況
-
+# 還沒跑過驗證
 class CFSubgraphRemover:
     """
     Select edges to remove based on counterfactual explanations.

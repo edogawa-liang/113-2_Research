@@ -49,7 +49,7 @@ class GCNPerturb(nn.Module):
 		else:
 			# continuous mask (training 時用)
 			P_used = torch.sigmoid(P_symm)
-			print("continuous P_used:", P_used)
+			# print("continuous P_used:", P_used)
 		
 		# 確保 sub_adj 和 P_used 在同一個 device
 		self.sub_adj = self.sub_adj.to(self.device)
