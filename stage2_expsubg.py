@@ -6,7 +6,6 @@ import pickle
 from utils.device import DEVICE
 from models.explainer import SubgraphExplainer
 from models.basic_GCN import GCN2Classifier, GCN3Classifier
-from data.prepare_split import load_split_csv
 
 # 看split_id多少，抓那次的模型, 並讀取那10次的split檔，聚集10次training node，一起生成解釋子圖，
 def parse_args():
@@ -64,7 +63,9 @@ if __name__ == "__main__":
 
     # Select nodes to explain 
     for split_id in range(args.split_start, args.split_end + 1):
+
         print(f"\n===== [Split {split_id}] =====")
+        # 不管有沒有經過 feature to node，都會讀入 feat2node_graph 內資料夾的 graph
         graph_path = os.path.join(args.stage1_path, f"split_{split_id}", "feat2node_graph", args.dataset, "converted_data.pt")
         if not os.path.exists(graph_path):
             raise FileNotFoundError(f"Converted graph not found: {graph_path}")
@@ -73,10 +74,7 @@ if __name__ == "__main__":
         data = torch.load(graph_path, map_location=DEVICE)
         data = data.to(DEVICE)
 
-        # Load the split mask
-        train_mask, _, _, _ = load_split_csv(args.dataset, split_id, DEVICE) # 這裏的mask是原dataset的長度
-        train_nodes = train_mask.nonzero(as_tuple=True)[0].cpu().tolist() # 原始節點的編號
-        
+        train_nodes = data.train_mask.nonzero(as_tuple=True)[0].cpu().tolist() # 原始節點的編號        
         # # try only one node
         # print("====Note: For testing, only one node will be selected.====")
         # train_nodes=train_nodes[0:2] 

@@ -17,7 +17,6 @@ from trainer.gnn_trainer import GNNClassifierTrainer
 from utils.save_result import ExperimentLogger
 
 from data.node2feature import FeatureNodeReverter
-from data.prepare_split import load_split_csv
 from utils.node_coverage_summary import save_coverage_log
 from utils.feature_utils import remove_all_zero_features, remove_top_common_features
 from subgraph_selector.subgraph import CoreSubgraphExtractor
@@ -80,6 +79,7 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     selected_feat = None
+    selected_feat_ids = None
     selected_feat_mask = None
     zero_feature_cols = None
 
@@ -97,7 +97,6 @@ if __name__ == "__main__":
         return torch.cat([mask, torch.zeros(pad_len, dtype=torch.bool, device=mask.device)], dim=0)
 
 
-
     # 每次 repeat 挑選的節點都不一樣，分別找子圖與訓練模型
     for split_id in range(args.split_start, args.split_end + 1):
         print(f"\n===== [Split {split_id}] =====")
@@ -109,27 +108,10 @@ if __name__ == "__main__":
         print(f"Loading converted graph from {graph_path}")
         data = torch.load(graph_path, map_location=DEVICE)
         data = data.to(DEVICE)
-
-        train_mask, val_mask, test_mask, unknown_mask = load_split_csv(args.dataset, split_id, DEVICE) # 這裏的mask是原dataset的長度
         
         # ori_data 也要更新 mask
-        ori_data.train_mask, ori_data.val_mask, ori_data.test_mask, ori_data.unknown_mask = train_mask, val_mask, test_mask, unknown_mask
-
-        num_orig_nodes = train_mask.shape[0]
-        num_total_nodes = data.x.shape[0]
-
-
-        # add padding to feature node (mask會補滿，但y不會)
-        if args.feature_to_node and num_total_nodes > num_orig_nodes:
-            pad_len = num_total_nodes - num_orig_nodes
-            print(f"Padding masks with {pad_len} additional nodes for feature nodes...")
-
-            train_mask = pad_mask(train_mask, pad_len)
-            val_mask = pad_mask(val_mask, pad_len)
-            test_mask = pad_mask(test_mask, pad_len)
-            unknown_mask = pad_mask(unknown_mask, pad_len) 
-
-        data.train_mask, data.val_mask, data.test_mask, data.unknown_mask = train_mask, val_mask, test_mask, unknown_mask
+        ori_data.train_mask, ori_data.val_mask, ori_data.test_mask, ori_data.unknown_mask = \
+        data.train_mask, data.val_mask, data.test_mask, data.unknown_mask
 
 
         # pick node: 挑選所有的訓練節點作為起點 (all_train) or 部分的訓練節點 (by random, Degree, PageRank, Betweenness, Closeness)
@@ -141,7 +123,6 @@ if __name__ == "__main__":
             )
             selected_nodes = picker.pick_nodes()
             coverage_stats = picker.compute_coverage(selected_nodes)  # 獲取 coverage 統計
-
 
             save_coverage_log(args, split_id, coverage_stats, selected_nodes=selected_nodes, save_dir="saved/node_coverage")
 
@@ -287,7 +268,7 @@ if __name__ == "__main__":
         # 如果有移除特徵，應該在測試節點保留完整特徵，
         if args.fraction_feat > 0:
             print("Restoring full features for test nodes...")
-            test_node_idx = torch.where(test_mask)[0]
+            test_node_idx = torch.where(remaining_graph.test_mask)[0]
             remaining_graph.x[test_node_idx] = ori_data.x[test_node_idx]
 
 
@@ -313,7 +294,7 @@ if __name__ == "__main__":
                                   only_structure=args.only_structure, feature_to_node=args.feature_to_node, only_feature_node=args.only_feature_node, structure_mode=args.structure_mode, same_feat=args.same_feat)
         
         elif args.selector_type == "explainer":
-            logger.log_experiment(args.dataset, result, label_source="Original", selector_type=args.selector_type, explaner=args.explainer_name, node_choose=args.node_choose, 
+            logger.log_experiment(args.dataset, result, label_source="Original", selector_type=args.selector_type, explainer=args.explainer_name, node_choose=args.node_choose, 
                                   fraction=args.fraction, fraction_feat=args.fraction_feat, remove_feat=zero_feature_cols,
                                   only_structure=args.only_structure, feature_to_node=args.feature_to_node, only_feature_node=args.only_feature_node, structure_mode=args.structure_mode, same_feat=args.same_feat)
         

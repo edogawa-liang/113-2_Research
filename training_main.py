@@ -71,7 +71,6 @@ if __name__ == "__main__":
     def pad_mask(mask, pad_len):
         return torch.cat([mask, torch.zeros(pad_len, dtype=torch.bool, device=mask.device)], dim=0)
 
-
     # 1. Feature to node conversion
     if args.feature_to_node:
         print("Converting node features into feature-nodes...")
@@ -114,6 +113,9 @@ if __name__ == "__main__":
     for split_id in range(args.split_start, args.split_end + 1):
 
         print(f"\n===== [Split {split_id}] =====")
+        
+        # 希望模型跟結果都存在 split_id 資料夾下。但檔名是trial_number開頭
+        save_dir = os.path.join(args.run_mode, f"split_{split_id}")
 
         # Load the split mask
         train_mask, val_mask, test_mask, unknown_mask = load_split_csv(args.dataset, split_id, DEVICE) # 這裏的mask是原dataset的長度
@@ -135,9 +137,17 @@ if __name__ == "__main__":
         data.test_mask = test_mask
         data.unknown_mask = unknown_mask
 
+        # 統一存一份 graph，不管是不是 feature_to_node，避免後續錯誤
+        output_dir = os.path.join("saved", save_dir, "feat2node_graph", args.dataset)
+        os.makedirs(output_dir, exist_ok=True)
+        torch.save(data, os.path.join(output_dir, "converted_data.pt"))
+        print(f"Saved graph to {output_dir}/converted_data.pt")
 
-        # 希望模型跟結果都存在 split_id 資料夾下。但檔名是trial_number開頭
-        save_dir = os.path.join(args.run_mode, f"split_{split_id}")
+        # 只有 feature_to_node 才存 importance
+        if args.feature_to_node:
+            torch.save(converter.node_feature_vs_structure.data.cpu(), os.path.join(output_dir, "node_feature_vs_structure_imp.pt"))
+            print("Saved node-feature importance.")
+
 
         # Initialize logger
         logger = ExperimentLogger(file_name=args.result_filename, note=args.note, copy_old=args.copy_old, run_mode=save_dir)
@@ -168,16 +178,7 @@ if __name__ == "__main__":
             
             result = trainer.run()
 
-
             logger.log_experiment(args.dataset + "_cls", result, label_source, split_id=split_id)
-
-
-            if args.feature_to_node:
-                output_dir = os.path.join("saved", save_dir, "feat2node_graph", args.dataset)
-                os.makedirs(output_dir, exist_ok=True)
-                torch.save(data, os.path.join(output_dir, "converted_data.pt"))
-                torch.save(converter.node_feature_vs_structure.data.cpu(), os.path.join(output_dir, "node_feature_vs_structure_imp.pt"))
-                print(f"Saved converted graph and importance to {output_dir}")
 
         except ValueError as e:
             raise
