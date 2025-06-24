@@ -11,46 +11,33 @@ class CFSubgraphRemover:
     Select edges to remove based on counterfactual explanations.
     """
 
-    def __init__(self, data, base_dir, explainer_name, dataset_name, node_choose, device="cpu"):
+    def __init__(self, data, base_dir, dataset_name, device, selected_nodes):
         self.data = data.to(device)
-        self.base_path = os.path.join(base_dir, explainer_name, dataset_name)
-        self.sub_dirs = sorted([d for d in os.listdir(self.base_path) if d.endswith("GCN2Classifier")])
+        self.base_path = os.path.join(base_dir, "CFExplainer", dataset_name)
         self.device = device
-        self.node_choose = node_choose
+        self.selected_nodes = selected_nodes  # 新增，可外部指定
         self.cf_removed_edges = []  # 儲存要移除的邊 (原始 edge_index 格式)
 
-    def load_data(self):
+
+    def load_data(self, trial_name):
         """
         從每個模型中找出被選到的節點，並載入對應的 cf_explanation（edge_index）來收集要移除的邊。
         """
-        self.node_count = 0
 
-        for sub_dir in self.sub_dirs:
-            model_dir = os.path.join(self.base_path, sub_dir)
-            share_node_dir = os.path.join(model_dir, "share_nodes")
-            csv_path = os.path.join(model_dir, "node_record.csv")
+        exp_dir = os.path.join(self.base_path, f"{trial_name}_GCN2Classifier")
+        for node_id in self.selected_nodes:
+            file_path = os.path.join(exp_dir, f"node_{node_id}.npz")
 
-            if not os.path.exists(csv_path):
-                raise FileNotFoundError(f"'{share_node_dir}' not found. Please run stage2_node_share first.")
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(f"File {file_path} does not exist. Please check the selected_nodes list and explanation folder.")
 
-            df = pd.read_csv(csv_path)
-            if self.node_choose not in df.columns:
-                raise ValueError(f"Column '{self.node_choose}' not found in {csv_path}. Please check if stage2_node_share has been correctly executed.")
+            data = np.load(file_path, allow_pickle=True)
+            cf_explanation = data["cf_explanation"]
+            edge_importance = data["edge_importance"]
+            
 
-            selected_nodes = df[df[self.node_choose] == 1]["Node"].tolist()
-            if self.node_count == 0:
-                self.node_count = len(selected_nodes)
-
-            for node_id in selected_nodes:
-                file_path = os.path.join(share_node_dir, f"node_{node_id}.npz")
-                if not os.path.exists(file_path):
-                    print(f"File {file_path} does not exist.")
-                    continue
-
-                data = np.load(file_path, allow_pickle=True)
-                cf_explanation = data["cf_explanation"]
-                edges = torch.tensor(cf_explanation, device=self.device)
-                self.cf_removed_edges.append(edges)
+            edges = torch.tensor(cf_explanation, device=self.device)
+            self.cf_removed_edges.append(edges)
 
         if self.cf_removed_edges:
             self.cf_removed_edges = torch.cat(self.cf_removed_edges, dim=1)  # [2, num_total_edges]
@@ -65,13 +52,11 @@ class CFSubgraphRemover:
             self.cf_removed_edges = torch.empty((2, 0), dtype=torch.long, device=self.device)
             print("No CF removed edges found.")
 
-    def get_node_count(self):
-        print(f"Number of nodes selected: {self.node_count}")
-        return self.node_count
 
     def get_edge_count(self):
         print(f"Number of edges selected: {self.cf_removed_edges.size(1)}")
         return self.cf_removed_edges.size(1)
+
 
     def get_remaining_graph(self):
         """

@@ -36,7 +36,7 @@ class ExplainerEdgeSelector:
         self.only_feature_node = only_feature_node
 
 
-    def load_data(self, split_id):
+    def load_data(self, trial_name):
         """
         根據每個 model 的 node_record.csv 中某欄位的 one-hot 選擇節點，
         並從 share_nodes/ 中載入 edge_mask 後加總。
@@ -44,7 +44,7 @@ class ExplainerEdgeSelector:
         self.edge_masks = []
         self.node_masks = []
 
-        exp_dir = os.path.join(self.base_path, f"{split_id}_GCN2Classifier")
+        exp_dir = os.path.join(self.base_path, f"{trial_name}_GCN2Classifier")
 
         if not os.path.exists(exp_dir):
             print(f"Warning: explanation folder not found in {exp_dir}")

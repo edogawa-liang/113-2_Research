@@ -68,6 +68,9 @@ def parse_args():
     parser.add_argument("--fraction_feat", type=float, default=0, help="Fraction of features to select for feature-to-node conversion")
     parser.add_argument("--same_feat", action="store_true", help="all nodes select the same features; otherwise, each node selects independently.")
 
+    # trial settings for stage 1   (not the same trial as stage 3)
+    parser.add_argument("--trial_name", type=int, default=0, help="Trial name for saving results")
+
     # split settings
     parser.add_argument("--split_start", type=int, default=0, help="Start repeat id (inclusive)")
     parser.add_argument("--split_end", type=int, default=0, help="End repeat id (inclusive)")
@@ -155,9 +158,9 @@ if __name__ == "__main__":
 
         
         elif args.selector_type == "explainer": # 處理PyG支援的可解釋方法
+            base_dir = os.path.join(args.base_dir, f"split_{split_id}")
             if args.explainer_name != "CFExplainer": # CF另外處理
                 
-                base_dir = os.path.join(args.base_dir, f"split_{split_id}")
                 selector = ExplainerEdgeSelector(
                     data=data,
                     base_dir=base_dir,
@@ -171,7 +174,7 @@ if __name__ == "__main__":
                     use_feature_to_node=args.feature_to_node, # 若要使用特徵，分成直接使用(node_mask)還是將特徵轉為結構使用(edge_mask)
                     only_feature_node = args.only_feature_node
                 )            
-                selector.load_data(split_id)
+                selector.load_data(args.trial_name)
                 selector.plot_edge_distribution()
 
                 # 只有需要選特徵邊時，selected_feat_ids 才會有值，不然就是空的
@@ -195,13 +198,13 @@ if __name__ == "__main__":
         print("selected feature mask shape:", selected_feat.shape if selected_feat is not None else "No feature mask")
 
 
-        # Remove subgraph from the original graph
+        # Get the remaining graph. Remove subgraph from the original graph
         if args.explainer_name == "CFExplainer":
-            remaining_graph_constructor = CFSubgraphRemover(data, args.base_dir, args.explainer_name, args.dataset, args.node_choose, device=DEVICE)
-            remaining_graph_constructor.load_data()
+            remaining_graph_constructor = CFSubgraphRemover(data, base_dir, args.dataset, device=DEVICE, selected_nodes=selected_nodes)
+            remaining_graph_constructor.load_data(args.trial_name)
             remaining_graph = remaining_graph_constructor.get_remaining_graph()
-            num_node = remaining_graph_constructor.get_node_count()
-            num_edge = remaining_graph_constructor.get_edge_count()
+            cf_edge = remaining_graph_constructor.get_edge_count()
+
         else:
             remaining_graph_constructor = RemainingGraphConstructor(data, selected_edges, selected_feat_mask=selected_feat, device=DEVICE) # selected_feat 沒有經過 feature_to_node 才會有
             remaining_graph = remaining_graph_constructor.get_remaining_graph()
@@ -209,7 +212,9 @@ if __name__ == "__main__":
 
         print("\nRemaining graph before reverting feature nodes:\n", remaining_graph)
 
+
 # ===============Revert to Original Graph================ #
+
         # if use feature to node, revert the feature node to original node (add feature value into original graph)
         if args.feature_to_node:
             print("Reverting feature nodes to original nodes...")
@@ -234,7 +239,6 @@ if __name__ == "__main__":
         if args.only_structure:
             # 如果只透過結構資訊選邊，還原圖做預測時依然要加入原始特徵 (才會是移除只有結構的核心子圖)
             remaining_graph.x = ori_data.x.clone()
-
 
         # 希望模型跟結果都存在 split_id 資料夾下。但檔名是trial_number開頭
         save_dir = os.path.join(args.run_mode, f"split_{split_id}")
@@ -283,10 +287,7 @@ if __name__ == "__main__":
                                     trial_number=trial_number, device=DEVICE,
                                     epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
                                     run_mode=save_dir)
-
-
         result = trainer.run()
-
 
         # Save experiment results
         if args.selector_type == "random":
