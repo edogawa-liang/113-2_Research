@@ -80,6 +80,7 @@ if __name__ == "__main__":
         print(f"[Split {split_id}] Loading converted graph from {graph_path}")
         data = torch.load(graph_path, map_location=DEVICE)
         data = data.to(DEVICE)
+        print(data)
 
         train_nodes = data.train_mask.nonzero(as_tuple=True)[0].cpu().tolist() # 原始節點的編號        
         # # try only one node

@@ -174,9 +174,6 @@ python stage2_expsubg.py --dataset GitHub --explainer_type GNNExplainer --run_mo
 
 
 
-
-
-
 # ==================== CF 生成解釋 ======================== 
 # command9-7
 # 可以跑 但feature to node 學不太起來

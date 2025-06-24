@@ -15,7 +15,8 @@ from data.split_unknown_to_test import load_split_test
 from utils.device import DEVICE
 
 # 固定 train/valid，只會重抽 test_mask (確定子圖適用於整體，並且用同一個模型)
-
+# 實際上 只有 Original GCN, GNN Only Look at Structure, MLP 才會用到這個
+# 經過 feature_to_node 轉換後的資料，不需要 test 10 次  (但目前還沒刪掉)
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train a GNN model with specified parameters.")
