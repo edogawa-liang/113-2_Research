@@ -11,11 +11,13 @@ class CFSubgraphRemover:
     Select edges to remove based on counterfactual explanations.
     """
 
-    def __init__(self, data, base_dir, dataset_name, device, selected_nodes):
+    def __init__(self, data, base_dir, dataset_name, device, selected_nodes, fraction, top_k_percent_feat):
         self.data = data.to(device)
         self.base_path = os.path.join(base_dir, "CFExplainer", dataset_name)
         self.device = device
         self.selected_nodes = selected_nodes  # 新增，可外部指定
+        self.fraction = fraction
+        self.top_k_percent_feat = top_k_percent_feat
         self.cf_removed_edges = []  # 儲存要移除的邊 (原始 edge_index 格式)
 
 
@@ -25,60 +27,141 @@ class CFSubgraphRemover:
         """
 
         exp_dir = os.path.join(self.base_path, f"{trial_name}_GCN2Classifier")
+        all_edges = []
+        all_importance = []
+        explained_nodes = []
+
         for node_id in self.selected_nodes:
             file_path = os.path.join(exp_dir, f"node_{node_id}.npz")
-
+            
             if not os.path.exists(file_path):
-                raise FileNotFoundError(f"File {file_path} does not exist. Please check the selected_nodes list and explanation folder.")
+                print(f"[Skip] Node {node_id} has no explanation.")
+                continue
 
             data = np.load(file_path, allow_pickle=True)
             cf_explanation = data["cf_explanation"]
             edge_importance = data["edge_importance"]
-            
 
-            edges = torch.tensor(cf_explanation, device=self.device)
-            self.cf_removed_edges.append(edges)
+            all_edges.append(torch.tensor(cf_explanation, device=self.device))
+            all_importance.append(torch.tensor(edge_importance, device=self.device))
+            explained_nodes.append(node_id)
 
-        if self.cf_removed_edges:
-            self.cf_removed_edges = torch.cat(self.cf_removed_edges, dim=1)  # [2, num_total_edges]
+        # 有生成解釋的數量
+        self.nodes_with_cf = len(explained_nodes)
+        
+        if all_edges:
+            edges = torch.cat(all_edges, dim=1)
+            importance = torch.cat(all_importance)
 
-            # 去重複（轉成 [num_edges, 2]，使用 unique）
-            edges_t = self.cf_removed_edges.t()  # [num_edges, 2]
-            edges_t_unique = torch.unique(edges_t, dim=0)
-            self.cf_removed_edges = edges_t_unique.t()  # 還原為 [2, num_edges]
-            print(f"Found {self.cf_removed_edges.size(1)} CF removed edges.")   
+            edges_t = edges.t()
+            unique_edges, unique_indices = torch.unique(edges_t, dim=0, return_inverse=True)
+            edges = unique_edges.t()
+
+            # 對應 importance：將 importance 加總
+            importance_per_edge = torch.zeros(unique_edges.size(0), device=self.device)
+            for i, idx in enumerate(unique_indices):
+                importance_per_edge[idx] += importance[i]
+
+            self.cf_removed_edges = edges
+            self.edge_importance = importance_per_edge
+
+            print(f"[Summary] Loaded {edges.size(1)} unique CF edges from {len(explained_nodes)}/{len(self.selected_nodes)} nodes.")
 
         else:
             self.cf_removed_edges = torch.empty((2, 0), dtype=torch.long, device=self.device)
+            self.edge_importance = torch.empty(0, device=self.device)
             print("No CF removed edges found.")
 
 
-    def get_edge_count(self):
-        print(f"Number of edges selected: {self.cf_removed_edges.size(1)}")
-        return self.cf_removed_edges.size(1)
-
-
     def get_remaining_graph(self):
-        """
-        從原圖中移除 cf_removed_edges 中的邊，回傳新的 PyG Data。
-        """
         edge_index = self.data.edge_index
+        num_total_edges = edge_index.size(1)
 
-        # 建立 set 方便比對
-        remove_set = { (u.item(), v.item()) for u, v in self.cf_removed_edges.t() }
-        # 注意 PyG 中 edge_index 是雙向的（若是 undirected graph）
-        keep_mask = [
-            i for i in range(edge_index.size(1))
-            if (edge_index[0, i].item(), edge_index[1, i].item()) not in remove_set
-        ]
+        node_node_mask = self.data.node_node_mask.bool()
+        node_feat_mask = self.data.node_feat_mask.bool()
+        num_node_edges = node_node_mask.sum().item()
+        num_feat_edges = node_feat_mask.sum().item()
 
-        new_edge_index = edge_index[:, keep_mask]
+        cf_node_edges = []
+        cf_feat_edges = []
+        cf_importance_node = []
+        cf_importance_feat = []
 
-        return Data(
-            x=self.data.x,
-            edge_index=new_edge_index,
-            y=self.data.y,
-            train_mask=self.data.train_mask,
-            val_mask=self.data.val_mask,
-            test_mask=self.data.test_mask
-        )
+        for i, (u, v) in enumerate(self.cf_removed_edges.t()):
+            mask_index = ((edge_index[0] == u) & (edge_index[1] == v)).nonzero(as_tuple=True)[0]
+            if mask_index.numel() == 0:
+                continue
+            idx = mask_index.item()
+
+            if node_node_mask[idx]:
+                cf_node_edges.append(idx)
+                cf_importance_node.append(self.edge_importance[i].item())
+            elif node_feat_mask[idx]:
+                cf_feat_edges.append(idx)
+                cf_importance_feat.append(self.edge_importance[i].item())
+
+        cf_node_edges = torch.tensor(cf_node_edges, dtype=torch.long, device=self.device)
+        cf_feat_edges = torch.tensor(cf_feat_edges, dtype=torch.long, device=self.device)
+        cf_importance_node = np.array(cf_importance_node)
+        cf_importance_feat = np.array(cf_importance_feat)
+
+        k_node = int(self.fraction * num_node_edges)
+        num_pairs = num_feat_edges // 2
+        k_feat_pair = int(self.top_k_percent_feat * num_pairs)
+
+        if k_node > len(cf_node_edges):
+            print("[Warning] Not enough node edges, removing all available node edges.")
+            k_node = len(cf_node_edges)
+
+        if k_feat_pair * 2 > len(cf_feat_edges):
+            print("[Warning] Not enough feature edges, removing all available feature edges.")
+            k_feat_pair = len(cf_feat_edges) // 2
+
+        idx_remove_node = cf_node_edges[cf_importance_node.argsort()[-k_node:]] if k_node > 0 else torch.empty(0, dtype=torch.long, device=self.device)
+
+        pair_scores = []
+        feat_edge_indices = cf_feat_edges
+
+        for p_idx in range(num_pairs):
+            idx1 = p_idx * 2
+            idx2 = p_idx * 2 + 1
+
+            mask1 = (feat_edge_indices == idx1)
+            mask2 = (feat_edge_indices == idx2)
+
+            score1 = self.edge_importance[mask1.nonzero(as_tuple=True)[0]].max().item() if mask1.any() else 0
+            score2 = self.edge_importance[mask2.nonzero(as_tuple=True)[0]].max().item() if mask2.any() else 0
+
+            pair_scores.append((score1 + score2) / 2)
+
+        pair_scores = np.array(pair_scores)
+        top_pair_idx = np.argsort(pair_scores)[-k_feat_pair:] if k_feat_pair > 0 else []
+
+        idx_remove_feat = torch.cat([
+            torch.tensor([p_idx * 2 for p_idx in top_pair_idx], device=self.device),
+            torch.tensor([p_idx * 2 + 1 for p_idx in top_pair_idx], device=self.device)
+        ]) if k_feat_pair > 0 else torch.empty(0, dtype=torch.long, device=self.device)
+
+        idx_keep = torch.ones(num_total_edges, dtype=torch.bool, device=self.device)
+        idx_keep[idx_remove_node] = False
+        idx_keep[idx_remove_feat] = False
+        new_edge_index = edge_index[:, idx_keep]
+        print(f"Removed {len(idx_remove_node)} node edges and {len(idx_remove_feat)} feature edges.")
+
+
+        # 統計資訊
+        stats = {
+            "selected_nodes": len(self.selected_nodes),
+            "nodes_with_cf": self.nodes_with_cf,
+            "nodes_without_cf": len(self.selected_nodes) - self.nodes_with_cf,
+            "cf_node_edge_percent": (len(cf_node_edges) / num_node_edges * 100) if num_node_edges > 0 else 0,
+            "cf_feat_edge_percent": (len(cf_feat_edges) / num_feat_edges * 100) if num_feat_edges > 0 else 0,
+            "removed_node_edge_percent": (len(idx_remove_node) / num_node_edges * 100) if num_node_edges > 0 else 0,
+            "removed_feat_edge_percent": (len(idx_remove_feat) / num_feat_edges * 100) if num_feat_edges > 0 else 0
+        }
+
+        print(f"[CF Summary] {stats}")
+
+        return Data(x=self.data.x, edge_index=new_edge_index, y=self.data.y, 
+                    train_mask=self.data.train_mask, val_mask=self.data.val_mask, test_mask=self.data.test_mask, unknown_mask=self.data.unknown_mask
+                    ), stats

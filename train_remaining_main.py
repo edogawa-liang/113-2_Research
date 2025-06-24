@@ -1,6 +1,7 @@
 import torch
 import os
 import numpy as np
+import pandas as pd
 import argparse
 from utils.device import DEVICE
 
@@ -103,6 +104,12 @@ if __name__ == "__main__":
     # 每次 repeat 挑選的節點都不一樣，分別找子圖與訓練模型
     for split_id in range(args.split_start, args.split_end + 1):
         print(f"\n===== [Split {split_id}] =====")
+        # 希望模型跟結果都存在 split_id 資料夾下。但檔名是trial_number開頭
+        save_dir = os.path.join(args.run_mode, f"split_{split_id}")
+
+        logger = ExperimentLogger(file_name=args.filename, note=args.note, copy_old=True, run_mode=save_dir)
+        trial_number = logger.get_next_trial_number(args.dataset)
+
 
         graph_path = os.path.join("saved", "stage1", f"split_{split_id}", "feat2node_graph", args.dataset, "converted_data.pt")
         if not os.path.exists(graph_path):
@@ -193,17 +200,21 @@ if __name__ == "__main__":
                                             device=DEVICE, top_k_percent_feat=args.fraction_feat)
             selected_edges, selected_feat_ids, ori_edge_visit_ratio, feat_edge_visit_ratio = selector.select_edges()
 
-        # check
-        print("Number of Selected edges:", len(selected_edges))
-        print("selected feature mask shape:", selected_feat.shape if selected_feat is not None else "No feature mask")
-
 
         # Get the remaining graph. Remove subgraph from the original graph
         if args.explainer_name == "CFExplainer":
-            remaining_graph_constructor = CFSubgraphRemover(data, base_dir, args.dataset, device=DEVICE, selected_nodes=selected_nodes)
+            remaining_graph_constructor = CFSubgraphRemover(data, base_dir, args.dataset, device=DEVICE, selected_nodes=selected_nodes, fraction=args.fraction, top_k_percent_feat=args.fraction_feat)
             remaining_graph_constructor.load_data(args.trial_name)
-            remaining_graph = remaining_graph_constructor.get_remaining_graph()
-            cf_edge = remaining_graph_constructor.get_edge_count()
+            remaining_graph, stats = remaining_graph_constructor.get_remaining_graph()
+            
+            # save stats
+            cf_summary_dir = os.path.join(base_dir, "cf_summary")
+            os.makedirs(cf_summary_dir, exist_ok=True)
+
+            summary_save_path = os.path.join(cf_summary_dir, f"{trial_number}_summary.csv")
+            df = pd.DataFrame([stats])  # stats 已經是字典
+            df.to_csv(summary_save_path, index=False)
+            print(f"CF summary saved to {summary_save_path}")
 
         else:
             remaining_graph_constructor = RemainingGraphConstructor(data, selected_edges, selected_feat_mask=selected_feat, device=DEVICE) # selected_feat 沒有經過 feature_to_node 才會有
@@ -240,11 +251,6 @@ if __name__ == "__main__":
             # 如果只透過結構資訊選邊，還原圖做預測時依然要加入原始特徵 (才會是移除只有結構的核心子圖)
             remaining_graph.x = ori_data.x.clone()
 
-        # 希望模型跟結果都存在 split_id 資料夾下。但檔名是trial_number開頭
-        save_dir = os.path.join(args.run_mode, f"split_{split_id}")
-
-        logger = ExperimentLogger(file_name=args.filename, note=args.note, copy_old=True, run_mode=save_dir)
-        trial_number = logger.get_next_trial_number(args.dataset)
 
         # 匯出核心子圖 mask  (存在 split_id folder 下)
         extractor = CoreSubgraphExtractor(

@@ -80,8 +80,6 @@ class GraphDatasetLoader:
         # print(f"Is undirected: {data.is_undirected()}")
         # print(f"Node Feature: {data.x}")
 
-        num_edges = data.edge_index.shape[1]
-        num_nodes = data.x.shape[0]
 
         # Initialize extra attributes (for consistency even without feature2node)
         num_edges = data.edge_index.shape[1]
