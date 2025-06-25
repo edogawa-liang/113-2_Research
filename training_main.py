@@ -160,6 +160,15 @@ if __name__ == "__main__":
             num_classes = len(torch.unique(data.y))
             print(f"Training Classification Model - Trial {trial_number}")
             
+            extra_params = []
+
+            # structure embedding 有學習的情況
+            if (args.feature_to_node or args.only_structure) and args.structure_mode == "random+imp" and args.learn_embedding:
+                extra_params.append(builder.embedding.weight)
+            # feature to node 有啟用，學 node_feature_vs_structure
+            if args.feature_to_node and not args.only_feature_node:
+                extra_params.append(converter.node_feature_vs_structure)
+
             if args.model == "MLP":
                 trainer = MLPClassifierTrainer(dataset_name=args.dataset, data=data,
                                     num_features=num_features, num_classes=num_classes,
@@ -174,8 +183,7 @@ if __name__ == "__main__":
                                             trial_number=trial_number, device=DEVICE,
                                             epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay, 
                                             run_mode=save_dir, threshold=args.threshold,
-                                            extra_params=[builder.embedding.weight] if (args.feature_to_node or args.only_structure) and args.structure_mode == "random+imp" and args.learn_embedding else None)
-            
+                                            extra_params=extra_params if extra_params else None)            
             result = trainer.run()
 
             logger.log_experiment(args.dataset + "_cls", result, label_source, split_id=split_id)
