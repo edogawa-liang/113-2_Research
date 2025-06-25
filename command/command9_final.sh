@@ -169,11 +169,6 @@ python stage2_expsubg.py --dataset FacebookPagePage--explainer_type GNNExplainer
 python stage2_expsubg.py --dataset GitHub --explainer_type GNNExplainer --run_mode stage2_feature2node_fn --stage1_path saved/stage1_feature2node_fn --feature_to_node --structure_mode random+imp --only_feature_node 
 
 
-# ==================== Stage 3 移除解釋子圖後========================
-# 
-
-
-
 # ==================== CF 生成解釋 ======================== 
 # 可以跑 但feature to node 學不太起來
 
@@ -200,6 +195,10 @@ python stage2_expsubg.py --dataset CiteSeer --explainer_type GNNExplainer --run_
 python stage2_expsubg.py --dataset Amazon --explainer_type GNNExplainer --run_mode stage2_feature2node_fn --stage1_path saved/stage1_feature2node_fn 
 python stage2_expsubg.py --dataset FacebookPagePage --explainer_type GNNExplainer --run_mode stage2_feature2node_fn --stage1_path saved/stage1_feature2node_fn 
 python stage2_expsubg.py --dataset GitHub --explainer_type GNNExplainer --run_mode stage2_feature2node_fn --stage1_path saved/stage1_feature2node_fn 
+
+
+# ==================== Stage 3 移除解釋子圖後========================
+# 
 
 
 
