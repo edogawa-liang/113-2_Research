@@ -209,5 +209,3 @@ python stage2_expsubg.py --dataset GitHub --explainer_type GNNExplainer --run_mo
 # 
 wait
 
-
-python training_main.py --dataset Cora --model GCN2 --epochs 1 --lr 0.01 --run_mode try_stage1_feature2node_nn_fn --note feature2node_nn_fn  --feature_to_node --structure_mode random+imp --learn_embedding
