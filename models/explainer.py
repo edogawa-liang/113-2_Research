@@ -133,7 +133,7 @@ class SubgraphExplainer:
             return explanation.node_mask, explanation.edge_mask
 
 
-    def _run_cf_explainer(self, node_idx, neighbor_threshold=5000):
+    def _run_cf_explainer(self, node_idx, neighbor_threshold=10000):
         self.model = self.model.to(self.device)
         edge_index = self.data.edge_index
         features = self.data.x
@@ -148,7 +148,7 @@ class SubgraphExplainer:
             labels = all_labels
 
         sub_edge_index, sub_feat, sub_labels, node_dict = get_neighbourhood(int(node_idx), edge_index, self.hop, features, labels)
-        
+        num_neighbors = sub_feat.shape[0]
         # 鄰居超過門檻，自動降為 1-hop
         if num_neighbors > neighbor_threshold and self.hop > 1:
             print(f"[Adjust] Too many neighbors ({num_neighbors}), retry with 1-hop.")
