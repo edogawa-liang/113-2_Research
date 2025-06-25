@@ -6,6 +6,8 @@ import pickle
 from utils.device import DEVICE
 from models.explainer import SubgraphExplainer
 from models.basic_GCN import GCN2Classifier, GCN3Classifier
+from data.prepare_split import load_split_csv
+
 
 # 看split_id多少，抓那次的模型, 並讀取那10次的split檔，聚集10次training node，一起生成解釋子圖，
 def parse_args():
@@ -14,6 +16,7 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description="Run GNN Explainer for node regression.")
     parser.add_argument("--dataset", type=str, required=True, help="Dataset name")
+    parser.add_argument("--normalize", action="store_true", help="Whether to normalize the dataset.")
     parser.add_argument("--model", type=str, default="GCN2", choices=["GCN2", "GCN3"], help="Model type")
 
     parser.add_argument("--explainer_type", type=str, default="GNNExplainer", choices=["GNNExplainer", "PGExplainer", "DummyExplainer", "CFExplainer"], help="Type of explainer to use")
@@ -72,15 +75,30 @@ if __name__ == "__main__":
     for split_id in range(args.split_start, args.split_end + 1):
 
         print(f"\n===== [Split {split_id}] =====")
+        
         # 不管有沒有經過 feature to node，都會讀入 feat2node_graph 內資料夾的 graph
         graph_path = os.path.join(args.stage1_path, f"split_{split_id}", "feat2node_graph", args.dataset, "converted_data.pt")
+        
         if not os.path.exists(graph_path):
-            raise FileNotFoundError(f"Converted graph not found: {graph_path}")
-
-        print(f"[Split {split_id}] Loading converted graph from {graph_path}")
-        data = torch.load(graph_path, map_location=DEVICE)
-        data = data.to(DEVICE)
-        print(data)
+            if "saved/stage1" == args.stage1_path:
+                print(f"[Warning] Converted graph not found: {graph_path}")
+                print("[Info] Reload original data from dataset.")
+                
+                from data.dataset_loader import GraphDatasetLoader  # 確保只有需要時才 import
+                loader = GraphDatasetLoader(normalize=args.normalize)  
+                data, _, _, _, _ = loader.load_dataset(args.dataset)
+                train_mask, val_mask, test_mask, unknown_mask = load_split_csv(args.dataset, split_id, DEVICE) # 這裏的mask是原dataset的長度
+                data.train_mask, data.val_mask, data.test_mask, data.unknown_mask = train_mask, val_mask, test_mask, unknown_mask   
+                data = data.to(DEVICE)
+                print(data)
+            else:
+                raise FileNotFoundError(f"Converted graph not found: {graph_path}")
+            
+        else:
+            print(f"[Split {split_id}] Loading converted graph from {graph_path}")
+            data = torch.load(graph_path, map_location=DEVICE)
+            data = data.to(DEVICE)
+            print(data)
 
         train_nodes = data.train_mask.nonzero(as_tuple=True)[0].cpu().tolist() # 原始節點的編號        
         # # try only one node
