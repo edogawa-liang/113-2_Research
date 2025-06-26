@@ -58,10 +58,10 @@ class FeatureNodeReverter:
 
         reverted_data = Data(x=x_restored, edge_index=edge_index_new, edge_weight=edge_weight_new, y=original_data.y)
 
+        # 同步更新 mask
         for attr in ["train_mask", "val_mask", "test_mask", "unknown_mask"]:
             if hasattr(original_data, attr):
-                setattr(reverted_data, attr, getattr(original_data, attr))
-
+                setattr(reverted_data, attr, getattr(original_data, attr)[:num_nodes])  # 裁切回原始長度
 
         # 印出 zero 數量比較
         num_zero_original = (original_data.x == 0).sum().item()
