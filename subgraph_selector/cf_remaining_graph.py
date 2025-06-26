@@ -75,15 +75,14 @@ class CFSubgraphRemover:
 
 
     def get_remaining_graph(self):
+        edge_index = self.data.edge_index
         num_total_edges = edge_index.size(1)
         node_node_mask = self.data.node_node_mask.bool()
         node_feat_mask = self.data.node_feat_mask.bool()
         num_node_edges = node_node_mask.sum().item()
         num_feat_edges = node_feat_mask.sum().item()
 
-
         # 先建 edge_map
-        edge_index = self.data.edge_index
         edge_map = { (edge_index[0, i].item(), edge_index[1, i].item()): i for i in range(edge_index.size(1)) }
 
         cf_node_edges = []
@@ -95,6 +94,7 @@ class CFSubgraphRemover:
             
             idx = edge_map.get((u.item(), v.item()), None)
             if idx is None:
+                print(f"[Warning] Edge ({u.item()}, {v.item()}) not found in original graph, skipping.")
                 continue  # 邊不存在，跳過
 
             if node_node_mask[idx]:
@@ -178,6 +178,18 @@ class CFSubgraphRemover:
 
         print(f"[CF Summary] {stats}")
 
-        return Data(x=self.data.x, edge_index=new_edge_index, y=self.data.y, 
-                    train_mask=self.data.train_mask, val_mask=self.data.val_mask, test_mask=self.data.test_mask, unknown_mask=self.data.unknown_mask
-                    ), stats
+        remaining_graph = Data(x=self.data.x, edge_index=new_edge_index, y=self.data.y,
+                               train_mask=self.data.train_mask, val_mask=self.data.val_mask, test_mask=self.data.test_mask, unknown_mask=self.data.unknown_mask)
+
+        # 新增：保留對應的 edge_weight
+        if hasattr(self.data, 'edge_weight') and self.data.edge_weight is not None:
+            edge_weight = self.data.edge_weight.to(self.device)
+            remaining_graph.edge_weight = edge_weight[idx_keep]
+
+        # 新增：計算這次選到的 feature id
+        ori_num_features = self.data.x.size(1)
+        rel_idx = np.arange(num_feat_edges)[np.isin(np.arange(num_feat_edges), idx_remove_feat.cpu().numpy() - feat_edge_start)]
+        pair_idx = rel_idx // 2
+        selected_feat_ids = pair_idx % ori_num_features
+
+        return remaining_graph, stats, selected_feat_ids

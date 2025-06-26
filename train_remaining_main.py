@@ -223,7 +223,7 @@ if __name__ == "__main__":
                                                             fraction=args.fraction, top_k_percent_feat=args.fraction_feat, 
                                                             only_feature_node = args.only_feature_node)
             remaining_graph_constructor.load_data(args.trial_name)
-            remaining_graph, stats = remaining_graph_constructor.get_remaining_graph()
+            remaining_graph, stats, selected_feat_ids = remaining_graph_constructor.get_remaining_graph()
             
             # save stats
             cf_summary_dir = os.path.join(base_dir, "cf_summary")
