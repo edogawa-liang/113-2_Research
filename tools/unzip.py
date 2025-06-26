@@ -2,6 +2,8 @@ import zipfile
 import argparse
 import os
 
+# python tools/unzip.py --zip_path datasets.zip
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Unzip file to specified folder.")
     parser.add_argument("--zip_path", type=str, required=True, help="Path to the .zip file")

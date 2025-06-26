@@ -43,6 +43,10 @@ def filter_unexplained_nodes(train_nodes, save_dir):
     從目前已生成的結果中，找出最大 node_id，從該節點之後開始。
     如果都沒生成，從頭開始。
     """
+    if not os.path.exists(save_dir):
+        print(f"[Check] {save_dir} does not exist. Start from the beginning.")
+        return train_nodes
+
     existing_nodes = []
     for filename in os.listdir(save_dir):
         if filename.startswith("node_") and filename.endswith(".npz"):
