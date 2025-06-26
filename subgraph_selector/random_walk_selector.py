@@ -1,7 +1,3 @@
-# 目前的random walk 沒有考慮 edge weight 
-# 加入特徵邊會移除雙向，還沒驗證
-# 還沒加入 self.only_feature_node 的情況
-# 因為之後類別型也要全連接，feature value 要當作edge weight 但目前的版本是沒有考慮包含weight的random walk
 
 import torch
 import numpy as np
@@ -162,8 +158,5 @@ class RandomWalkEdgeSelector:
 
         print(f"[RandomWalkEdgeSelector] Selected {len(selected_ori)} node-node edges and {len(selected_feat)} feature edges.")
         print(f"[RandomWalkEdgeSelector] Edge visit ratio - Node edges: {ori_edge_visit_ratio:.3f}, Feature edges: {feat_edge_visit_ratio:.3f}")
-
-        return selected_tensor, selected_feat_ids, ori_edge_visit_ratio, feat_edge_visit_ratio
-
 
         return selected_tensor, selected_feat_ids, ori_edge_visit_ratio, feat_edge_visit_ratio

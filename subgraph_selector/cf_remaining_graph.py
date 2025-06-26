@@ -10,7 +10,7 @@ class CFSubgraphRemover:
     Select edges to remove based on counterfactual explanations.
     """
 
-    def __init__(self, data, base_dir, dataset_name, device, selected_nodes, fraction, top_k_percent_feat):
+    def __init__(self, data, base_dir, dataset_name, device, selected_nodes, fraction, top_k_percent_feat, only_feature_node):
         self.data = data.to(device)
         self.base_path = os.path.join(base_dir, "CFExplainer", dataset_name)
         self.device = device
@@ -18,6 +18,7 @@ class CFSubgraphRemover:
         self.fraction = fraction
         self.top_k_percent_feat = top_k_percent_feat
         self.cf_removed_edges = []  # 儲存要移除的邊 (原始 edge_index 格式)
+        self.only_feature_node = only_feature_node  # 是否只處理 feature node
 
 
     def load_data(self, trial_name):
@@ -41,6 +42,11 @@ class CFSubgraphRemover:
             cf_explanation = data["cf_explanation"]
             edge_importance = data["edge_importance"]
 
+            # 直接補上雙向邊
+            reverse_edges = cf_explanation[[1, 0], :]
+            cf_explanation = np.concatenate([cf_explanation, reverse_edges], axis=1)
+            edge_importance = np.concatenate([edge_importance, edge_importance], axis=0)
+
             all_edges.append(torch.tensor(cf_explanation, device=self.device))
             all_importance.append(torch.tensor(edge_importance, device=self.device))
             explained_nodes.append(node_id)
@@ -62,7 +68,7 @@ class CFSubgraphRemover:
                 importance_per_edge[idx] += importance[i]
 
             self.cf_removed_edges = edges
-            self.edge_importance = importance_per_edge
+            self.edge_importance = importance_per_edge # 這裏的 edge 和 importance 是對應的
 
             print(f"[Summary] Loaded {edges.size(1)} unique CF edges from {len(explained_nodes)}/{len(self.selected_nodes)} nodes.")
 
@@ -90,7 +96,7 @@ class CFSubgraphRemover:
             mask_index = ((edge_index[0] == u) & (edge_index[1] == v)).nonzero(as_tuple=True)[0]
             if mask_index.numel() == 0:
                 continue
-            idx = mask_index.item()
+            idx = mask_index.item() # idx: 該條邊在 self.data.edge_index 裡的位置
 
             if node_node_mask[idx]:
                 cf_node_edges.append(idx)
@@ -99,6 +105,7 @@ class CFSubgraphRemover:
                 cf_feat_edges.append(idx)
                 cf_importance_feat.append(self.edge_importance[i].item())
 
+        # 原始圖裡第幾條邊
         cf_node_edges = torch.tensor(cf_node_edges, dtype=torch.long, device=self.device)
         cf_feat_edges = torch.tensor(cf_feat_edges, dtype=torch.long, device=self.device)
         cf_importance_node = np.array(cf_importance_node)
@@ -119,17 +126,27 @@ class CFSubgraphRemover:
         idx_remove_node = cf_node_edges[cf_importance_node.argsort()[-k_node:]] if k_node > 0 else torch.empty(0, dtype=torch.long, device=self.device)
 
         pair_scores = []
-        feat_edge_indices = cf_feat_edges
+        feat_edge_indices = cf_feat_edges # 該條邊在 self.data.edge_index 裡的位置
+        feat_importance = cf_importance_feat
 
+
+
+        # 動態計算 offset
+        if self.only_feature_node:
+            feat_edge_start = 0
+        else:
+            feat_edge_start = self.data.node_node_mask.sum().item()
+
+        # pair_scores 計算改寫：
         for p_idx in range(num_pairs):
-            idx1 = p_idx * 2
-            idx2 = p_idx * 2 + 1
+            idx1 = feat_edge_start + p_idx * 2
+            idx2 = feat_edge_start + p_idx * 2 + 1
 
             mask1 = (feat_edge_indices == idx1)
             mask2 = (feat_edge_indices == idx2)
 
-            score1 = self.edge_importance[mask1.nonzero(as_tuple=True)[0]].max().item() if mask1.any() else 0
-            score2 = self.edge_importance[mask2.nonzero(as_tuple=True)[0]].max().item() if mask2.any() else 0
+            score1 = feat_importance[mask1.nonzero(as_tuple=True)[0]].max().item() if mask1.any() else 0
+            score2 = feat_importance[mask2.nonzero(as_tuple=True)[0]].max().item() if mask2.any() else 0
 
             pair_scores.append((score1 + score2) / 2)
 
@@ -137,8 +154,8 @@ class CFSubgraphRemover:
         top_pair_idx = np.argsort(pair_scores)[-k_feat_pair:] if k_feat_pair > 0 else []
 
         idx_remove_feat = torch.cat([
-            torch.tensor([p_idx * 2 for p_idx in top_pair_idx], device=self.device),
-            torch.tensor([p_idx * 2 + 1 for p_idx in top_pair_idx], device=self.device)
+            torch.tensor([feat_edge_start + p_idx * 2 for p_idx in top_pair_idx], device=self.device),
+            torch.tensor([feat_edge_start + p_idx * 2 + 1 for p_idx in top_pair_idx], device=self.device)
         ]) if k_feat_pair > 0 else torch.empty(0, dtype=torch.long, device=self.device)
 
         idx_keep = torch.ones(num_total_edges, dtype=torch.bool, device=self.device)
