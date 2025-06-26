@@ -41,12 +41,8 @@ class CFSubgraphRemover:
             data = np.load(file_path, allow_pickle=True)
             cf_explanation = data["cf_explanation"]
             edge_importance = data["edge_importance"]
-
-            # 直接補上雙向邊
-            reverse_edges = cf_explanation[[1, 0], :]
-            cf_explanation = np.concatenate([cf_explanation, reverse_edges], axis=1)
-            edge_importance = np.concatenate([edge_importance, edge_importance], axis=0)
-
+            # 後續會一次移除雙向邊，不需要自補雙向邊
+            
             all_edges.append(torch.tensor(cf_explanation, device=self.device))
             all_importance.append(torch.tensor(edge_importance, device=self.device))
             explained_nodes.append(node_id)
