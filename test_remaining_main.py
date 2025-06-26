@@ -87,9 +87,13 @@ if __name__ == "__main__":
         remaining_graph.edge_index = ori_data.edge_index[:, edge_mask_tensor]
 
         # Remove all-zero features
+        keep_feature_cols = list(range(ori_data.x.shape[1]))  # 預設全部保留
+
         if args.run_mode.endswith("_samefeat"):
             remaining_graph.x, zero_cols = remove_all_zero_features(remaining_graph.x)
+            keep_feature_cols = [i for i in range(ori_data.x.shape[1]) if i not in zero_cols]
             print(f"Removed {len(zero_cols)} all-zero features.")
+
 
         num_features = remaining_graph.x.size(1)
 
@@ -103,7 +107,8 @@ if __name__ == "__main__":
             # 如果有移除特徵，應該在測試節點保留完整特徵，
             print("Restoring full features for test nodes...")
             test_node_idx = torch.where(test_mask)[0]
-            remaining_graph.x[test_node_idx] = ori_data.x[test_node_idx]
+            ori_x_reduced = ori_data.x[:, keep_feature_cols]
+            remaining_graph.x[test_node_idx] = ori_x_reduced[test_node_idx]
 
             # Inference GNN on the remaining graph
             print(f"Training Classification Model - Trial {trial_id}")

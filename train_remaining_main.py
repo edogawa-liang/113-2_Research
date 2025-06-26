@@ -119,10 +119,7 @@ if __name__ == "__main__":
             if "saved/stage1" == args.stage1_path:
                 print(f"[Warning] Converted graph not found: {graph_path}")
                 print("[Info] Reload original data from dataset.")
-                
-                from data.dataset_loader import GraphDatasetLoader  # 確保只有需要時才 import
-                loader = GraphDatasetLoader(normalize=args.normalize)  
-                data, _, _, _, _ = loader.load_dataset(args.dataset)
+                data = ori_data.clone()  # 這裏的 data 是原始的圖
                 train_mask, val_mask, test_mask, unknown_mask = load_split_csv(args.dataset, split_id, DEVICE) # 這裏的mask是原dataset的長度
                 data.train_mask, data.val_mask, data.test_mask, data.unknown_mask = train_mask, val_mask, test_mask, unknown_mask   
                 data = data.to(DEVICE)
@@ -289,7 +286,8 @@ if __name__ == "__main__":
         if args.same_feat:
             remaining_graph.x, zero_feature_cols = remove_all_zero_features(remaining_graph.x)
             print(f"Original features: {ori_data.x.shape[1]}, Removed features (all-zero): {len(zero_feature_cols)}")
-        
+            keep_feature_cols = [i for i in range(ori_data.x.shape[1]) if i not in zero_feature_cols]
+
         num_features = remaining_graph.x.size(1)
 
         # 如果 data 沒有邊了，報錯
@@ -300,8 +298,8 @@ if __name__ == "__main__":
         if args.fraction_feat > 0:
             print("Restoring full features for test nodes...")
             test_node_idx = torch.where(remaining_graph.test_mask)[0]
-            remaining_graph.x[test_node_idx] = ori_data.x[test_node_idx]
-
+            ori_x_reduced = ori_data.x[:, keep_feature_cols]
+            remaining_graph.x[test_node_idx] = ori_x_reduced[test_node_idx]
 
         # Train GNN on the remaining graph
         print("\nTraining GNN on the remaining graph after removing subgraph...")
