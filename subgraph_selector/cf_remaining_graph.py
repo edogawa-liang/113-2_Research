@@ -75,13 +75,16 @@ class CFSubgraphRemover:
 
 
     def get_remaining_graph(self):
-        edge_index = self.data.edge_index
         num_total_edges = edge_index.size(1)
-
         node_node_mask = self.data.node_node_mask.bool()
         node_feat_mask = self.data.node_feat_mask.bool()
         num_node_edges = node_node_mask.sum().item()
         num_feat_edges = node_feat_mask.sum().item()
+
+
+        # 先建 edge_map
+        edge_index = self.data.edge_index
+        edge_map = { (edge_index[0, i].item(), edge_index[1, i].item()): i for i in range(edge_index.size(1)) }
 
         cf_node_edges = []
         cf_feat_edges = []
@@ -89,10 +92,10 @@ class CFSubgraphRemover:
         cf_importance_feat = []
 
         for i, (u, v) in enumerate(self.cf_removed_edges.t()):
-            mask_index = ((edge_index[0] == u) & (edge_index[1] == v)).nonzero(as_tuple=True)[0]
-            if mask_index.numel() == 0:
-                continue
-            idx = mask_index.item() # idx: 該條邊在 self.data.edge_index 裡的位置
+            
+            idx = edge_map.get((u.item(), v.item()), None)
+            if idx is None:
+                continue  # 邊不存在，跳過
 
             if node_node_mask[idx]:
                 cf_node_edges.append(idx)
@@ -100,6 +103,7 @@ class CFSubgraphRemover:
             elif node_feat_mask[idx]:
                 cf_feat_edges.append(idx)
                 cf_importance_feat.append(self.edge_importance[i].item())
+
 
         # 原始圖裡第幾條邊
         cf_node_edges = torch.tensor(cf_node_edges, dtype=torch.long, device=self.device)

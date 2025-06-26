@@ -282,6 +282,7 @@ if __name__ == "__main__":
         extractor.summary()  # 印出移除的特徵和邊的統計
         extractor.save()
 
+        keep_feature_cols = list(range(ori_data.x.shape[1]))
         # 移除特徵全為0的欄位 (只在移除相同特徵時使用)
         if args.same_feat:
             remaining_graph.x, zero_feature_cols = remove_all_zero_features(remaining_graph.x)
