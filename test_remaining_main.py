@@ -7,7 +7,6 @@ import argparse
 from utils.device import DEVICE
 
 from data.dataset_loader import GraphDatasetLoader
-
 from models.basic_GCN import GCN2Classifier, GCN3Classifier
 from trainer.gnn_trainer import GNNClassifierTrainer
 

@@ -546,6 +546,17 @@ python train_remaining_main.py --dataset FacebookPagePage --normalize --model GC
 python train_remaining_main.py --dataset GitHub --normalize --model GCN2 --epochs 300 --lr 0.01 --selector_type explainer --fraction 0.1 --base_dir saved/stage2_feature2node_nn_fn --explainer_name CFExplainer --node_choose all_train --run_mode stage3_CFExplainer_difffeat_edge --note split0_feat2node_difffeat_edge_nn_fn --fraction_feat 0.1  --feature_to_node --stage1_path saved/stage1_feature2node_nn_fn
 
 
+# ==================== Test 10 times ======================== 
+# CFExplainer
+# 1. 移除結構 (節點邊)
+# command11-1.sh
+python testing_main.py --dataset Cora --model GCN2  --run_mode stage3_CFExplainer_edge --split_id 0  --trial_start 0 --trial_end 1
+python testing_main.py --dataset CiteSeer --model GCN2  --run_mode stage3_CFExplainer_edge --split_id 0  --trial_start 0 --trial_end 1
+python testing_main.py --dataset Amazon --model GCN2  --run_mode stage3_CFExplainer_edge --split_id 0  --trial_start 0 --trial_end 1
+python testing_main.py --dataset FacebookPagePage --normalize --model GCN2  --run_mode stage3_CFExplainer_edge --split_id 0  --trial_start 0 --trial_end 1
+python testing_main.py --dataset GitHub --normalize --model GCN2  --run_mode stage3_CFExplainer_edge --split_id 0  --trial_start 0 --trial_end 1
+
+
 # ==================== 表格資料 ======================== 
 
 
