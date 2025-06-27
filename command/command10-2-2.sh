@@ -107,9 +107,9 @@ python train_remaining_main.py --dataset FacebookPagePage --normalize --model GC
 
 
 
-python train_remaining_main.py --dataset FacebookPagePage --normalize --model GCN2 --epochs 300 --lr 0.01 --selector_type explainer --base_dir saved/stage2_feature2node_nn_fn --explainer_name GNNExplainer --node_choose pagerank --run_mode stage3_GNNExplainer_difffeat --note split0_feat2node_difffeat_nn_fn --fraction_feat 0.1 --feature_to_node --stage1_path saved/stage1_feature2node_nn_fn
-python train_remaining_main.py --dataset FacebookPagePage --normalize --model GCN2 --epochs 300 --lr 0.01 --selector_type explainer  --base_dir saved/stage2_feature2node_nn_fn --explainer_name GNNExplainer --node_choose stratified_by_degree --run_mode stage3_GNNExplainer_difffeat --note split0_feat2node_difffeat_nn_fn --fraction_feat 0.1  --feature_to_node --stage1_path saved/stage1_feature2node_nn_fn
-python train_remaining_main.py --dataset FacebookPagePage --normalize --model GCN2 --epochs 300 --lr 0.01 --selector_type explainer --base_dir saved/stage2_feature2node_nn_fn --explainer_name GNNExplainer --node_choose all_train --run_mode stage3_GNNExplainer_difffeat --note split0_feat2node_difffeat_nn_fn --fraction_feat 0.1  --feature_to_node --stage1_path saved/stage1_feature2node_nn_fn
+# python train_remaining_main.py --dataset FacebookPagePage --normalize --model GCN2 --epochs 300 --lr 0.01 --selector_type explainer --base_dir saved/stage2_feature2node_nn_fn --explainer_name GNNExplainer --node_choose pagerank --run_mode stage3_GNNExplainer_difffeat --note split0_feat2node_difffeat_nn_fn --fraction_feat 0.1 --feature_to_node --stage1_path saved/stage1_feature2node_nn_fn
+# python train_remaining_main.py --dataset FacebookPagePage --normalize --model GCN2 --epochs 300 --lr 0.01 --selector_type explainer  --base_dir saved/stage2_feature2node_nn_fn --explainer_name GNNExplainer --node_choose stratified_by_degree --run_mode stage3_GNNExplainer_difffeat --note split0_feat2node_difffeat_nn_fn --fraction_feat 0.1  --feature_to_node --stage1_path saved/stage1_feature2node_nn_fn
+# python train_remaining_main.py --dataset FacebookPagePage --normalize --model GCN2 --epochs 300 --lr 0.01 --selector_type explainer --base_dir saved/stage2_feature2node_nn_fn --explainer_name GNNExplainer --node_choose all_train --run_mode stage3_GNNExplainer_difffeat --note split0_feat2node_difffeat_nn_fn --fraction_feat 0.1  --feature_to_node --stage1_path saved/stage1_feature2node_nn_fn
 
 
 

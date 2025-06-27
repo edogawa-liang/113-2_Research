@@ -202,6 +202,7 @@ python stage2_expsubg.py --dataset GitHub --explainer_type GNNExplainer --run_mo
 # GNNExplainer
 
 # 2. 移除特徵 (特徵相同)
+# command10-3
 ## (1) Original Graph (node mask)
 ### [1] random select
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --selector_type random --run_mode stage3_random_samefeat --note split0_random_samefeat --fraction_feat 0.1 --same_feat --stage1_path saved/stage1
@@ -280,6 +281,7 @@ python train_remaining_main.py --dataset GitHub --normalize --model GCN2 --epoch
 
 
 # 3. 移除特徵 (特徵不同)
+# command10-2 (done)
 ## (1) Original Graph (node mask)
 ### [1] random select
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --selector_type random --run_mode stage3_random_difffeat --note split0_random_difffeat --fraction_feat 0.1 --stage1_path saved/stage1
@@ -358,6 +360,7 @@ python train_remaining_main.py --dataset GitHub --normalize --model GCN2 --epoch
 
 
 # 4. 移除結構+特徵 (特徵相同)
+# command10-4
 ## (1) Original Graph
 ### [1] random select
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --selector_type random --fraction 0.1 --run_mode stage3_random_samefeat --note split0_random_samefeat_edge --fraction_feat 0.1 --same_feat  --stage1_path saved/stage1
@@ -413,6 +416,7 @@ python train_remaining_main.py --dataset GitHub --normalize --model GCN2 --epoch
 
 
 # 5. 移除結構+特徵 (特徵不同)
+# command10-5
 ## (1) Original Graph
 ### [1] random select
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --selector_type random --fraction 0.1 --run_mode stage3_random_difffeat_edge --note split0_random_difffeat_edge --fraction_feat 0.1 --stage1_path saved/stage1
@@ -469,7 +473,7 @@ python train_remaining_main.py --dataset GitHub --normalize --model GCN2 --epoch
 # ==================== Stage 3 移除解釋子圖後========================
 
 # CFExplainer
-# done
+# command10-1 (done)
 # 1. 移除結構 (節點邊)
 ### [2] explainer select
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --selector_type explainer --fraction 0.1 --base_dir saved/stage2 --explainer_name CFExplainer --node_choose all_train --run_mode stage3_CFExplainer_edge --note split0_cf_edge --stage1_path saved/stage1
