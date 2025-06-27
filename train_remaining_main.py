@@ -226,10 +226,10 @@ if __name__ == "__main__":
             remaining_graph, stats, selected_feat_ids = remaining_graph_constructor.get_remaining_graph()
             
             # save stats
-            cf_summary_dir = os.path.join(base_dir, args.dataset, "cf_summary")
+            cf_summary_dir = os.path.join(base_dir, "cf_summary")
             os.makedirs(cf_summary_dir, exist_ok=True)
 
-            summary_save_path = os.path.join(cf_summary_dir, f"{trial_number}_summary.csv")
+            summary_save_path = os.path.join(cf_summary_dir, f"{trial_number}_{args.dataset}.csv")
             df = pd.DataFrame([stats])  # stats 已經是字典
             df.to_csv(summary_save_path, index=False)
             print(f"CF summary saved to {summary_save_path}")

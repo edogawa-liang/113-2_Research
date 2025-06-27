@@ -22,27 +22,27 @@ set -x
 
 # ============================================
 
-# GNNExplainer
+# # GNNExplainer
 
-# 3. 移除特徵 (特徵不同)
-# random
-python test_remaining_main.py --dataset Cora --model GCN2  --run_mode stage3_random_difffeat --split_id 0  --trial_start 0 --trial_end 0
-python test_remaining_main.py --dataset CiteSeer --model GCN2  --run_mode stage3_random_difffeat --split_id 0  --trial_start 0 --trial_end 0
-python test_remaining_main.py --dataset Amazon --model GCN2  --run_mode stage3_random_difffeat --split_id 0  --trial_start 0 --trial_end 0
-python test_remaining_main.py --dataset FacebookPagePage --normalize --model GCN2  --run_mode stage3_random_difffeat --split_id 0  --trial_start 0 --trial_end 0
-python test_remaining_main.py --dataset GitHub --normalize --model GCN2  --run_mode stage3_random_difffeat --split_id 0  --trial_start 0 --trial_end 0
+# # 3. 移除特徵 (特徵不同)
+# # random
+# python test_remaining_main.py --dataset Cora --model GCN2  --run_mode stage3_random_difffeat --split_id 0  --trial_start 0 --trial_end 0
+# python test_remaining_main.py --dataset CiteSeer --model GCN2  --run_mode stage3_random_difffeat --split_id 0  --trial_start 0 --trial_end 0
+# python test_remaining_main.py --dataset Amazon --model GCN2  --run_mode stage3_random_difffeat --split_id 0  --trial_start 0 --trial_end 0
+# python test_remaining_main.py --dataset FacebookPagePage --normalize --model GCN2  --run_mode stage3_random_difffeat --split_id 0  --trial_start 0 --trial_end 0
+# python test_remaining_main.py --dataset GitHub --normalize --model GCN2  --run_mode stage3_random_difffeat --split_id 0  --trial_start 0 --trial_end 0
 
-# GNNExplainer
-python test_remaining_main.py --dataset Cora --model GCN2  --run_mode stage3_GNNExplainer_difffeat --split_id 0  --trial_start 0 --trial_end 8
-python test_remaining_main.py --dataset CiteSeer --model GCN2  --run_mode stage3_GNNExplainer_difffeat --split_id 0  --trial_start 0 --trial_end 8
-python test_remaining_main.py --dataset Amazon --model GCN2  --run_mode stage3_GNNExplainer_difffeat --split_id 0  --trial_start 0 --trial_end 8
-python test_remaining_main.py --dataset FacebookPagePage --normalize --model GCN2  --run_mode stage3_GNNExplainer_difffeat --split_id 0  --trial_start 0 --trial_end 8
-python test_remaining_main.py --dataset GitHub --normalize --model GCN2  --run_mode stage3_GNNExplainer_difffeat --split_id 0  --trial_start 0 --trial_end 8
+# # GNNExplainer
+# python test_remaining_main.py --dataset Cora --model GCN2  --run_mode stage3_GNNExplainer_difffeat --split_id 0  --trial_start 0 --trial_end 8
+# python test_remaining_main.py --dataset CiteSeer --model GCN2  --run_mode stage3_GNNExplainer_difffeat --split_id 0  --trial_start 0 --trial_end 8
+# python test_remaining_main.py --dataset Amazon --model GCN2  --run_mode stage3_GNNExplainer_difffeat --split_id 0  --trial_start 0 --trial_end 8
+# python test_remaining_main.py --dataset FacebookPagePage --normalize --model GCN2  --run_mode stage3_GNNExplainer_difffeat --split_id 0  --trial_start 0 --trial_end 8
+# # python test_remaining_main.py --dataset GitHub --normalize --model GCN2  --run_mode stage3_GNNExplainer_difffeat --split_id 0  --trial_start 0 --trial_end 8
 
 # CFExplainer
-python test_remaining_main.py --dataset Cora --model GCN2  --run_mode stage3_CFExplainer_difffeat --split_id 0  --trial_start 0 --trial_end 1
-python test_remaining_main.py --dataset CiteSeer --model GCN2  --run_mode stage3_CFExplainer_difffeat --split_id 0  --trial_start 0 --trial_end 1
-python test_remaining_main.py --dataset Amazon --model GCN2  --run_mode stage3_CFExplainer_difffeat --split_id 0  --trial_start 0 --trial_end 1
+# python test_remaining_main.py --dataset Cora --model GCN2  --run_mode stage3_CFExplainer_difffeat --split_id 0  --trial_start 0 --trial_end 1
+# python test_remaining_main.py --dataset CiteSeer --model GCN2  --run_mode stage3_CFExplainer_difffeat --split_id 0  --trial_start 0 --trial_end 1
+python test_remaining_main.py --dataset Amazon --model GCN2  --run_mode stage3_CFExplainer_difffeat --split_id 0  --trial_start 0 --trial_end 0
 python test_remaining_main.py --dataset FacebookPagePage --normalize --model GCN2  --run_mode stage3_CFExplainer_difffeat --split_id 0  --trial_start 0 --trial_end 1
 # python test_remaining_main.py --dataset GitHub --normalize --model GCN2  --run_mode stage3_CFExplainer_difffeat --split_id 0  --trial_start 0 --trial_end 1
 
@@ -52,7 +52,7 @@ python tools/result_summary.py --run_mode stage3_random_difffeat --split_id 0 --
 python tools/result_summary.py --run_mode stage3_random_difffeat --split_id 0 --dataset CiteSeer --trial_start 0 --trial_end 0
 python tools/result_summary.py --run_mode stage3_random_difffeat --split_id 0 --dataset Amazon --trial_start 0 --trial_end 0
 python tools/result_summary.py --run_mode stage3_random_difffeat --split_id 0 --dataset FacebookPagePage --trial_start 0 --trial_end 0
-python tools/result_summary.py --run_mode stage3_random_difffeat --split_id 0 --dataset GitHub --trial_start 0 --trial_end 0
+# python tools/result_summary.py --run_mode stage3_random_difffeat --split_id 0 --dataset GitHub --trial_start 0 --trial_end 0
 
 # GNNExplainer
 python tools/result_summary.py --run_mode stage3_GNNExplainer_difffeat --split_id 0 --dataset Cora --trial_start 0 --trial_end 8
@@ -64,7 +64,7 @@ python tools/result_summary.py --run_mode stage3_GNNExplainer_difffeat --split_i
 # CFExplainer
 python tools/result_summary.py --run_mode stage3_CFExplainer_difffeat --split_id 0 --dataset Cora --trial_start 0 --trial_end 1
 python tools/result_summary.py --run_mode stage3_CFExplainer_difffeat --split_id 0 --dataset CiteSeer --trial_start 0 --trial_end 1
-python tools/result_summary.py --run_mode stage3_CFExplainer_difffeat --split_id 0 --dataset Amazon --trial_start 0 --trial_end 1
+python tools/result_summary.py --run_mode stage3_CFExplainer_difffeat --split_id 0 --dataset Amazon --trial_start 0 --trial_end 0
 python tools/result_summary.py --run_mode stage3_CFExplainer_difffeat --split_id 0 --dataset FacebookPagePage --trial_start 0 --trial_end 1
 # python tools/result_summary.py --run_mode stage3_CFExplainer_difffeat --split_id 0 --dataset GitHub --trial_start 0 --trial_end 1
 
