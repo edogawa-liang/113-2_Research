@@ -173,7 +173,7 @@ python stage2_expsubg.py --dataset GitHub --explainer_type GNNExplainer --run_mo
 # 可以跑 但feature to node 學不太起來
 
 ## 原始 Graph (只有節點邊)
-# command9-7
+# command9-7 (done)
 python stage2_expsubg.py --dataset Cora --explainer_type CFExplainer --run_mode stage2 --stage1_path saved/stage1
 python stage2_expsubg.py --dataset CiteSeer --explainer_type CFExplainer --run_mode stage2 --stage1_path saved/stage1
 python stage2_expsubg.py --dataset Amazon --explainer_type CFExplainer --run_mode stage2 --stage1_path saved/stage1
@@ -469,7 +469,7 @@ python train_remaining_main.py --dataset GitHub --normalize --model GCN2 --epoch
 # ==================== Stage 3 移除解釋子圖後========================
 
 # CFExplainer
-
+# done
 # 1. 移除結構 (節點邊)
 ### [2] explainer select
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --selector_type explainer --fraction 0.1 --base_dir saved/stage2 --explainer_name CFExplainer --node_choose all_train --run_mode stage3_CFExplainer_edge --note split0_cf_edge --stage1_path saved/stage1
@@ -489,7 +489,6 @@ python train_remaining_main.py --dataset GitHub --normalize --model GCN2 --epoch
 
 # 2. 移除特徵 (特徵相同)
 ## (2) feature to Node (含節點邊 & 特徵邊)
-
 ### [2] explainer select
 python train_remaining_main.py --dataset Cora --model GCN2 --epochs 300 --lr 0.01 --selector_type explainer --base_dir saved/stage2_feature2node_nn_fn --explainer_name CFExplainer --node_choose all_train --run_mode stage3_CFExplainer_samefeat --note split0_feat2node_samefeat_nn_fn --fraction_feat 0.1 --same_feat --feature_to_node --stage1_path saved/stage1_feature2node_nn_fn
 python train_remaining_main.py --dataset CiteSeer --model GCN2 --epochs 300 --lr 0.01 --selector_type explainer --base_dir saved/stage2_feature2node_nn_fn --explainer_name CFExplainer --node_choose all_train --run_mode stage3_CFExplainer_samefeat --note split0_feat2node_samefeat_nn_fn --fraction_feat 0.1 --same_feat --feature_to_node --stage1_path saved/stage1_feature2node_nn_fn
