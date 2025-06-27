@@ -153,7 +153,7 @@ python training_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --r
 
 # 2. 生成解釋
 ## Feature to Node (含節點邊 & 特徵邊)
-## commmand9-9 (running)
+## commmand9-9 (done)
 python stage2_expsubg.py --dataset Cora --explainer_type GNNExplainer --run_mode stage2_feature2node_nn_fn --stage1_path saved/stage1_feature2node_nn_fn --feature_to_node --structure_mode random+imp 
 python stage2_expsubg.py --dataset CiteSeer --explainer_type GNNExplainer --run_mode stage2_feature2node_nn_fn --stage1_path saved/stage1_feature2node_nn_fn --feature_to_node --structure_mode random+imp 
 python stage2_expsubg.py --dataset Amazon --explainer_type GNNExplainer --run_mode stage2_feature2node_nn_fn --stage1_path saved/stage1_feature2node_nn_fn --feature_to_node --structure_mode random+imp 
@@ -567,6 +567,10 @@ python tools/result_summary.py --run_mode stage3_CFExplainer_edge --split_id 0 -
 python tools/result_summary.py --run_mode stage3_CFExplainer_edge --split_id 0 --dataset Amazon --trial_start 0 --trial_end 1
 python tools/result_summary.py --run_mode stage3_CFExplainer_edge --split_id 0 --dataset FacebookPagePage --trial_start 0 --trial_end 1
 python tools/result_summary.py --run_mode stage3_CFExplainer_edge --split_id 0 --dataset GitHub --trial_start 0 --trial_end 1
+
+
+# Test 10 times
+# commmand11-1
 
 # ==================== 表格資料 ======================== 
 
