@@ -2,11 +2,14 @@ import os
 import shutil
 import pandas as pd
 
+
+
 src_dir = "datasets"
 dst_dir = "table_datasets"
+dst_data_dir = os.path.join(dst_dir, "datasets")
 summary = []
+os.makedirs(dst_data_dir, exist_ok=True)
 
-os.makedirs(dst_dir, exist_ok=True)
 
 for root, dirs, files in os.walk(src_dir):
     
