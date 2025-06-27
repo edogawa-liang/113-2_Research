@@ -153,7 +153,7 @@ python training_main.py --dataset GitHub --model GCN2 --epochs 300 --lr 0.01 --r
 
 # 2. 生成解釋
 ## Feature to Node (含節點邊 & 特徵邊)
-## commmand9-9
+## commmand9-9 (running)
 python stage2_expsubg.py --dataset Cora --explainer_type GNNExplainer --run_mode stage2_feature2node_nn_fn --stage1_path saved/stage1_feature2node_nn_fn --feature_to_node --structure_mode random+imp 
 python stage2_expsubg.py --dataset CiteSeer --explainer_type GNNExplainer --run_mode stage2_feature2node_nn_fn --stage1_path saved/stage1_feature2node_nn_fn --feature_to_node --structure_mode random+imp 
 python stage2_expsubg.py --dataset Amazon --explainer_type GNNExplainer --run_mode stage2_feature2node_nn_fn --stage1_path saved/stage1_feature2node_nn_fn --feature_to_node --structure_mode random+imp 
@@ -161,7 +161,7 @@ python stage2_expsubg.py --dataset FacebookPagePage --explainer_type GNNExplaine
 python stage2_expsubg.py --dataset GitHub --explainer_type GNNExplainer --run_mode stage2_feature2node_nn_fn --stage1_path saved/stage1_feature2node_nn_fn --feature_to_node --structure_mode random+imp 
 
 ## Feature to Node (只有特徵邊)
-## commmand9-10
+## commmand9-10 (done)
 python stage2_expsubg.py --dataset Cora --explainer_type GNNExplainer --run_mode stage2_feature2node_fn --stage1_path saved/stage1_feature2node_fn --feature_to_node --structure_mode random+imp --only_feature_node 
 python stage2_expsubg.py --dataset CiteSeer --explainer_type GNNExplainer --run_mode stage2_feature2node_fn --stage1_path saved/stage1_feature2node_fn --feature_to_node --structure_mode random+imp --only_feature_node 
 python stage2_expsubg.py --dataset Amazon --explainer_type GNNExplainer --run_mode stage2_feature2node_fn --stage1_path saved/stage1_feature2node_fn --feature_to_node --structure_mode random+imp --only_feature_node 
@@ -181,7 +181,7 @@ python stage2_expsubg.py --dataset FacebookPagePage  --normalize --explainer_typ
 python stage2_expsubg.py --dataset GitHub  --normalize --explainer_type CFExplainer --run_mode stage2 --stage1_path saved/stage1
 
 ## Feature to Node (含節點邊 & 特徵邊)
-# command9-11
+# command9-11 (done)
 python stage2_expsubg.py --dataset Cora --explainer_type GNNExplainer --run_mode stage2_feature2node_nn_fn --stage1_path saved/stage1_feature2node_nn_fn 
 python stage2_expsubg.py --dataset CiteSeer --explainer_type GNNExplainer --run_mode stage2_feature2node_nn_fn --stage1_path saved/stage1_feature2node_nn_fn 
 python stage2_expsubg.py --dataset Amazon --explainer_type GNNExplainer --run_mode stage2_feature2node_nn_fn --stage1_path saved/stage1_feature2node_nn_fn
@@ -189,7 +189,7 @@ python stage2_expsubg.py --dataset FacebookPagePage --explainer_type GNNExplaine
 python stage2_expsubg.py --dataset GitHub --explainer_type GNNExplainer --run_mode stage2_feature2node_nn_fn --stage1_path saved/stage1_feature2node_nn_fn 
 
 ## Feature to Node (只有特徵邊)
-# command9-12
+# command9-12 (done)
 python stage2_expsubg.py --dataset Cora --explainer_type GNNExplainer --run_mode stage2_feature2node_fn --stage1_path saved/stage1_feature2node_fn
 python stage2_expsubg.py --dataset CiteSeer --explainer_type GNNExplainer --run_mode stage2_feature2node_fn --stage1_path saved/stage1_feature2node_fn 
 python stage2_expsubg.py --dataset Amazon --explainer_type GNNExplainer --run_mode stage2_feature2node_fn --stage1_path saved/stage1_feature2node_fn 
@@ -549,6 +549,7 @@ python train_remaining_main.py --dataset GitHub --normalize --model GCN2 --epoch
 # ==================== Test 10 times ======================== 
 # CFExplainer
 # 1. 移除結構 (節點邊)
+# done
 # command11-1.sh
 python testing_main.py --dataset Cora --model GCN2  --run_mode stage3_CFExplainer_edge --split_id 0  --trial_start 0 --trial_end 1
 python testing_main.py --dataset CiteSeer --model GCN2  --run_mode stage3_CFExplainer_edge --split_id 0  --trial_start 0 --trial_end 1
@@ -556,6 +557,12 @@ python testing_main.py --dataset Amazon --model GCN2  --run_mode stage3_CFExplai
 python testing_main.py --dataset FacebookPagePage --normalize --model GCN2  --run_mode stage3_CFExplainer_edge --split_id 0  --trial_start 0 --trial_end 1
 python testing_main.py --dataset GitHub --normalize --model GCN2  --run_mode stage3_CFExplainer_edge --split_id 0  --trial_start 0 --trial_end 1
 
+# summary
+python tools/result_summary.py --run_mode stage3_CFExplainer_edge --split_id 0 --dataset Cora --trial_start 0 --trial_end 1
+python tools/result_summary.py --run_mode stage3_CFExplainer_edge --split_id 0 --dataset CiteSeer --trial_start 0 --trial_end 1
+python tools/result_summary.py --run_mode stage3_CFExplainer_edge --split_id 0 --dataset Amazon --trial_start 0 --trial_end 1
+python tools/result_summary.py --run_mode stage3_CFExplainer_edge --split_id 0 --dataset FacebookPagePage --trial_start 0 --trial_end 1
+python tools/result_summary.py --run_mode stage3_CFExplainer_edge --split_id 0 --dataset GitHub --trial_start 0 --trial_end 1
 
 # ==================== 表格資料 ======================== 
 
